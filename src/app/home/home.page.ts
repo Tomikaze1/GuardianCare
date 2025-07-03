@@ -24,7 +24,7 @@ export class HomePage implements OnInit {
       this.initializeMap();
     } catch (error) {
       console.error('Error getting location:', error);
-      this.currentLocation = { lng: 123.8931, lat: 10.3111 };
+      this.currentLocation = { lng: 123.8931, lat: 10.3111 }; 
       this.initializeMap();
     }
   }
@@ -38,7 +38,7 @@ export class HomePage implements OnInit {
       container: 'map',
       style: 'mapbox://styles/mapbox/streets-v11',
       center: [this.currentLocation.lng, this.currentLocation.lat],
-      zoom: 12
+      zoom: 12 
     });
 
     new mapboxgl.Marker()
@@ -73,14 +73,55 @@ export class HomePage implements OnInit {
           [123.8800, 10.3195],
           [123.8795, 10.3190]
         ]
+      },
+      {
+        level: 'Danger',
+        coordinates: [
+          [123.9541, 10.3158],
+          [123.9553, 10.3165],
+          [123.9562, 10.3153],
+          [123.9550, 10.3145]
+        ]
+      },
+      {
+        level: 'Caution',
+        coordinates: [
+          [123.8952, 10.2965],
+          [123.8970, 10.2985],
+          [123.8990, 10.2970],
+          [123.8978, 10.2955]
+        ]
+      },
+      {
+        level: 'Neutral',
+        coordinates: [
+          [123.8937, 10.3151],
+          [123.8950, 10.3164],
+          [123.8965, 10.3159],
+          [123.8945, 10.3149]
+        ]
+      },
+      {
+        level: 'Safe',
+        coordinates: [
+          [123.9671, 10.3085],
+          [123.9705, 10.3100],
+          [123.9730, 10.3080],
+          [123.9700, 10.3065]
+        ]
       }
     ];
 
+    const bounds = new mapboxgl.LngLatBounds();
+
     zones.forEach(zone => {
-      const bounds = new mapboxgl.LngLatBounds();
-      zone.coordinates.forEach(coord => {
-        bounds.extend([coord[0], coord[1]]);
-      });
+      zone.coordinates.forEach(coord => bounds.extend([coord[0], coord[1]]));
+
+      if (this.map?.getSource(`zone-${zone.level}`)) {
+        this.map?.removeLayer(`zone-${zone.level}-fill`);
+        this.map?.removeLayer(`zone-${zone.level}-outline`);
+        this.map?.removeSource(`zone-${zone.level}`);
+      }
 
       this.map?.addSource(`zone-${zone.level}`, {
         type: 'geojson',
@@ -90,9 +131,7 @@ export class HomePage implements OnInit {
             type: 'Polygon',
             coordinates: [zone.coordinates]
           },
-          properties: {
-            level: zone.level
-          }
+          properties: {}
         }
       });
 
@@ -116,6 +155,8 @@ export class HomePage implements OnInit {
         }
       });
     });
+
+    this.map?.fitBounds(bounds, { padding: 40 });
   }
 
   getZoneColor(level: string): string {
