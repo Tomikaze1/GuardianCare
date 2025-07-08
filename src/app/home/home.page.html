@@ -1,11 +1,17 @@
 <ion-header>
   <ion-toolbar>
-    <ion-title>
-      GuardianCare Map
-    </ion-title>
+    <ion-title>Guardian Care Map</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
-  <div id="map" style="width: 100%; height: 100%;"></div>
+  <div id="map" style="height: 100%;"></div>
+
+    <ion-button 
+    id="panic-button"
+    expand="full" 
+    color="danger" 
+    (click)="triggerPanicButton()">
+    Panic Button
+  </ion-button>
 </ion-content>
