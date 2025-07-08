@@ -14,5 +14,11 @@
     "DANGER_ZONE": "Warning! Danger zone detected!",
     "CAUTION_ZONE": "Caution! Potentially dangerous area",
     "PANIC_BUTTON": "Emergency alert sent! Help is coming!"
+  },
+  "TABS": {
+    "HOME": "Home",
+    "REPORTS": "Reports",
+    "HEATMAP": "Heatmap",
+    "SETTINGS": "Settings"
   }
 }

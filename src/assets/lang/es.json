@@ -14,5 +14,11 @@
     "DANGER_ZONE": "¡Advertencia! ¡Zona peligrosa detectada!",
     "CAUTION_ZONE": "¡Precaución! Área potencialmente peligrosa",
     "PANIC_BUTTON": "¡Alerta de emergencia enviada! ¡La ayuda viene en camino!"
+  },
+  "TABS": {
+    "HOME": "Inicio",
+    "REPORTS": "Reportes",
+    "HEATMAP": "Mapa de calor",
+    "SETTINGS": "Configuración"
   }
 }

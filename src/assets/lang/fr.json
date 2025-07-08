@@ -14,5 +14,11 @@
     "DANGER_ZONE": "Attention ! Zone dangereuse détectée !",
     "CAUTION_ZONE": "Attention ! Zone potentiellement dangereuse",
     "PANIC_BUTTON": "Alerte d'urgence envoyée ! Les secours arrivent !"
+  },
+  "TABS": {
+    "HOME": "Accueil",
+    "REPORTS": "Rapports",
+    "HEATMAP": "Carte thermique",
+    "SETTINGS": "Paramètres"
   }
 }
