@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { LocationService } from '../services/location.service';
 import * as mapboxgl from 'mapbox-gl';
+import { HttpClient } from '@angular/common/http';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-home',
@@ -11,11 +13,27 @@ import * as mapboxgl from 'mapbox-gl';
 export class HomePage implements OnInit {
   map: mapboxgl.Map | undefined;
   currentLocation: { lat: number; lng: number } | undefined;
+  inDangerZone = false;
+  currentLanguage = 'en';
+  languages = [
+    { code: 'en', name: 'English' },
+    { code: 'es', name: 'Español' },
+    { code: 'fr', name: 'Français' },
+    { code: 'ja', name: '日本語' }
+  ];
+  zoneLayers: string[] = [];
 
-  constructor(private locationService: LocationService) { }
+  constructor(
+    private locationService: LocationService,
+    private http: HttpClient,
+    private translate: TranslateService
+  ) {
+    this.translate.setDefaultLang('en');
+  }
 
   ngOnInit() {
     this.getCurrentLocation();
+    this.setupLocationMonitoring();
   }
 
   async getCurrentLocation() {
@@ -24,21 +42,61 @@ export class HomePage implements OnInit {
       this.initializeMap();
     } catch (error) {
       console.error('Error getting location:', error);
-      this.currentLocation = { lng: 123.8931, lat: 10.3111 }; 
+      this.currentLocation = { lng: 123.8931, lat: 10.3111 };
       this.initializeMap();
     }
   }
 
+  setupLocationMonitoring() {
+    this.locationService.currentLocation$.subscribe(location => {
+      if (location) {
+        this.currentLocation = location;
+        this.checkZoneSafety();
+      }
+    });
+  }
+
+  checkZoneSafety() {
+    if (!this.currentLocation || !this.map || this.zoneLayers.length === 0) return;
+    
+    const features = this.map.queryRenderedFeatures(
+      this.map.project([this.currentLocation.lng, this.currentLocation.lat]),
+      { layers: this.zoneLayers }
+    );
+
+    if (features.length > 0) {
+      const zoneLevel = features[0].properties?.['level'] || 'Unknown';
+      this.handleZoneEnter(zoneLevel);
+    } else {
+      this.inDangerZone = false;
+    }
+  }
+
+  handleZoneEnter(zoneLevel: string) {
+    if (zoneLevel === 'Danger' || zoneLevel === 'Caution') {
+      this.inDangerZone = true;
+      this.showWarningAlert(zoneLevel);
+      this.autoRouteToSafeZone();
+    } else {
+      this.inDangerZone = false;
+    }
+  }
+
+  showWarningAlert(zoneLevel: string) {
+    const alertMessage = this.translate.instant(
+      zoneLevel === 'Danger' ? 'DANGER_ZONE_WARNING' : 'CAUTION_ZONE_WARNING'
+    );
+    alert(alertMessage);
+  }
+
   initializeMap() {
     if (!this.currentLocation) return;
-
     (mapboxgl as any).accessToken = 'pk.eyJ1IjoidG9taWthemUxIiwiYSI6ImNtY25rM3NxazB2ZG8ybHFxeHVoZWthd28ifQ.Vnf9pMEQAryEI2rMJeMQGQ';
-
     this.map = new mapboxgl.Map({
       container: 'map',
       style: 'mapbox://styles/mapbox/streets-v11',
       center: [this.currentLocation.lng, this.currentLocation.lat],
-      zoom: 12 
+      zoom: 12
     });
 
     new mapboxgl.Marker()
@@ -46,10 +104,16 @@ export class HomePage implements OnInit {
       .addTo(this.map);
 
     this.map.addControl(new mapboxgl.NavigationControl());
+    this.map.addControl(new mapboxgl.GeolocateControl({
+      positionOptions: { enableHighAccuracy: true },
+      trackUserLocation: true
+    }));
 
     this.map.on('load', () => {
       this.addDangerZones();
+      this.checkZoneSafety();
     });
+    this.map.on('move', () => this.checkZoneSafety());
   }
 
   addDangerZones() {
@@ -113,17 +177,20 @@ export class HomePage implements OnInit {
     ];
 
     const bounds = new mapboxgl.LngLatBounds();
-
     zones.forEach(zone => {
       zone.coordinates.forEach(coord => bounds.extend([coord[0], coord[1]]));
+      
+      const sourceId = `zone-${zone.level}`;
+      const fillLayerId = `zone-${zone.level}-fill`;
+      const outlineLayerId = `zone-${zone.level}-outline`;
 
-      if (this.map?.getSource(`zone-${zone.level}`)) {
-        this.map?.removeLayer(`zone-${zone.level}-fill`);
-        this.map?.removeLayer(`zone-${zone.level}-outline`);
-        this.map?.removeSource(`zone-${zone.level}`);
+      if (this.map?.getSource(sourceId)) {
+        this.map?.removeLayer(fillLayerId);
+        this.map?.removeLayer(outlineLayerId);
+        this.map?.removeSource(sourceId);
       }
 
-      this.map?.addSource(`zone-${zone.level}`, {
+      this.map?.addSource(sourceId, {
         type: 'geojson',
         data: {
           type: 'Feature',
@@ -131,14 +198,16 @@ export class HomePage implements OnInit {
             type: 'Polygon',
             coordinates: [zone.coordinates]
           },
-          properties: {}
+          properties: {
+            level: zone.level
+          }
         }
       });
 
       this.map?.addLayer({
-        id: `zone-${zone.level}-fill`,
+        id: fillLayerId,
         type: 'fill',
-        source: `zone-${zone.level}`,
+        source: sourceId,
         paint: {
           'fill-color': this.getZoneColor(zone.level),
           'fill-opacity': 0.5
@@ -146,14 +215,16 @@ export class HomePage implements OnInit {
       });
 
       this.map?.addLayer({
-        id: `zone-${zone.level}-outline`,
+        id: outlineLayerId,
         type: 'line',
-        source: `zone-${zone.level}`,
+        source: sourceId,
         paint: {
           'line-color': this.getZoneColor(zone.level),
           'line-width': 2
         }
       });
+
+      this.zoneLayers.push(fillLayerId);
     });
 
     this.map?.fitBounds(bounds, { padding: 40 });
@@ -169,9 +240,71 @@ export class HomePage implements OnInit {
     }
   }
 
-  ngOnDestroy() {
-    if (this.map) {
-      this.map.remove();
+  autoRouteToSafeZone() {
+    if (!this.map || !this.currentLocation) return;
+    const safeZone = this.findNearestSafeZone();
+    if (!safeZone) return;
+    const directionsUrl = `https://api.mapbox.com/directions/v5/mapbox/walking/${
+      this.currentLocation.lng},${this.currentLocation.lat};${
+      safeZone.center[0]},${safeZone.center[1]}?geometries=geojson&access_token=${(mapboxgl as any).accessToken}`;
+    this.http.get(directionsUrl).subscribe((data: any) => {
+      this.drawRoute(data.routes[0].geometry);
+    });
+  }
+
+  findNearestSafeZone(): { center: [number, number]; coordinates: number[][] } | undefined {
+    return {
+      center: [123.9671, 10.3085],
+      coordinates: [
+        [123.9671, 10.3085],
+        [123.9705, 10.3100],
+        [123.9730, 10.3080],
+        [123.9700, 10.3065]
+      ]
+    };
+  }
+
+  drawRoute(route: any) {
+    if (!this.map) return;
+    if (this.map.getSource('route')) {
+      this.map.removeLayer('route');
+      this.map.removeSource('route');
     }
+    this.map.addSource('route', {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        properties: {},
+        geometry: route
+      }
+    });
+    this.map.addLayer({
+      id: 'route',
+      type: 'line',
+      source: 'route',
+      layout: {
+        'line-join': 'round',
+        'line-cap': 'round'
+      },
+      paint: {
+        'line-color': '#3a7bd5',
+        'line-width': 5
+      }
+    });
+  }
+
+  triggerPanicButton() {
+    const alertMessage = this.translate.instant('PANIC_BUTTON_MESSAGE');
+    alert(alertMessage);
+    this.autoRouteToSafeZone();
+  }
+
+  changeLanguage(lang: string) {
+    this.currentLanguage = lang;
+    this.translate.use(lang);
+  }
+
+  ngOnDestroy() {
+    if (this.map) this.map.remove();
   }
 }
