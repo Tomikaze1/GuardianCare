@@ -1,0 +1,7 @@
+{
+  "name": "guardian-care-app",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}

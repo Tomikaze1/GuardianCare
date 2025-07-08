@@ -1,0 +1,186 @@
+<ion-content class="auth-content">
+  <div class="auth-container">
+    <!-- Header with Back Button -->
+    <div class="header-section">
+      <ion-button fill="clear" (click)="goBack()" class="back-button">
+        <ion-icon name="arrow-back-outline"></ion-icon>
+      </ion-button>
+      <div class="logo-mini">
+        <ion-icon name="shield-checkmark" class="app-logo-mini"></ion-icon>
+        <span class="app-name">Guardian Care</span>
+      </div>
+    </div>
+
+    <!-- Registration Form -->
+    <div class="form-section">
+      <h2 class="form-title">Create Account</h2>
+      <p class="form-subtitle">Join our safety community</p>
+      
+      <form (ngSubmit)="onRegister()" class="auth-form">
+        <ion-item class="custom-input" lines="none">
+          <ion-icon name="person-outline" slot="start" class="input-icon"></ion-icon>
+          <ion-label position="stacked">Full Name</ion-label>
+          <ion-input 
+            type="text" 
+            [(ngModel)]="fullName" 
+            name="fullName" 
+            required
+            placeholder="Enter your full name"
+            class="custom-input-field">
+          </ion-input>
+        </ion-item>
+
+        <ion-item class="custom-input" lines="none">
+          <ion-icon name="call-outline" slot="start" class="input-icon"></ion-icon>
+          <ion-label position="stacked">Phone Number</ion-label>
+          <ion-input 
+            type="tel" 
+            [(ngModel)]="phoneNumber" 
+            name="phoneNumber" 
+            required
+            placeholder="Enter your phone number"
+            class="custom-input-field">
+          </ion-input>
+        </ion-item>
+
+        <ion-item class="custom-input" lines="none">
+          <ion-icon name="mail-outline" slot="start" class="input-icon"></ion-icon>
+          <ion-label position="stacked">Email Address</ion-label>
+          <ion-input 
+            type="email" 
+            [(ngModel)]="email" 
+            name="email" 
+            required
+            placeholder="Enter your email"
+            class="custom-input-field">
+          </ion-input>
+        </ion-item>
+
+        <ion-item class="custom-input" lines="none">
+          <ion-icon name="lock-closed-outline" slot="start" class="input-icon"></ion-icon>
+          <ion-label position="stacked">Password</ion-label>
+          <ion-input 
+            [type]="showPassword ? 'text' : 'password'" 
+            [(ngModel)]="password" 
+            name="password" 
+            required
+            placeholder="Create a strong password"
+            class="custom-input-field">
+          </ion-input>
+          <ion-button 
+            fill="clear" 
+            slot="end" 
+            (click)="togglePasswordVisibility()"
+            class="password-toggle">
+            <ion-icon [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+          </ion-button>
+        </ion-item>
+
+        <ion-item class="custom-input" lines="none">
+          <ion-icon name="lock-closed-outline" slot="start" class="input-icon"></ion-icon>
+          <ion-label position="stacked">Confirm Password</ion-label>
+          <ion-input 
+            [type]="showConfirmPassword ? 'text' : 'password'" 
+            [(ngModel)]="confirmPassword" 
+            name="confirmPassword" 
+            required
+            placeholder="Confirm your password"
+            class="custom-input-field">
+          </ion-input>
+          <ion-button 
+            fill="clear" 
+            slot="end" 
+            (click)="toggleConfirmPasswordVisibility()"
+            class="password-toggle">
+            <ion-icon [name]="showConfirmPassword ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+          </ion-button>
+        </ion-item>
+
+        <!-- Password Strength Indicator -->
+        <div class="password-strength" *ngIf="password">
+          <div class="strength-label">Password Strength:</div>
+          <div class="strength-bar">
+            <div class="strength-fill" [ngClass]="passwordStrength"></div>
+          </div>
+          <div class="strength-text" [ngClass]="passwordStrength">
+            {{ getPasswordStrengthText() }}
+          </div>
+        </div>
+
+        <!-- Emergency Contact -->
+        <ion-item class="custom-input" lines="none">
+          <ion-icon name="people-outline" slot="start" class="input-icon"></ion-icon>
+          <ion-label position="stacked">Emergency Contact</ion-label>
+          <ion-input 
+            type="tel" 
+            [(ngModel)]="emergencyContact" 
+            name="emergencyContact" 
+            placeholder="Emergency contact number"
+            class="custom-input-field">
+          </ion-input>
+        </ion-item>
+
+        <!-- Terms and Conditions -->
+        <div class="terms-section">
+          <ion-checkbox [(ngModel)]="acceptTerms" name="acceptTerms" class="terms-checkbox"></ion-checkbox>
+          <ion-label class="terms-label">
+            I agree to the 
+            <ion-button fill="clear" size="small" class="terms-link" (click)="openTerms()">
+              Terms of Service
+            </ion-button>
+            and 
+            <ion-button fill="clear" size="small" class="terms-link" (click)="openPrivacy()">
+              Privacy Policy
+            </ion-button>
+          </ion-label>
+        </div>
+
+        <div class="safety-notice">
+          <ion-icon name="information-circle-outline" class="notice-icon"></ion-icon>
+          <div class="notice-text">
+            <strong>Safety First:</strong> Your location data will be used only for safety alerts and emergency response.
+          </div>
+        </div>
+
+        <ion-button 
+          expand="block" 
+          type="submit" 
+          class="register-button"
+          [disabled]="!isFormValid()">
+          <ion-icon name="shield-checkmark-outline" slot="start"></ion-icon>
+          Create Account
+        </ion-button>
+      </form>
+
+      <!-- Error Message -->
+      <ion-text color="danger" *ngIf="error" class="error-message">
+        <ion-icon name="alert-circle-outline"></ion-icon>
+        {{ error }}
+      </ion-text>
+
+      <!-- Social Registration Options -->
+      <div class="divider">
+        <span>or sign up with</span>
+      </div>
+
+      <div class="social-buttons">
+        <ion-button fill="outline" class="social-button google" (click)="registerWithGoogle()">
+          <ion-icon name="logo-google" slot="start"></ion-icon>
+          Google
+        </ion-button>
+        <ion-button fill="outline" class="social-button apple" (click)="registerWithApple()">
+          <ion-icon name="logo-apple" slot="start"></ion-icon>
+          Apple
+        </ion-button>
+      </div>
+
+      <!-- Login Link -->
+      <div class="login-link">
+        <span>Already have an account? </span>
+        <ion-button fill="clear" (click)="goToLogin()" class="login-button">
+          Sign In
+        </ion-button>
+      </div>
+    </div>
+  </div>
+</ion-content>

@@ -1,0 +1,231 @@
+.auth-content {
+    --background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    
+    .auth-container {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      padding: 20px;
+    }
+  
+    .logo-section {
+      text-align: center;
+      margin-top: 60px;
+      margin-bottom: 40px;
+  
+      .logo-container {
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+      }
+  
+      .app-logo {
+        font-size: 40px;
+        color: white;
+      }
+  
+      .app-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: white;
+        margin: 0;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+  
+      .app-subtitle {
+        font-size: 16px;
+        color: rgba(255, 255, 255, 0.8);
+        margin: 8px 0 0;
+      }
+    }
+  
+    .form-section {
+      background: white;
+      border-radius: 24px 24px 0 0;
+      padding: 32px 24px;
+      flex: 1;
+      box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.1);
+  
+      .form-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0 0 8px;
+        text-align: center;
+      }
+  
+      .form-subtitle {
+        font-size: 16px;
+        color: #7f8c8d;
+        margin: 0 0 32px;
+        text-align: center;
+      }
+  
+      .auth-form {
+        .custom-input {
+          --background: #f8f9fa;
+          --border-radius: 12px;
+          margin-bottom: 16px;
+          border: 2px solid #e9ecef;
+          transition: all 0.3s ease;
+  
+          &:focus-within {
+            border-color: #667eea;
+            --background: white;
+          }
+  
+          .input-icon {
+            color: #6c757d;
+            margin-right: 12px;
+          }
+  
+          ion-label {
+            color: #495057;
+            font-weight: 500;
+            font-size: 14px;
+          }
+  
+          .custom-input-field {
+            --padding-start: 0;
+            --padding-end: 0;
+            font-size: 16px;
+          }
+  
+          .password-toggle {
+            --color: #6c757d;
+            margin: 0;
+          }
+        }
+  
+        .form-options {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin: 20px 0 32px;
+  
+          .remember-checkbox {
+            --size: 18px;
+            --checkbox-background-checked: #667eea;
+            --border-color-checked: #667eea;
+          }
+  
+          .remember-label {
+            font-size: 14px;
+            color: #6c757d;
+            margin-left: 8px;
+            flex: 1;
+          }
+  
+          .forgot-password {
+            --color: #667eea;
+            font-size: 14px;
+            font-weight: 500;
+          }
+        }
+  
+        .login-button {
+          --background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          --color: white;
+          --border-radius: 12px;
+          height: 52px;
+          font-size: 16px;
+          font-weight: 600;
+          margin: 16px 0;
+          --box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+          
+          &:disabled {
+            --background: #e9ecef;
+            --color: #6c757d;
+            --box-shadow: none;
+          }
+        }
+      }
+  
+      .error-message {
+        display: flex;
+        align-items: center;
+        background: #fee;
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin: 16px 0;
+        font-size: 14px;
+        border-left: 4px solid #dc3545;
+  
+        ion-icon {
+          margin-right: 8px;
+          font-size: 16px;
+        }
+      }
+  
+      .divider {
+        text-align: center;
+        margin: 32px 0 24px;
+        position: relative;
+        color: #6c757d;
+        font-size: 14px;
+  
+        &::before {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 0;
+          right: 0;
+          height: 1px;
+          background: #e9ecef;
+          z-index: 1;
+        }
+  
+        span {
+          background: white;
+          padding: 0 16px;
+          position: relative;
+          z-index: 2;
+        }
+      }
+  
+      .social-buttons {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 32px;
+  
+        .social-button {
+          flex: 1;
+          height: 48px;
+          --border-width: 2px;
+          --border-color: #e9ecef;
+          --color: #495057;
+          --border-radius: 12px;
+          font-weight: 500;
+  
+          &.google:hover {
+            --border-color: #db4437;
+            --color: #db4437;
+          }
+  
+          &.apple:hover {
+            --border-color: #000;
+            --color: #000;
+          }
+        }
+      }
+  
+      .register-link {
+        text-align: center;
+        color: #6c757d;
+        font-size: 14px;
+  
+        .register-button {
+          --color: #667eea;
+          font-weight: 600;
+          font-size: 14px;
+        }
+      }
+    }
+  }

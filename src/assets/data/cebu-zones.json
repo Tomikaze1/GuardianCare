@@ -1,0 +1,137 @@
+[
+  {
+    "id": "zone-colon",
+    "name": "Colon Street",
+    "level": "Danger",
+    "coordinates": [
+      [123.8965, 10.2950],
+      [123.8970, 10.2955],
+      [123.8975, 10.2950],
+      [123.8970, 10.2945]
+    ],
+    "timeSlots": [
+      { "range": "9PM–2AM", "severity": "High" },
+      { "range": "2AM–6AM", "severity": "Medium" }
+    ],
+    "incidentsCount": 12,
+    "lastIncidentDate": "2025-07-01"
+  },
+  {
+    "id": "zone-guadalupe",
+    "name": "Guadalupe",
+    "level": "Caution",
+    "coordinates": [
+      [123.8790, 10.3195],
+      [123.8795, 10.3200],
+      [123.8800, 10.3195],
+      [123.8795, 10.3190]
+    ],
+    "timeSlots": [
+      { "range": "6PM–11PM", "severity": "Medium" },
+      { "range": "11PM–4AM", "severity": "High" }
+    ],
+    "incidentsCount": 8,
+    "lastIncidentDate": "2025-06-28"
+  },
+  {
+    "id": "zone-mandaue",
+    "name": "Mandaue City - N. Bacalso Avenue",
+    "level": "Danger",
+    "coordinates": [
+      [123.9541, 10.3158],
+      [123.9553, 10.3165],
+      [123.9562, 10.3153],
+      [123.9550, 10.3145]
+    ],
+    "timeSlots": [
+      { "range": "6PM–11PM", "severity": "High" },
+      { "range": "11PM–4AM", "severity": "Very High" }
+    ],
+    "incidentsCount": 15,
+    "lastIncidentDate": "2025-06-15"
+  },
+  {
+    "id": "zone-cebu-downtown",
+    "name": "Cebu City - Downtown (Colon, Mango)",
+    "level": "Caution",
+    "coordinates": [
+      [123.8952, 10.2965],
+      [123.8970, 10.2985],
+      [123.8990, 10.2970],
+      [123.8978, 10.2955]
+    ],
+    "timeSlots": [
+      { "range": "9PM–2AM", "severity": "Medium" },
+      { "range": "2AM–6AM", "severity": "High" }
+    ],
+    "incidentsCount": 20,
+    "lastIncidentDate": "2025-06-20"
+  },
+  {
+    "id": "zone-ctu",
+    "name": "Cebu Technological University (CTU)",
+    "level": "Neutral",
+    "coordinates": [
+      [123.8937, 10.3151],
+      [123.8950, 10.3164],
+      [123.8965, 10.3159],
+      [123.8945, 10.3149]
+    ],
+    "timeSlots": [
+      { "range": "7AM–12PM", "severity": "Low" },
+      { "range": "12PM–6PM", "severity": "Medium" }
+    ],
+    "incidentsCount": 5,
+    "lastIncidentDate": "2025-06-10"
+  },
+  {
+    "id": "zone-mactan",
+    "name": "Mactan Island - Lapu-Lapu City",
+    "level": "Safe",
+    "coordinates": [
+      [123.9671, 10.3085],
+      [123.9705, 10.3100],
+      [123.9730, 10.3080],
+      [123.9700, 10.3065]
+    ],
+    "timeSlots": [
+      { "range": "8AM–5PM", "severity": "Low" }
+    ],
+    "incidentsCount": 2,
+    "lastIncidentDate": "2025-05-25"
+  },
+  {
+    "id": "zone-talisay",
+    "name": "Talisay City - South Road Properties",
+    "level": "Danger",
+    "coordinates": [
+      [123.7990, 10.3088],
+      [123.8003, 10.3095],
+      [123.8015, 10.3080],
+      [123.8005, 10.3073]
+    ],
+    "timeSlots": [
+      { "range": "7PM–1AM", "severity": "High" },
+      { "range": "1AM–6AM", "severity": "Very High" }
+    ],
+    "incidentsCount": 10,
+    "lastIncidentDate": "2025-06-25"
+  },
+  {
+    "id": "zone-mandaue-north",
+    "name": "Mandaue City - North Reclamation Area",
+    "level": "Caution",
+    "coordinates": [
+      [123.9781, 10.2993],
+      [123.9795, 10.3000],
+      [123.9805, 10.2995],
+      [123.9790, 10.2985]
+    ],
+    "timeSlots": [
+      { "range": "5PM–10PM", "severity": "Medium" },
+      { "range": "10PM–2AM", "severity": "High" }
+    ],
+    "incidentsCount": 7,
+    "lastIncidentDate": "2025-06-20"
+  }
+]

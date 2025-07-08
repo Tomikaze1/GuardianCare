@@ -1,0 +1,100 @@
+<ion-content class="auth-content">
+  <div class="auth-container">
+    <!-- Logo and App Branding -->
+    <div class="logo-section">
+      <div class="logo-container">
+        <ion-icon name="shield-checkmark" class="app-logo"></ion-icon>
+      </div>
+      <h1 class="app-title">Guardian Care</h1>
+      <p class="app-subtitle">Your Safety, Our Priority</p>
+    </div>
+
+    <!-- Login Form -->
+    <div class="form-section">
+      <h2 class="form-title">Welcome Back</h2>
+      <p class="form-subtitle">Sign in to stay protected</p>
+      
+      <form (ngSubmit)="onLogin()" class="auth-form">
+        <ion-item class="custom-input" lines="none">
+          <ion-icon name="mail-outline" slot="start" class="input-icon"></ion-icon>
+          <ion-label position="stacked">Email Address</ion-label>
+          <ion-input 
+            type="email" 
+            [(ngModel)]="email" 
+            name="email" 
+            required
+            placeholder="Enter your email"
+            class="custom-input-field">
+          </ion-input>
+        </ion-item>
+
+        <ion-item class="custom-input" lines="none">
+          <ion-icon name="lock-closed-outline" slot="start" class="input-icon"></ion-icon>
+          <ion-label position="stacked">Password</ion-label>
+          <ion-input 
+            [type]="showPassword ? 'text' : 'password'" 
+            [(ngModel)]="password" 
+            name="password" 
+            required
+            placeholder="Enter your password"
+            class="custom-input-field">
+          </ion-input>
+          <ion-button 
+            fill="clear" 
+            slot="end" 
+            (click)="togglePasswordVisibility()"
+            class="password-toggle">
+            <ion-icon [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+          </ion-button>
+        </ion-item>
+
+        <div class="form-options">
+          <ion-checkbox [(ngModel)]="rememberMe" name="rememberMe" class="remember-checkbox"></ion-checkbox>
+          <ion-label class="remember-label">Remember me</ion-label>
+          <ion-button fill="clear" size="small" class="forgot-password" (click)="goToForgotPassword()">
+            Forgot Password?
+          </ion-button>
+        </div>
+
+        <ion-button 
+          expand="block" 
+          type="submit" 
+          class="login-button"
+          [disabled]="!email || !password">
+          <ion-icon name="log-in-outline" slot="start"></ion-icon>
+          Sign In
+        </ion-button>
+      </form>
+
+      <!-- Error Message -->
+      <ion-text color="danger" *ngIf="error" class="error-message">
+        <ion-icon name="alert-circle-outline"></ion-icon>
+        {{ error }}
+      </ion-text>
+
+      <!-- Social Login Options -->
+      <div class="divider">
+        <span>or continue with</span>
+      </div>
+
+      <div class="social-buttons">
+        <ion-button fill="outline" class="social-button google" (click)="loginWithGoogle()">
+          <ion-icon name="logo-google" slot="start"></ion-icon>
+          Google
+        </ion-button>
+        <ion-button fill="outline" class="social-button apple" (click)="loginWithApple()">
+          <ion-icon name="logo-apple" slot="start"></ion-icon>
+          Apple
+        </ion-button>
+      </div>
+
+      <!-- Register Link -->
+      <div class="register-link">
+        <span>Don't have an account? </span>
+        <ion-button fill="clear" (click)="goToRegister()" class="register-button">
+          Create Account
+        </ion-button>
+      </div>
+    </div>
+  </div>
+</ion-content>
