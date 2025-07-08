@@ -18,11 +18,7 @@
     "@angular/compiler": "^20.0.0",
     "@angular/core": "^20.0.0",
     "@angular/fire": "^20.0.1",
-<<<<<<< HEAD
     "@angular/forms": "^20.0.6",
-=======
-    "@angular/forms": "^20.0.0",
->>>>>>> dad415551fb418a8df5d2e53060dd47cd1be0390
     "@angular/platform-browser": "^20.0.0",
     "@angular/platform-browser-dynamic": "^20.0.0",
     "@angular/router": "^20.0.0",
@@ -33,11 +29,7 @@
     "@capacitor/haptics": "7.0.1",
     "@capacitor/keyboard": "7.0.1",
     "@capacitor/status-bar": "7.0.1",
-<<<<<<< HEAD
     "@ionic/angular": "^8.6.3",
-=======
-    "@ionic/angular": "^8.0.0",
->>>>>>> dad415551fb418a8df5d2e53060dd47cd1be0390
     "firebase": "^11.10.0",
     "ionicons": "^7.0.0",
     "mapbox-gl": "^3.13.0",

@@ -1,15 +1,11 @@
 import { Injectable } from '@angular/core';
-<<<<<<< HEAD
-import { BehaviorSubject } from 'rxjs';
-=======
 import { Geolocation } from '@capacitor/geolocation';
->>>>>>> dad415551fb418a8df5d2e53060dd47cd1be0390
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class LocationService {
-<<<<<<< HEAD
   private currentLocation = new BehaviorSubject<{lat: number, lng: number} | null>(null);
   currentLocation$ = this.currentLocation.asObservable();
 
@@ -17,37 +13,20 @@ export class LocationService {
     this.startTracking();
   }
 
-  private startTracking() {
-    if (navigator.geolocation) {
-      navigator.geolocation.watchPosition(
-        (position) => {
+  private async startTracking() {
+    try {
+      Geolocation.watchPosition({ enableHighAccuracy: true }, (position) => {
+        if (position) {
           this.currentLocation.next({
             lat: position.coords.latitude,
             lng: position.coords.longitude
           });
-        },
-        (error) => console.error('Location error:', error),
-        { enableHighAccuracy: true, timeout: 30000, maximumAge: 60000 }
-      );
+        }
+      });
+    } catch (error) {
+      console.error('Location tracking error:', error);
     }
   }
-
-  getCurrentLocation(): Promise<{lat: number, lng: number}> {
-    return new Promise((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(
-        (position) => resolve({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        }),
-        reject,
-        { enableHighAccuracy: true, timeout: 10000 }
-      );
-    });
-  }
-}
-=======
-
-  constructor() {}
 
   async getCurrentLocation(): Promise<{ lat: number; lng: number }> {
     try {
@@ -62,4 +41,3 @@ export class LocationService {
     }
   }
 }
->>>>>>> dad415551fb418a8df5d2e53060dd47cd1be0390
