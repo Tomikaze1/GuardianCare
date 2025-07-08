@@ -1,0 +1,18 @@
+{
+  "SETTINGS": {
+    "TITLE": "Configuración",
+    "LANGUAGE": "Configuración de idioma"
+  },
+  "LANGUAGES": {
+    "ENGLISH": "Inglés",
+    "SPANISH": "Español",
+    "FRENCH": "Francés",
+    "JAPANESE": "Japonés"
+  },
+  "ALERTS": {
+    "LANGUAGE_CHANGED": "Idioma cambiado correctamente",
+    "DANGER_ZONE": "¡Advertencia! ¡Zona peligrosa detectada!",
+    "CAUTION_ZONE": "¡Precaución! Área potencialmente peligrosa",
+    "PANIC_BUTTON": "¡Alerta de emergencia enviada! ¡La ayuda viene en camino!"
+  }
+}

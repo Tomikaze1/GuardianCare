@@ -1,5 +1,18 @@
 {
-  "DANGER_ZONE_WARNING": "Warning! You have entered a danger zone!",
-  "CAUTION_ZONE_WARNING": "Caution! You're in a potentially dangerous area!",
-  "PANIC_BUTTON_MESSAGE": "Emergency alert sent! Help is on the way!"
+  "SETTINGS": {
+    "TITLE": "Settings",
+    "LANGUAGE": "Language Settings"
+  },
+  "LANGUAGES": {
+    "ENGLISH": "English",
+    "SPANISH": "Spanish",
+    "FRENCH": "French",
+    "JAPANESE": "Japanese"
+  },
+  "ALERTS": {
+    "LANGUAGE_CHANGED": "Language changed successfully",
+    "DANGER_ZONE": "Warning! Danger zone detected!",
+    "CAUTION_ZONE": "Caution! Potentially dangerous area",
+    "PANIC_BUTTON": "Emergency alert sent! Help is coming!"
+  }
 }

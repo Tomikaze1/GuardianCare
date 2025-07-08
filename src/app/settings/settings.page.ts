@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { ToastController } from '@ionic/angular';
 
 @Component({
   selector: 'app-settings',
@@ -6,11 +8,37 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./settings.page.scss'],
   standalone: false,
 })
-export class SettingsPage implements OnInit {
+export class SettingsPage {
+  currentLanguage = 'en';
+  languages = [
+    { code: 'en', name: 'English' },
+    { code: 'es', name: 'Español' }, 
+    { code: 'fr', name: 'Français' },
+    { code: 'ja', name: '日本語' }
+  ];
 
-  constructor() { }
-
-  ngOnInit() {
+  constructor(
+    private translate: TranslateService,
+    private toastController: ToastController
+  ) {
+    this.currentLanguage = this.translate.currentLang || 'en';
   }
 
+  async setLanguage(lang: string) {
+    this.currentLanguage = lang;
+    this.translate.use(lang);
+    localStorage.setItem('userLanguage', lang);
+    
+    const message = this.translate.instant('ALERTS.LANGUAGE_CHANGED');
+    await this.showToast(message);
+  }
+
+  private async showToast(message: string) {
+    const toast = await this.toastController.create({
+      message: message,
+      duration: 2000,
+      position: 'bottom'
+    });
+    await toast.present();
+  }
 }

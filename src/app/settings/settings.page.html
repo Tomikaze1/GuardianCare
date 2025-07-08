@@ -1,13 +1,32 @@
-<ion-header [translucent]="true">
+<ion-header>
   <ion-toolbar>
-    <ion-title>settings</ion-title>
+    <ion-title>{{ 'SETTINGS.TITLE' | translate }}</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">settings</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content>
+  <ion-list>
+    <ion-list-header>
+      <ion-label>{{ 'SETTINGS.LANGUAGE' | translate }}</ion-label>
+    </ion-list-header>
+
+    <ion-radio-group [value]="currentLanguage" (ionChange)="setLanguage($event.detail.value)">
+      <ion-item>
+        <ion-label>{{ 'LANGUAGES.ENGLISH' | translate }}</ion-label>
+        <ion-radio value="en"></ion-radio>
+      </ion-item>
+      <ion-item>
+        <ion-label>{{ 'LANGUAGES.SPANISH' | translate }}</ion-label>
+        <ion-radio value="es"></ion-radio>
+      </ion-item>
+      <ion-item>
+        <ion-label>{{ 'LANGUAGES.FRENCH' | translate }}</ion-label>
+        <ion-radio value="fr"></ion-radio>
+      </ion-item>
+      <ion-item>
+        <ion-label>{{ 'LANGUAGES.JAPANESE' | translate }}</ion-label>
+        <ion-radio value="ja"></ion-radio>
+      </ion-item>
+    </ion-radio-group>
+  </ion-list>
 </ion-content>

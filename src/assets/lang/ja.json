@@ -1,0 +1,18 @@
+{
+  "SETTINGS": {
+    "TITLE": "設定",
+    "LANGUAGE": "言語設定"
+  },
+  "LANGUAGES": {
+    "ENGLISH": "英語",
+    "SPANISH": "スペイン語",
+    "FRENCH": "フランス語",
+    "JAPANESE": "日本語"
+  },
+  "ALERTS": {
+    "LANGUAGE_CHANGED": "言語が正常に変更されました",
+    "DANGER_ZONE": "警告！危険地帯を検知しました！",
+    "CAUTION_ZONE": "注意！危険な可能性がある地域です",
+    "PANIC_BUTTON": "緊急警報を送信しました！助けが来ます！"
+  }
+}
