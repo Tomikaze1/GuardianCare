@@ -1,10 +1,15 @@
 import { Injectable } from '@angular/core';
+<<<<<<< HEAD
 import { BehaviorSubject } from 'rxjs';
+=======
+import { Geolocation } from '@capacitor/geolocation';
+>>>>>>> dad415551fb418a8df5d2e53060dd47cd1be0390
 
 @Injectable({
   providedIn: 'root'
 })
 export class LocationService {
+<<<<<<< HEAD
   private currentLocation = new BehaviorSubject<{lat: number, lng: number} | null>(null);
   currentLocation$ = this.currentLocation.asObservable();
 
@@ -40,3 +45,21 @@ export class LocationService {
     });
   }
 }
+=======
+
+  constructor() {}
+
+  async getCurrentLocation(): Promise<{ lat: number; lng: number }> {
+    try {
+      const coordinates = await Geolocation.getCurrentPosition();
+      return {
+        lat: coordinates.coords.latitude,
+        lng: coordinates.coords.longitude
+      };
+    } catch (error) {
+      console.error('Error getting location:', error);
+      return { lat: 10.3111, lng: 123.8931 };
+    }
+  }
+}
+>>>>>>> dad415551fb418a8df5d2e53060dd47cd1be0390
