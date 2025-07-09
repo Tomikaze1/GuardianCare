@@ -8,9 +8,13 @@ import { IonicModule, IonicRouteStrategy } from '@ionic/angular';
 
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
+
 import { AngularFireModule } from '@angular/fire/compat';
 import { AngularFirestoreModule } from '@angular/fire/compat/firestore';
+import { AngularFireAuthModule } from '@angular/fire/compat/auth';
+
 import { environment } from '../environments/environment';
+
 export function createTranslateLoader(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/lang/', '.json');
 }
@@ -21,8 +25,10 @@ export function createTranslateLoader(http: HttpClient) {
     BrowserModule,
     HttpClientModule,
     IonicModule.forRoot(),
-    AppRoutingModule,AngularFireModule.initializeApp(environment.firebaseConfig),
+    AppRoutingModule,
+    AngularFireModule.initializeApp(environment.firebaseConfig),
     AngularFirestoreModule,
+    AngularFireAuthModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,
