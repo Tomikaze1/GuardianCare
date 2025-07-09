@@ -10,7 +10,7 @@ import { getApp } from 'firebase/app';
   standalone: false
 })
 export class ReportsPage implements OnInit {
-  segment: string = 'submit';  // Changed default to 'submit'
+  segment: string = 'submit';  
   
   newReport: any = {
     title: '',
@@ -20,7 +20,7 @@ export class ReportsPage implements OnInit {
     details: '',
     contactNumber: '',
     mediaUrl: '',
-    anonymous: false, // Ensure this is explicitly boolean
+    anonymous: false, 
     timestamp: '',
     status: 'Pending'
   };
@@ -66,11 +66,11 @@ export class ReportsPage implements OnInit {
       this.reportHistory = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        // Ensure boolean values are properly converted
+        
         this.reportHistory.push({ 
           id: doc.id, 
           ...data,
-          anonymous: this.toBooleanSafe(data['anonymous']) // Convert to boolean safely
+          anonymous: this.toBooleanSafe(data['anonymous']) 
         });
       });
       this.filteredReports = [...this.reportHistory];
@@ -91,7 +91,7 @@ export class ReportsPage implements OnInit {
     this.isSubmitting = true;
     this.newReport.timestamp = new Date().toISOString();
     
-    // Ensure anonymous is boolean before submitting
+    
     this.newReport.anonymous = this.toBooleanSafe(this.newReport.anonymous);
 
     try {
@@ -99,7 +99,7 @@ export class ReportsPage implements OnInit {
       this.showToast('Report submitted successfully!', 'success');
       this.loadReportHistory();
       this.resetForm();
-      this.segment = 'history'; // Switch to history tab after submission
+      this.segment = 'history'; 
     } catch (error) {
       console.error('Error submitting report: ', error);
       this.showToast('Error submitting report. Please try again.', 'danger');
@@ -117,7 +117,7 @@ export class ReportsPage implements OnInit {
       details: '',
       contactNumber: '',
       mediaUrl: '',
-      anonymous: false, // Explicitly set as boolean
+      anonymous: false, 
       timestamp: '',
       status: 'Pending'
     };
@@ -182,10 +182,10 @@ export class ReportsPage implements OnInit {
   }
 
   async editReport(report: any) {
-    // Populate form with existing data and ensure boolean conversion
+    
     this.newReport = { 
       ...report,
-      anonymous: this.toBooleanSafe(report.anonymous) // Convert to boolean safely
+      anonymous: this.toBooleanSafe(report.anonymous) 
     };
     this.segment = 'submit';
     this.showToast('Report loaded for editing', 'primary');
@@ -194,7 +194,7 @@ export class ReportsPage implements OnInit {
   filterReports(event?: any) {
     let filtered = [...this.reportHistory];
 
-    // Filter by search term
+    
     if (this.searchTerm) {
       filtered = filtered.filter(report =>
         report.title.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
@@ -203,7 +203,7 @@ export class ReportsPage implements OnInit {
       );
     }
 
-    // Filter by status
+    
     if (this.filterStatus) {
       filtered = filtered.filter(report => report.status === this.filterStatus);
     }
@@ -223,7 +223,6 @@ export class ReportsPage implements OnInit {
         console.log('Error sharing:', error);
       }
     } else {
-      // Fallback for browsers that don't support Web Share API
       this.showToast('Sharing not supported on this device', 'warning');
     }
   }
@@ -254,24 +253,24 @@ export class ReportsPage implements OnInit {
   }
 
   async takePhoto() {
-    // Implement camera functionality
+    
     this.showToast('Camera functionality to be implemented', 'primary');
-    // For now, just simulate adding a photo URL
-    // this.newReport.mediaUrl = 'path/to/photo.jpg';
+    
+    
   }
 
   async recordVoice() {
-    // Implement voice recording functionality
+    
     this.showToast('Voice recording functionality to be implemented', 'primary');
-    // For now, just simulate adding a voice URL
-    // this.newReport.mediaUrl = 'path/to/voice.mp3';
+    
+    
   }
 
   async uploadFile() {
-    // Implement file upload functionality
+    
     this.showToast('File upload functionality to be implemented', 'primary');
-    // For now, just simulate adding a file URL
-    // this.newReport.mediaUrl = 'path/to/file.pdf';
+    
+    
   }
 
   removeMedia() {
@@ -325,13 +324,13 @@ isAudio(url: string): boolean {
   }
 
   async loadMoreReports() {
-    // Implement pagination
+    
     this.showToast('Load more functionality to be implemented', 'primary');
-    // For now, just set hasMoreReports to false
+    
     this.hasMoreReports = false;
   }
 
-  // Helper method to safely convert values to boolean
+  
   private toBooleanSafe(value: any): boolean {
     if (typeof value === 'boolean') {
       return value;
@@ -339,7 +338,7 @@ isAudio(url: string): boolean {
     if (typeof value === 'string') {
       return value.toLowerCase() === 'true';
     }
-    return !!value; // Convert any other value to boolean
+    return !!value; 
   }
 
   private async showToast(message: string, color: string) {
