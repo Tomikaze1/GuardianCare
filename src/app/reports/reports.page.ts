@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AlertController, ToastController, LoadingController } from '@ionic/angular';
-import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, updateDoc, query, orderBy, limit } from 'firebase/firestore';
-import { getApp } from 'firebase/app';
+import { AngularFirestore } from '@angular/fire/compat/firestore';
 
 @Component({
   selector: 'app-reports',
@@ -10,8 +9,8 @@ import { getApp } from 'firebase/app';
   standalone: false
 })
 export class ReportsPage implements OnInit {
-  segment: string = 'submit';  
-  
+  segment: string = 'submit';
+
   newReport: any = {
     title: '',
     type: '',
@@ -20,11 +19,11 @@ export class ReportsPage implements OnInit {
     details: '',
     contactNumber: '',
     mediaUrl: '',
-    anonymous: false, 
+    anonymous: false,
     timestamp: '',
     status: 'Pending'
   };
-  
+
   reportHistory: any[] = [];
   filteredReports: any[] = [];
   searchTerm: string = '';
@@ -35,16 +34,9 @@ export class ReportsPage implements OnInit {
   constructor(
     private alertCtrl: AlertController,
     private toastCtrl: ToastController,
-    private loadingCtrl: LoadingController
+    private loadingCtrl: LoadingController,
+    private firestore: AngularFirestore
   ) {}
-
-  private get app() {
-    return getApp();
-  }
-
-  private get db() {
-    return getFirestore(this.app);
-  }
 
   ngOnInit() {
     this.loadReportHistory();
@@ -57,25 +49,21 @@ export class ReportsPage implements OnInit {
     await loading.present();
 
     try {
-      const q = query(
-        collection(this.db, 'reports'),
-        orderBy('timestamp', 'desc'),
-        limit(20)
-      );
-      const querySnapshot = await getDocs(q);
+      const snapshot = await this.firestore.collection('reports', ref =>
+        ref.orderBy('timestamp', 'desc').limit(20)
+      ).get().toPromise();
+
       this.reportHistory = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        
-        this.reportHistory.push({ 
-          id: doc.id, 
-          ...data,
-          anonymous: this.toBooleanSafe(data['anonymous']) 
+      snapshot?.forEach(doc => {
+        const data = doc.data() as any;
+        this.reportHistory.push({
+          id: doc.id,
+          ...(data || {}),
+          anonymous: this.toBooleanSafe(data['anonymous'])
         });
       });
       this.filteredReports = [...this.reportHistory];
     } catch (error) {
-      console.error('Error fetching report history: ', error);
       this.showToast('Error loading reports', 'danger');
     } finally {
       await loading.dismiss();
@@ -90,18 +78,15 @@ export class ReportsPage implements OnInit {
 
     this.isSubmitting = true;
     this.newReport.timestamp = new Date().toISOString();
-    
-    
     this.newReport.anonymous = this.toBooleanSafe(this.newReport.anonymous);
 
     try {
-      await addDoc(collection(this.db, 'reports'), this.newReport);
+      await this.firestore.collection('reports').add(this.newReport);
       this.showToast('Report submitted successfully!', 'success');
       this.loadReportHistory();
       this.resetForm();
-      this.segment = 'history'; 
+      this.segment = 'history';
     } catch (error) {
-      console.error('Error submitting report: ', error);
       this.showToast('Error submitting report. Please try again.', 'danger');
     } finally {
       this.isSubmitting = false;
@@ -117,7 +102,7 @@ export class ReportsPage implements OnInit {
       details: '',
       contactNumber: '',
       mediaUrl: '',
-      anonymous: false, 
+      anonymous: false,
       timestamp: '',
       status: 'Pending'
     };
@@ -167,11 +152,10 @@ export class ReportsPage implements OnInit {
           text: 'Delete',
           handler: async () => {
             try {
-              await deleteDoc(doc(this.db, 'reports', report.id));
+              await this.firestore.collection('reports').doc(report.id).delete();
               this.showToast('Report deleted successfully', 'success');
               this.loadReportHistory();
             } catch (error) {
-              console.error('Error deleting report: ', error);
               this.showToast('Error deleting report', 'danger');
             }
           }
@@ -182,10 +166,9 @@ export class ReportsPage implements OnInit {
   }
 
   async editReport(report: any) {
-    
-    this.newReport = { 
+    this.newReport = {
       ...report,
-      anonymous: this.toBooleanSafe(report.anonymous) 
+      anonymous: this.toBooleanSafe(report.anonymous)
     };
     this.segment = 'submit';
     this.showToast('Report loaded for editing', 'primary');
@@ -194,7 +177,6 @@ export class ReportsPage implements OnInit {
   filterReports(event?: any) {
     let filtered = [...this.reportHistory];
 
-    
     if (this.searchTerm) {
       filtered = filtered.filter(report =>
         report.title.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
@@ -203,7 +185,6 @@ export class ReportsPage implements OnInit {
       );
     }
 
-    
     if (this.filterStatus) {
       filtered = filtered.filter(report => report.status === this.filterStatus);
     }
@@ -219,9 +200,7 @@ export class ReportsPage implements OnInit {
           text: `Report: ${report.title}\nType: ${report.type}\nStatus: ${report.status}`,
           url: window.location.href
         });
-      } catch (error) {
-        console.log('Error sharing:', error);
-      }
+      } catch {}
     } else {
       this.showToast('Sharing not supported on this device', 'warning');
     }
@@ -242,7 +221,7 @@ export class ReportsPage implements OnInit {
           await loading.dismiss();
           this.showToast('Location added successfully', 'success');
         },
-        async (error) => {
+        async () => {
           await loading.dismiss();
           this.showToast('Unable to get location', 'danger');
         }
@@ -253,24 +232,15 @@ export class ReportsPage implements OnInit {
   }
 
   async takePhoto() {
-    
     this.showToast('Camera functionality to be implemented', 'primary');
-    
-    
   }
 
   async recordVoice() {
-    
     this.showToast('Voice recording functionality to be implemented', 'primary');
-    
-    
   }
 
   async uploadFile() {
-    
     this.showToast('File upload functionality to be implemented', 'primary');
-    
-    
   }
 
   removeMedia() {
@@ -279,13 +249,12 @@ export class ReportsPage implements OnInit {
   }
 
   isImage(url: string): boolean {
-  return typeof url === 'string' && (url.includes('.jpg') || url.includes('.jpeg') || url.includes('.png') || url.includes('.gif'));
-}
+    return typeof url === 'string' && (url.includes('.jpg') || url.includes('.jpeg') || url.includes('.png') || url.includes('.gif'));
+  }
 
-isAudio(url: string): boolean {
-  return typeof url === 'string' && (url.includes('.mp3') || url.includes('.wav') || url.includes('.ogg'));
-}
-
+  isAudio(url: string): boolean {
+    return typeof url === 'string' && (url.includes('.mp3') || url.includes('.wav') || url.includes('.ogg'));
+  }
 
   getReportIcon(type: string): string {
     const icons: { [key: string]: string } = {
@@ -324,13 +293,10 @@ isAudio(url: string): boolean {
   }
 
   async loadMoreReports() {
-    
     this.showToast('Load more functionality to be implemented', 'primary');
-    
     this.hasMoreReports = false;
   }
 
-  
   private toBooleanSafe(value: any): boolean {
     if (typeof value === 'boolean') {
       return value;
@@ -338,7 +304,7 @@ isAudio(url: string): boolean {
     if (typeof value === 'string') {
       return value.toLowerCase() === 'true';
     }
-    return !!value; 
+    return !!value;
   }
 
   private async showToast(message: string, color: string) {
