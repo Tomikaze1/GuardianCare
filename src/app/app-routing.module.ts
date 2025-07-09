@@ -20,6 +20,10 @@ const routes: Routes = [
     path: 'tabs',
     loadChildren: () => import('./tabs/tabs.module').then(m => m.TabsPageModule)
   },
+  {
+    path: 'reports',
+    loadChildren: () => import('./reports/reports.module').then(m => m.ReportsPageModule)
+  },
   { path: '**', redirectTo: 'tabs/home', pathMatch: 'full' }
 ];
 
