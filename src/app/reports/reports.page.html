@@ -8,7 +8,6 @@
 </ion-header>
 
 <ion-content class="ion-padding">
-  <!-- Enhanced Segment with Submit Report first -->
   <ion-segment [(ngModel)]="segment" scrollable>
     <ion-segment-button value="submit">
       <ion-icon name="add-circle-outline"></ion-icon>
@@ -21,7 +20,6 @@
   </ion-segment>
 
   <div [ngSwitch]="segment">
-    <!-- Enhanced Report Submission Form Tab (First Tab) -->
     <div *ngSwitchCase="'submit'" class="submit-form-container">
       <div class="form-header">
         <h2>
@@ -32,7 +30,6 @@
       </div>
 
       <form #reportForm="ngForm">
-        <!-- Report Title -->
         <ion-item class="form-item">
           <ion-icon name="text-outline" slot="start" color="primary"></ion-icon>
           <ion-label position="floating">Report Title *</ion-label>
@@ -46,7 +43,6 @@
           </ion-input>
         </ion-item>
 
-        <!-- Report Type -->
         <ion-item class="form-item">
           <ion-icon name="list-outline" slot="start" color="primary"></ion-icon>
           <ion-label position="floating">Report Type *</ion-label>
@@ -78,7 +74,6 @@
           </ion-select>
         </ion-item>
 
-        <!-- Priority Level -->
         <ion-item class="form-item">
           <ion-icon name="flag-outline" slot="start" color="primary"></ion-icon>
           <ion-label position="floating">Priority Level *</ion-label>
@@ -102,7 +97,6 @@
           </ion-select>
         </ion-item>
 
-        <!-- Location -->
         <ion-item class="form-item">
           <ion-icon name="location-outline" slot="start" color="primary"></ion-icon>
           <ion-label position="floating">Location</ion-label>
@@ -120,7 +114,6 @@
           </ion-button>
         </ion-item>
 
-        <!-- Incident Details -->
         <ion-item class="form-item textarea-item">
           <ion-icon name="document-text-outline" slot="start" color="primary"></ion-icon>
           <ion-label position="floating">Incident Details *</ion-label>
@@ -135,7 +128,6 @@
           </ion-textarea>
         </ion-item>
 
-        <!-- Contact Information -->
         <ion-item class="form-item">
           <ion-icon name="call-outline" slot="start" color="primary"></ion-icon>
           <ion-label position="floating">Contact Number</ion-label>
@@ -147,7 +139,6 @@
           </ion-input>
         </ion-item>
 
-        <!-- Media Upload -->
         <ion-item class="form-item media-item">
           <ion-icon name="camera-outline" slot="start" color="primary"></ion-icon>
           <ion-label>Attach Media</ion-label>
@@ -176,7 +167,6 @@
           </div>
         </ion-item>
 
-        <!-- Media Preview -->
         <div *ngIf="newReport.mediaUrl" class="media-preview">
           <ion-card>
             <ion-card-header>
@@ -196,7 +186,6 @@
           </ion-card>
         </div>
 
-        <!-- Anonymous Reporting -->
         <ion-item class="form-item">
           <ion-checkbox 
             [(ngModel)]="newReport.anonymous" 
@@ -206,7 +195,6 @@
           <ion-label>Submit anonymously</ion-label>
         </ion-item>
 
-        <!-- Submit Button -->
         <ion-button 
           expand="full" 
           color="primary" 
@@ -223,7 +211,6 @@
       </form>
     </div>
 
-    <!-- Enhanced Report History Tab (Second Tab) -->
     <div *ngSwitchCase="'history'" class="history-container">
       <div class="history-header">
         <h2>
@@ -251,7 +238,7 @@
         </div>
       </div>
 
-      <!-- Empty State -->
+
       <div *ngIf="filteredReports.length === 0" class="empty-state">
         <ion-icon name="document-outline" size="large"></ion-icon>
         <h3>No Reports Found</h3>
@@ -265,7 +252,7 @@
         </ion-button>
       </div>
 
-      <!-- Reports List -->
+
       <ion-list *ngIf="filteredReports.length > 0">
         <ion-item-sliding *ngFor="let report of filteredReports; trackBy: trackByReportId">
           <ion-item class="report-item">
@@ -325,7 +312,6 @@
             </ion-label>
           </ion-item>
 
-          <!-- Sliding Actions -->
           <ion-item-options side="end">
             <ion-item-option color="primary" (click)="editReport(report)">
               <ion-icon name="create-outline"></ion-icon>
@@ -339,7 +325,7 @@
         </ion-item-sliding>
       </ion-list>
 
-      <!-- Load More Button -->
+  
       <ion-button 
         *ngIf="hasMoreReports"
         expand="block" 
@@ -352,7 +338,7 @@
     </div>
   </div>
 
-  <!-- Floating Action Button -->
+  
   <ion-fab 
     vertical="bottom" 
     horizontal="end" 
