@@ -13,18 +13,19 @@
     backdrop-filter: blur(10px);
     --border-width: 0;
     
-  #panic-button {
+ #panic-button {
   position: fixed;
   top: 20px;
   left: 20px;
-  z-index: 9999; 
+  z-index: 10000;
   background-color: red;
   color: white;
   width: 150px;
   height: 50px;
-  font-size: 16px;
   border-radius: 5px;
+  font-size: 16px;
 }
+
 
     .map-title {
       .title-container {

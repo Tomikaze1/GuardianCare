@@ -128,6 +128,24 @@ export class HomePage implements OnInit, OnDestroy {
     if (!this.map) return;
 
     const zones = [
+       {
+        level: 'Safe',
+        coordinates: [
+          [123.9671, 10.3085],
+          [123.9705, 10.3100],
+          [123.9730, 10.3080],
+          [123.9700, 10.3065]
+        ]
+      },
+      {
+        level: 'Neutral',
+        coordinates: [
+          [123.8937, 10.3151],
+          [123.8950, 10.3164],
+          [123.8965, 10.3159],
+          [123.8945, 10.3149]
+        ]
+      },
       {
         level: 'Danger',
         coordinates: [
