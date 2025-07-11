@@ -8,7 +8,7 @@
 </ion-header>
 
 <ion-content class="ion-padding colorful-theme">
-  <!-- Segment Control -->
+  
   <div class="segment-container">
     <ion-segment [(ngModel)]="segment" scrollable color="vibrant">
       <ion-segment-button value="submit" class="segment-button">
@@ -23,7 +23,7 @@
   </div>
 
   <div [ngSwitch]="segment">
-    <!-- Submit Report Form -->
+    
     <div *ngSwitchCase="'submit'" class="form-container">
       <div class="form-header">
         <h2 class="colorful-heading">Create New Report</h2>
@@ -32,7 +32,7 @@
 
       <form #reportForm="ngForm">
         <ion-list class="form-list">
-          <!-- Title -->
+          
           <ion-item lines="none" class="form-field colorful-input">
             <ion-icon name="text-outline" slot="start" color="vibrant"></ion-icon>
             <ion-label position="stacked">Report Title <span class="required">*</span></ion-label>
@@ -46,7 +46,7 @@
             </ion-input>
           </ion-item>
 
-          <!-- Type -->
+          
           <ion-item lines="none" class="form-field colorful-input">
             <ion-icon name="list-outline" slot="start" color="vibrant"></ion-icon>
             <ion-label position="stacked">Report Type <span class="required">*</span></ion-label>
@@ -78,7 +78,7 @@
             </ion-select>
           </ion-item>
 
-          <!-- Priority -->
+          
           <ion-item lines="none" class="form-field colorful-input">
             <ion-icon name="flag-outline" slot="start" color="vibrant"></ion-icon>
             <ion-label position="stacked">Priority Level</ion-label>
@@ -101,7 +101,7 @@
             </ion-select>
           </ion-item>
 
-          <!-- Location -->
+          
           <ion-item lines="none" class="form-field colorful-input">
             <ion-icon name="location-outline" slot="start" color="vibrant"></ion-icon>
             <ion-label position="stacked">Location</ion-label>
@@ -120,7 +120,7 @@
             </ion-button>
           </ion-item>
 
-          <!-- Details -->
+          
           <ion-item lines="none" class="form-field colorful-input textarea-item">
             <ion-icon name="document-text-outline" slot="start" color="vibrant"></ion-icon>
             <ion-label position="stacked">Incident Details <span class="required">*</span></ion-label>
@@ -135,7 +135,7 @@
             </ion-textarea>
           </ion-item>
 
-          <!-- Contact -->
+          
           <ion-item lines="none" class="form-field colorful-input">
             <ion-icon name="call-outline" slot="start" color="vibrant"></ion-icon>
             <ion-label position="stacked">Contact Number</ion-label>
@@ -147,7 +147,7 @@
             </ion-input>
           </ion-item>
 
-          <!-- Media -->
+          
           <div class="media-section colorful-card">
             <ion-label>Attach Media</ion-label>
             <div class="media-buttons">
@@ -162,7 +162,7 @@
             </div>
           </div>
 
-          <!-- Anonymous -->
+          
           <ion-item lines="none" class="anonymous-toggle colorful-card">
             <ion-checkbox 
               [(ngModel)]="newReport.anonymous" 
@@ -174,7 +174,7 @@
           </ion-item>
         </ion-list>
 
-        <!-- Submit Button -->
+        
         <ion-button 
           expand="block" 
           color="success" 
@@ -188,7 +188,7 @@
       </form>
     </div>
 
-    <!-- Report History -->
+    
     <div *ngSwitchCase="'history'" class="history-container">
       <div class="history-header">
         <h2 class="colorful-heading">Your Reports</h2>
