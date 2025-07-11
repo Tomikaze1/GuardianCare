@@ -1,538 +1,185 @@
+// Variables
+$primary-color: #2c3e50;
+$secondary-color: #3498db;
+$accent-color: #e74c3c;
+$light-gray: #ecf0f1;
+$dark-gray: #7f8c8d;
+$border-radius: 8px;
+$box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 
-/* Variables */
-:root {
-  --ion-color-safe: #2dd36f;
-  --ion-color-warning: #ffc409;
-  --ion-color-danger: #eb445a;
-  --ion-color-medium: #92949c;
-  --border-radius: 12px;
-  --box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  --form-spacing: 16px;
-}
-
-/* Content */
-ion-content {
-  --background: #f8f9fa;
-  --padding-start: 16px;
-  --padding-end: 16px;
-  --padding-top: 16px;
-  --padding-bottom: 16px;
-}
-
-/* Header */
-ion-toolbar {
-  --background: #428cff;
-  --color: white;
-  
-  ion-title {
-    font-weight: 500;
-    text-align: center;
-    
-    ion-icon {
-      margin-right: 8px;
-      vertical-align: middle;
-    }
-  }
-}
-
-/* Segment Control */
-.segment-container {
-  margin-bottom: 24px;
-  
-  ion-segment {
-    --background: white;
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
-    padding: 4px;
-    
-    ion-segment-button {
-      --color: var(--ion-color-medium);
-      --color-checked: white;
-      --background-checked: #428cff;
-      --border-radius: 8px;
-      --padding-top: 8px;
-      --padding-bottom: 8px;
-      min-width: 120px;
-      
-      ion-icon {
-        margin-right: 6px;
-      }
-    }
-  }
-}
-
-/* Form Container */
-.form-container {
+// Base Styles
+#reports-management {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   max-width: 800px;
   margin: 0 auto;
-  
-  .form-header {
-    text-align: center;
-    margin-bottom: 24px;
-    
-    h2 {
-      font-weight: 600;
-      color: #2c3e50;
-      margin-bottom: 8px;
-      font-size: 1.5rem;
-    }
-    
-    p {
-      color: var(--ion-color-medium);
-      font-size: 1rem;
-    }
+  padding: 20px;
+  color: $primary-color;
+
+  h1 {
+    color: $primary-color;
+    margin-bottom: 30px;
+    font-weight: 600;
+    border-bottom: 2px solid $light-gray;
+    padding-bottom: 10px;
   }
-  
-  .form-list {
-    background: transparent;
-    padding: 0;
-  }
-  
-  .form-field {
-    --background: white;
-    --border-radius: var(--border-radius);
-    --padding-start: 16px;
-    --padding-end: 16px;
-    margin-bottom: var(--form-spacing);
-    box-shadow: var(--box-shadow);
-    
-    ion-label {
+
+  .nav-options {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 30px;
+
+    button {
+      background: none;
+      border: none;
+      font-size: 16px;
       font-weight: 500;
-      color: #4a5568;
-      margin-bottom: 8px;
-      
-      .required {
-        color: var(--ion-color-danger);
-      }
-    }
-    
-    ion-input, ion-textarea, ion-select {
-      --padding-start: 0;
-    }
-  }
-  
-  .media-section {
-    background: white;
-    border-radius: var(--border-radius);
-    padding: 16px;
-    margin-bottom: var(--form-spacing);
-    box-shadow: var(--box-shadow);
-    
-    ion-label {
-      display: block;
-      font-weight: 500;
-      color: #4a5568;
-      margin-bottom: 12px;
-    }
-    
-    .media-buttons {
-      display: flex;
-      gap: 8px;
-      
-      ion-button {
-        --border-radius: 20px;
-        --padding-start: 12px;
-        --padding-end: 12px;
-        margin: 0;
-      }
-    }
-  }
-  
-  .anonymous-toggle {
-    --background: transparent;
-    --border-radius: var(--border-radius);
-    margin-bottom: 24px;
-    
-    ion-checkbox {
-      margin-right: 12px;
-    }
-  }
-  
-  ion-button[type="submit"] {
-    --border-radius: var(--border-radius);
-    margin-top: 16px;
-    height: 48px;
-    font-weight: 500;
-  }
-}
+      color: $dark-gray;
+      cursor: pointer;
+      padding: 8px 0;
+      position: relative;
+      transition: color 0.3s ease;
 
-/* History Container */
-.history-container {
-  max-width: 1000px;
-  margin: 0 auto;
-  
-  .history-header {
-    margin-bottom: 24px;
-    
-    h2 {
-      font-weight: 600;
-      color: #2c3e50;
-      margin-bottom: 16px;
-      font-size: 1.5rem;
-    }
-    
-    .history-controls {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      
-      ion-searchbar {
-        flex: 1;
-        --background: white;
-        --border-radius: var(--border-radius);
-        --box-shadow: var(--box-shadow);
-        padding: 0;
+      &:hover, &.active {
+        color: $secondary-color;
       }
-      
-      ion-select {
-        --background: white;
-        --border-radius: var(--border-radius);
-        min-width: 160px;
-      }
-    }
-  }
-  
-  .empty-state {
-    text-align: center;
-    padding: 40px 20px;
-    
-    ion-icon {
-      font-size: 64px;
-      color: var(--ion-color-medium);
-      margin-bottom: 16px;
-      opacity: 0.5;
-    }
-    
-    h3 {
-      font-weight: 600;
-      color: #2c3e50;
-      margin-bottom: 8px;
-    }
-    
-    p {
-      color: var(--ion-color-medium);
-      margin-bottom: 24px;
-    }
-    
-    ion-button {
-      --border-radius: var(--border-radius);
-    }
-  }
-  
-  .reports-list {
-    background: transparent;
-    
-    .report-card {
-      --background: white;
-      --border-radius: var(--border-radius);
-      --padding-start: 0;
-      margin-bottom: 12px;
-      box-shadow: var(--box-shadow);
-      
-      .report-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 16px;
-        background: var(--ion-color-primary);
-        
-        ion-icon {
-          color: white;
-          font-size: 24px;
-        }
-      }
-      
-      .report-content {
-        margin: 16px 16px 16px 0;
-        
-        h3 {
-          font-weight: 600;
-          margin-bottom: 8px;
-          color: #2c3e50;
-          font-size: 1.1rem;
-        }
-        
-        .report-meta {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          margin-bottom: 8px;
-          
-          ion-badge {
-            font-weight: 500;
-            font-size: 0.75rem;
-          }
-          
-          .report-date {
-            font-size: 0.8rem;
-            color: var(--ion-color-medium);
-          }
-        }
-        
-        .report-excerpt {
-          font-size: 0.9rem;
-          color: #4a5568;
-          margin: 0;
-          line-height: 1.4;
-        }
-      }
-    }
-  }
-}
 
-/* Priority Colors */
-.priority-low {
-  color: var(--ion-color-safe);
-}
-
-.priority-medium {
-  color: var(--ion-color-warning);
-}
-
-.priority-high, .priority-critical {
-  color: var(--ion-color-danger);
-  font-weight: 500;
-}
-
-/* Responsive Adjustments */
-@media (max-width: 768px) {
-  .history-controls {
-    flex-direction: column;
-    
-    ion-searchbar, ion-select {
-      width: 100%;
-    }
-  }
-  
-  .form-container .form-header h2,
-  .history-container .history-header h2 {
-    font-size: 1.3rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .segment-container ion-segment {
-    ion-segment-button {
-      min-width: auto;
-      
-      ion-label {
-        display: none;
-      }
-    }
-  }
-  
-  .form-container {
-    .form-field,
-    .media-section {
-      --padding-start: 12px;
-      --padding-end: 12px;
-    }
-    
-    .media-buttons {
-      flex-direction: column;
-      
-      ion-button {
+      &.active::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
         width: 100%;
+        height: 3px;
+        background-color: $secondary-color;
+        border-radius: 3px;
       }
     }
   }
 }
 
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-  ion-content {
-    --background: #1a1a1a;
+// Report Form Styles
+.report-form {
+  background: white;
+  padding: 25px;
+  border-radius: $border-radius;
+  box-shadow: $box-shadow;
+
+  h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 20px;
+    color: $primary-color;
   }
-  
-  .form-field,
-  .media-section,
-  ion-segment,
-  ion-searchbar,
-  ion-select,
-  .report-card {
-    --background: #2d2d2d;
-    color: white;
+
+  .form-group {
+    margin-bottom: 25px;
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: $primary-color;
+
+      &::after {
+        content: ' *';
+        color: $accent-color;
+        visibility: hidden;
+      }
+
+      &.required::after {
+        visibility: visible;
+      }
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid $light-gray;
+      border-radius: $border-radius;
+      font-size: 16px;
+      transition: border-color 0.3s ease;
+
+      &:focus {
+        outline: none;
+        border-color: $secondary-color;
+        box-shadow: 0 0 0 2px rgba($secondary-color, 0.2);
+      }
+
+      &::placeholder {
+        color: $dark-gray;
+        opacity: 0.7;
+      }
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
   }
-  
-  .form-header h2,
-  .history-header h2,
-  .report-content h3 {
-    color: white;
+
+  .checkbox-group {
+    margin: 15px 0;
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+
+      input[type="checkbox"] {
+        width: auto;
+        margin-right: 10px;
+        accent-color: $secondary-color;
+      }
+
+      label {
+        margin-bottom: 0;
+        font-weight: normal;
+      }
+    }
+
+    .nested-field {
+      margin-left: 25px;
+      margin-top: 10px;
+      padding-left: 15px;
+      border-left: 2px solid $light-gray;
+    }
   }
-  
-  .report-excerpt,
-  .form-header p {
-    color: #b0b0b0;
-  }
-  
-  .priority-low,
-  .priority-medium,
-  .priority-high,
-  .priority-critical {
-    filter: brightness(1.2);
+
+  .divider {
+    height: 1px;
+    background-color: $light-gray;
+    margin: 25px 0;
   }
 }
 
-:host {
-  --ion-background-color: #f0f2f5;
-  --ion-text-color: #1e1e1e;
-  --ion-color-primary: #3b82f6; // Blue
-  --ion-color-secondary: #64748b; // Slate
-  --ion-color-warning: #f59e0b;
-  --ion-color-danger: #ef4444;
-  --ion-color-success: #10b981;
-  --ion-color-medium: #6b7280;
-  --ion-color-light: #f3f4f6;
-  --ion-color-dark: #111827;
-}
-
-ion-header,
-ion-toolbar {
-  background: #1e3a8a; // deep blue
-  color: white;
-  --color: white;
-}
-
-ion-title {
+// Bottom Navigation
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 600;
-}
+  justify-content: space-around;
+  padding: 15px 0;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 100;
 
-.segment-container {
-  background-color: #e0e7ff;
-  padding: 10px;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-}
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: $dark-gray;
+    text-decoration: none;
+    font-size: 12px;
 
-ion-segment-button {
-  color: #1e3a8a;
-  font-weight: bold;
-}
+    &.active {
+      color: $secondary-color;
+    }
 
-ion-segment-button.ion-activated {
-  background-color: #1e40af;
-  color: #ffffff;
-}
-
-.form-container,
-.history-container {
-  background: #ffffff;
-  border-radius: 10px;
-  padding: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.form-header h2,
-.history-header h2 {
-  color: #1e40af;
-}
-
-.form-header p {
-  color: #4b5563;
-  font-size: 0.95rem;
-}
-
-.form-list ion-item {
-  background: transparent;
-}
-
-.form-field ion-label {
-  font-weight: 600;
-  color: #374151;
-}
-
-.required {
-  color: #ef4444;
-  font-weight: bold;
-}
-
-.priority-low {
-  color: #10b981;
-}
-.priority-medium {
-  color: #f59e0b;
-}
-.priority-high {
-  color: #ef4444;
-}
-.priority-critical {
-  color: #991b1b;
-  font-weight: bold;
-}
-
-.media-section {
-  margin-top: 1rem;
-}
-
-.media-buttons {
-  display: flex;
-  gap: 1rem;
-  margin-top: 0.5rem;
-}
-
-.anonymous-toggle {
-  margin-top: 1rem;
-  background: #f9fafb;
-  border-radius: 8px;
-}
-
-ion-button {
-  font-weight: bold;
-}
-
-.reports-list .report-card {
-  background: #f9fafb;
-  border-radius: 10px;
-  margin-bottom: 10px;
-}
-
-.report-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  margin-right: 12px;
-}
-
-.report-content h3 {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.report-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.8rem;
-  color: #6b7280;
-  margin: 5px 0;
-}
-
-.report-excerpt {
-  font-size: 0.85rem;
-  color: #4b5563;
-}
-
-.empty-state {
-  text-align: center;
-  color: #9ca3af;
-  padding: 2rem 1rem;
-}
-
-.empty-state ion-icon {
-  font-size: 48px;
-  color: #cbd5e1;
-  margin-bottom: 1rem;
+    i {
+      font-size: 20px;
+      margin-bottom: 5px;
+    }
+  }
 }

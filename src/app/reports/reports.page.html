@@ -1,16 +1,16 @@
 <ion-header>
-  <ion-toolbar>
+  <ion-toolbar color="primary">
     <ion-title>
-      <ion-icon name="document-text-outline" slot="start"></ion-icon>
-      Reports Management
+      <ion-icon name="document-text-outline" slot="start" color="light"></ion-icon>
+      <span class="header-title">Reports Management</span>
     </ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding">
+<ion-content class="ion-padding colorful-theme">
   <!-- Segment Control -->
   <div class="segment-container">
-    <ion-segment [(ngModel)]="segment" scrollable>
+    <ion-segment [(ngModel)]="segment" scrollable color="vibrant">
       <ion-segment-button value="submit" class="segment-button">
         <ion-icon name="add-circle-outline"></ion-icon>
         <ion-label>Submit Report</ion-label>
@@ -26,14 +26,15 @@
     <!-- Submit Report Form -->
     <div *ngSwitchCase="'submit'" class="form-container">
       <div class="form-header">
-        <h2>Create New Report</h2>
-        <p>Fill in the details below to submit your report</p>
+        <h2 class="colorful-heading">Create New Report</h2>
+        <p class="colorful-subheading">Fill in the details below to submit your report</p>
       </div>
 
       <form #reportForm="ngForm">
         <ion-list class="form-list">
           <!-- Title -->
-          <ion-item lines="none" class="form-field">
+          <ion-item lines="none" class="form-field colorful-input">
+            <ion-icon name="text-outline" slot="start" color="vibrant"></ion-icon>
             <ion-label position="stacked">Report Title <span class="required">*</span></ion-label>
             <ion-input 
               [(ngModel)]="newReport.title" 
@@ -46,43 +47,45 @@
           </ion-item>
 
           <!-- Type -->
-          <ion-item lines="none" class="form-field">
+          <ion-item lines="none" class="form-field colorful-input">
+            <ion-icon name="list-outline" slot="start" color="vibrant"></ion-icon>
             <ion-label position="stacked">Report Type <span class="required">*</span></ion-label>
             <ion-select 
               [(ngModel)]="newReport.type" 
               name="type"
-              interface="popover"
-              required>
+              required
+              placeholder="Select report type">
               <ion-select-option value="Crime">
-                <ion-icon name="warning-outline"></ion-icon>
+                <ion-icon name="warning-outline" color="danger"></ion-icon>
                 Crime
               </ion-select-option>
               <ion-select-option value="Disaster">
-                <ion-icon name="alert-circle-outline"></ion-icon>
+                <ion-icon name="alert-circle-outline" color="warning"></ion-icon>
                 Natural Disaster
               </ion-select-option>
               <ion-select-option value="Emergency">
-                <ion-icon name="medical-outline"></ion-icon>
+                <ion-icon name="medical-outline" color="danger"></ion-icon>
                 Emergency
               </ion-select-option>
               <ion-select-option value="Infrastructure">
-                <ion-icon name="construct-outline"></ion-icon>
+                <ion-icon name="construct-outline" color="tertiary"></ion-icon>
                 Infrastructure Issue
               </ion-select-option>
               <ion-select-option value="Other">
-                <ion-icon name="help-circle-outline"></ion-icon>
+                <ion-icon name="help-circle-outline" color="medium"></ion-icon>
                 Other
               </ion-select-option>
             </ion-select>
           </ion-item>
 
           <!-- Priority -->
-          <ion-item lines="none" class="form-field">
+          <ion-item lines="none" class="form-field colorful-input">
+            <ion-icon name="flag-outline" slot="start" color="vibrant"></ion-icon>
             <ion-label position="stacked">Priority Level</ion-label>
             <ion-select 
               [(ngModel)]="newReport.priority" 
               name="priority"
-              interface="popover">
+              placeholder="Select priority">
               <ion-select-option value="Low">
                 <span class="priority-low">Low Priority</span>
               </ion-select-option>
@@ -99,7 +102,8 @@
           </ion-item>
 
           <!-- Location -->
-          <ion-item lines="none" class="form-field">
+          <ion-item lines="none" class="form-field colorful-input">
+            <ion-icon name="location-outline" slot="start" color="vibrant"></ion-icon>
             <ion-label position="stacked">Location</ion-label>
             <ion-input 
               [(ngModel)]="newReport.location" 
@@ -110,13 +114,15 @@
               slot="end" 
               fill="clear" 
               size="small"
+              color="vibrant"
               (click)="getCurrentLocation()">
               <ion-icon name="locate-outline"></ion-icon>
             </ion-button>
           </ion-item>
 
           <!-- Details -->
-          <ion-item lines="none" class="form-field">
+          <ion-item lines="none" class="form-field colorful-input textarea-item">
+            <ion-icon name="document-text-outline" slot="start" color="vibrant"></ion-icon>
             <ion-label position="stacked">Incident Details <span class="required">*</span></ion-label>
             <ion-textarea 
               [(ngModel)]="newReport.details" 
@@ -130,7 +136,8 @@
           </ion-item>
 
           <!-- Contact -->
-          <ion-item lines="none" class="form-field">
+          <ion-item lines="none" class="form-field colorful-input">
+            <ion-icon name="call-outline" slot="start" color="vibrant"></ion-icon>
             <ion-label position="stacked">Contact Number</ion-label>
             <ion-input 
               [(ngModel)]="newReport.contactNumber" 
@@ -141,14 +148,14 @@
           </ion-item>
 
           <!-- Media -->
-          <div class="media-section">
+          <div class="media-section colorful-card">
             <ion-label>Attach Media</ion-label>
             <div class="media-buttons">
-              <ion-button fill="outline" size="small" (click)="takePhoto()">
+              <ion-button fill="outline" color="vibrant" size="small" (click)="takePhoto()">
                 <ion-icon name="camera" slot="start"></ion-icon>
                 Photo
               </ion-button>
-              <ion-button fill="outline" size="small" (click)="recordVoice()">
+              <ion-button fill="outline" color="vibrant" size="small" (click)="recordVoice()">
                 <ion-icon name="mic" slot="start"></ion-icon>
                 Voice
               </ion-button>
@@ -156,11 +163,12 @@
           </div>
 
           <!-- Anonymous -->
-          <ion-item lines="none" class="anonymous-toggle">
+          <ion-item lines="none" class="anonymous-toggle colorful-card">
             <ion-checkbox 
               [(ngModel)]="newReport.anonymous" 
               name="anonymous" 
-              slot="start">
+              slot="start"
+              color="vibrant">
             </ion-checkbox>
             <ion-label>Submit anonymously</ion-label>
           </ion-item>
@@ -169,7 +177,8 @@
         <!-- Submit Button -->
         <ion-button 
           expand="block" 
-          color="primary" 
+          color="success" 
+          class="submit-button"
           [disabled]="!reportForm.valid || isSubmitting"
           (click)="submitReport()">
           <ion-icon name="send-outline" slot="start"></ion-icon>
@@ -182,18 +191,20 @@
     <!-- Report History -->
     <div *ngSwitchCase="'history'" class="history-container">
       <div class="history-header">
-        <h2>Your Reports</h2>
+        <h2 class="colorful-heading">Your Reports</h2>
         <div class="history-controls">
           <ion-searchbar 
             [(ngModel)]="searchTerm" 
-            placeholder="Search reports..." 
-            animated
-            (ionInput)="filterReports($event)">
+            placeholder="Search reports..."
+            color="vibrant"
+            (ionInput)="filterReports($event)"
+            debounce="300">
           </ion-searchbar>
           
           <ion-select 
             [(ngModel)]="filterStatus" 
             placeholder="Filter by status"
+            color="vibrant"
             (ionChange)="filterReports()">
             <ion-select-option value="">All Status</ion-select-option>
             <ion-select-option value="Pending">Pending</ion-select-option>
@@ -204,47 +215,94 @@
         </div>
       </div>
 
-      <!-- Empty State -->
-      <div *ngIf="filteredReports.length === 0" class="empty-state">
-        <ion-icon name="document-outline"></ion-icon>
+      <div *ngIf="filteredReports.length === 0" class="empty-state colorful-card">
+        <ion-icon name="document-outline" size="large" color="medium"></ion-icon>
         <h3>No Reports Found</h3>
         <p>{{ reportHistory.length === 0 ? 'You haven\'t submitted any reports yet.' : 'No reports match your current filter.' }}</p>
         <ion-button 
           *ngIf="reportHistory.length === 0"
           fill="outline" 
+          color="vibrant"
           (click)="segment = 'submit'">
+          <ion-icon name="add-outline" slot="start"></ion-icon>
           Submit Your First Report
         </ion-button>
       </div>
 
-      <!-- Reports List -->
       <ion-list *ngIf="filteredReports.length > 0" class="reports-list">
         <ion-item-sliding *ngFor="let report of filteredReports; trackBy: trackByReportId">
-          <ion-item detail="false" class="report-card">
-            <div class="report-icon" [style.background]="getReportColor(report.type)">
-              <ion-icon [name]="getReportIcon(report.type)"></ion-icon>
+          <ion-item class="report-item colorful-card">
+            <div class="report-icon" slot="start" [style.background]="getReportColor(report.type)">
+              <ion-icon 
+                [name]="getReportIcon(report.type)" 
+                color="light">
+              </ion-icon>
             </div>
             
-            <ion-label class="report-content">
-              <h3>{{ report.title }}</h3>
-              <div class="report-meta">
-                <ion-badge [color]="getStatusColor(report.status)">{{ report.status }}</ion-badge>
-                <span class="report-date">{{ report.timestamp | date:'shortDate' }}</span>
+            <ion-label>
+              <div class="report-header">
+                <h2>{{ report.title }}</h2>
+                <ion-badge 
+                  [color]="getStatusColor(report.status)"
+                  class="status-badge">
+                  {{ report.status }}
+                </ion-badge>
               </div>
-              <p class="report-excerpt">{{ report.details | slice:0:100 }}{{ report.details.length > 100 ? '...' : '' }}</p>
+              
+              <div class="report-meta">
+                <p class="report-date">
+                  <ion-icon name="calendar-outline" color="vibrant"></ion-icon>
+                  {{ report.timestamp | date:'medium' }}
+                </p>
+                <p class="report-type">
+                  <ion-icon name="pricetag-outline" color="vibrant"></ion-icon>
+                  {{ report.type }}
+                </p>
+                <p *ngIf="report.priority" class="report-priority">
+                  <ion-icon name="flag-outline" color="vibrant"></ion-icon>
+                  {{ report.priority }} Priority
+                </p>
+                <p *ngIf="report.location" class="report-location">
+                  <ion-icon name="location-outline" color="vibrant"></ion-icon>
+                  {{ report.location }}
+                </p>
+              </div>
             </ion-label>
           </ion-item>
 
           <ion-item-options side="end">
-            <ion-item-option color="primary" (click)="editReport(report)">
+            <ion-item-option color="vibrant" (click)="editReport(report)">
               <ion-icon name="create-outline" slot="icon-only"></ion-icon>
+              Edit
             </ion-item-option>
             <ion-item-option color="danger" (click)="deleteReport(report)">
               <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+              Delete
             </ion-item-option>
           </ion-item-options>
         </ion-item-sliding>
       </ion-list>
+
+      <ion-button 
+        *ngIf="hasMoreReports"
+        expand="block" 
+        fill="outline" 
+        color="vibrant"
+        class="load-more-button"
+        (click)="loadMoreReports()">
+        <ion-icon name="chevron-down-outline" slot="start"></ion-icon>
+        Load More Reports
+      </ion-button>
     </div>
   </div>
+
+  <ion-fab 
+    vertical="bottom" 
+    horizontal="end" 
+    slot="fixed"
+    *ngIf="segment === 'history'">
+    <ion-fab-button color="vibrant" (click)="segment = 'submit'">
+      <ion-icon name="add"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
 </ion-content>
