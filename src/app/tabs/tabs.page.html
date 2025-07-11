@@ -1,67 +1,29 @@
 <ion-tabs>
-  
   <ion-tab-bar slot="bottom">
-    
-    
     <ion-tab-button tab="home">
+      <ion-icon name="map"></ion-icon>
       <ion-label>Home</ion-label>
-       <ion-label>{{ 'TABS.HOME' | translate }}</ion-label>
+      <ion-label>{{ 'TABS.HOME' | translate }}</ion-label>
       <ion-icon name="home"></ion-icon>
     </ion-tab-button>
 
-    
     <ion-tab-button tab="reports">
       <ion-label>{{ 'TABS.REPORTS' | translate }}</ion-label>
       <ion-icon name="document-text"></ion-icon>
       <ion-label>Reports</ion-label>
     </ion-tab-button>
 
-    
     <ion-tab-button tab="heatmap">
-        <ion-label>Heatmap</ion-label>
-     <ion-label>{{ 'TABS.HEATMAP' | translate }}</ion-label>
-      <ion-label>Settings</ion-label>
+      <ion-icon name="flame"></ion-icon>
+      <ion-label>Heatmap</ion-label>
+      <ion-label>{{ 'TABS.HEATMAP' | translate }}</ion-label>
       <ion-icon name="map"></ion-icon>
     </ion-tab-button>
 
-    
     <ion-tab-button tab="settings">
       <ion-label>{{ 'TABS.SETTINGS' | translate }}</ion-label>
       <ion-icon name="settings"></ion-icon>
+      <ion-label>Settings</ion-label>
     </ion-tab-button>
-
   </ion-tab-bar>
 </ion-tabs>
-
-
-<ion-tab tab="home">
-  
-  <ion-content>
-    <h1>Welcome to Home!</h1>
-    <p>Here you can add content specific to the home tab.</p>
-  </ion-content>
-</ion-tab>
-
-<ion-tab tab="reports">
-  
-  <ion-content>
-    <h1>Reports</h1>
-    <p>View your reports here.</p>
-  </ion-content>
-</ion-tab>
-
-<ion-tab tab="heatmap">
-  
-  <ion-content>
-    <h1>Heatmap</h1>
-    <p>View heatmap data here.</p>
-  </ion-content>
-</ion-tab>
-
-<ion-tab tab="settings">
-  
-  <ion-content>
-    <h1>Settings</h1>
-    <p>Configure your app settings here.</p>
-  </ion-content>
-</ion-tab>
