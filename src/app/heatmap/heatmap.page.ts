@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, HostListener } from '@angular/core';
 import * as mapboxgl from 'mapbox-gl';
 import { ZoneDangerEngineService } from '../services/zone-danger-engine.service';
 import { DangerZone } from '../services/zone-danger-engine.service';
@@ -35,17 +35,30 @@ export class HeatmapPage implements OnInit, OnDestroy {
     }
   }
 
+  @HostListener('window:resize', ['$event'])
+  onResize() {
+    if (this.map) {
+      setTimeout(() => this.map?.resize(), 100);
+    }
+  }
+
   private initMap(): void {
     (mapboxgl as any).accessToken = 'pk.eyJ1IjoidG9taWthemUxIiwiYSI6ImNtY25rM3NxazB2ZG8ybHFxeHVoZWthd28ifQ.Vnf9pMEQAryEI2rMJeMQGQ';
     this.map = new mapboxgl.Map({
       container: this.mapContainer.nativeElement,
       style: 'mapbox://styles/mapbox/dark-v10',
       center: [123.8931, 10.3111],
-      zoom: 12
+      zoom: 12,
+      interactive: true,
+      trackResize: true,
+      attributionControl: false
     });
+
+    this.map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
 
     this.map.on('load', () => {
       this.updateMap();
+      setTimeout(() => this.map?.resize(), 100);
     });
   }
 
