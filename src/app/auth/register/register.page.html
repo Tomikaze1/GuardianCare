@@ -1,185 +1,289 @@
-<ion-content class="auth-content">
-  <div class="auth-container">
-    <!-- Header with Back Button -->
-    <div class="header-section">
-      <ion-button fill="clear" (click)="goBack()" class="back-button">
-        <ion-icon name="arrow-back-outline"></ion-icon>
-      </ion-button>
-      <div class="logo-mini">
-        <ion-icon name="shield-checkmark" class="app-logo-mini"></ion-icon>
-        <span class="app-name">Guardian Care</span>
-      </div>
+<ion-content class="register-content">
+  <div class="register-container">
+    <!-- Animated Background Elements -->
+    <div class="floating-shapes">
+      <div class="shape shape-1"></div>
+      <div class="shape shape-2"></div>
+      <div class="shape shape-3"></div>
+      <div class="shape shape-4"></div>
+      <div class="shape shape-5"></div>
     </div>
-
-    <!-- Registration Form -->
-    <div class="form-section">
-      <h2 class="form-title">Create Account</h2>
-      <p class="form-subtitle">Join our safety community</p>
+    
+    <!-- Centered Content Wrapper -->
+    <div class="content-wrapper">
+      <!-- Header Section -->
+      <div class="header-section">
+        <div class="logo-container">
+          <div class="logo-wrapper">
+            <ion-icon name="shield-checkmark" class="app-logo"></ion-icon>
+            <div class="logo-glow"></div>
+          </div>
+          <h1 class="app-title">GuardianCare</h1>
+          <p class="app-subtitle">Join our community</p>
+          <div class="title-underline"></div>
+        </div>
+      </div>
       
-      <form (ngSubmit)="onRegister()" class="auth-form">
-        <ion-item class="custom-input" lines="none">
-          <ion-icon name="person-outline" slot="start" class="input-icon"></ion-icon>
-          <ion-label position="stacked">Full Name</ion-label>
-          <ion-input 
-            type="text" 
-            [(ngModel)]="fullName" 
-            name="fullName" 
-            required
-            placeholder="Enter your full name"
-            class="custom-input-field">
-          </ion-input>
-        </ion-item>
-
-        <ion-item class="custom-input" lines="none">
-          <ion-icon name="call-outline" slot="start" class="input-icon"></ion-icon>
-          <ion-label position="stacked">Phone Number</ion-label>
-          <ion-input 
-            type="tel" 
-            [(ngModel)]="phoneNumber" 
-            name="phoneNumber" 
-            required
-            placeholder="Enter your phone number"
-            class="custom-input-field">
-          </ion-input>
-        </ion-item>
-
-        <ion-item class="custom-input" lines="none">
-          <ion-icon name="mail-outline" slot="start" class="input-icon"></ion-icon>
-          <ion-label position="stacked">Email Address</ion-label>
-          <ion-input 
-            type="email" 
-            [(ngModel)]="email" 
-            name="email" 
-            required
-            placeholder="Enter your email"
-            class="custom-input-field">
-          </ion-input>
-        </ion-item>
-
-        <ion-item class="custom-input" lines="none">
-          <ion-icon name="lock-closed-outline" slot="start" class="input-icon"></ion-icon>
-          <ion-label position="stacked">Password</ion-label>
-          <ion-input 
-            [type]="showPassword ? 'text' : 'password'" 
-            [(ngModel)]="password" 
-            name="password" 
-            required
-            placeholder="Create a strong password"
-            class="custom-input-field">
-          </ion-input>
-          <ion-button 
-            fill="clear" 
-            slot="end" 
-            (click)="togglePasswordVisibility()"
-            class="password-toggle">
-            <ion-icon [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
-          </ion-button>
-        </ion-item>
-
-        <ion-item class="custom-input" lines="none">
-          <ion-icon name="lock-closed-outline" slot="start" class="input-icon"></ion-icon>
-          <ion-label position="stacked">Confirm Password</ion-label>
-          <ion-input 
-            [type]="showConfirmPassword ? 'text' : 'password'" 
-            [(ngModel)]="confirmPassword" 
-            name="confirmPassword" 
-            required
-            placeholder="Confirm your password"
-            class="custom-input-field">
-          </ion-input>
-          <ion-button 
-            fill="clear" 
-            slot="end" 
-            (click)="toggleConfirmPasswordVisibility()"
-            class="password-toggle">
-            <ion-icon [name]="showConfirmPassword ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
-          </ion-button>
-        </ion-item>
-
-        <!-- Password Strength Indicator -->
-        <div class="password-strength" *ngIf="password">
-          <div class="strength-label">Password Strength:</div>
-          <div class="strength-bar">
-            <div class="strength-fill" [ngClass]="passwordStrength"></div>
-          </div>
-          <div class="strength-text" [ngClass]="passwordStrength">
-            {{ getPasswordStrengthText() }}
-          </div>
+      <!-- Form Container -->
+      <div class="form-container">
+        <div class="form-header">
+          <h2 class="form-title">Create Account</h2>
+          <p class="form-subtitle">Start protecting your community today</p>
         </div>
-
-        <!-- Emergency Contact -->
-        <ion-item class="custom-input" lines="none">
-          <ion-icon name="people-outline" slot="start" class="input-icon"></ion-icon>
-          <ion-label position="stacked">Emergency Contact</ion-label>
-          <ion-input 
-            type="tel" 
-            [(ngModel)]="emergencyContact" 
-            name="emergencyContact" 
-            placeholder="Emergency contact number"
-            class="custom-input-field">
-          </ion-input>
-        </ion-item>
-
-        <!-- Terms and Conditions -->
-        <div class="terms-section">
-          <ion-checkbox [(ngModel)]="acceptTerms" name="acceptTerms" class="terms-checkbox"></ion-checkbox>
-          <ion-label class="terms-label">
-            I agree to the 
-            <ion-button fill="clear" size="small" class="terms-link" (click)="openTerms()">
-              Terms of Service
+        
+        <form [formGroup]="registerForm" (ngSubmit)="onRegister()" class="register-form">
+          <!-- Personal Information Section -->
+          <div class="form-section">
+            <h3>Personal Information</h3>
+            
+            <!-- First Name -->
+            <div class="input-group">
+              <div class="input-wrapper">
+                <div class="input-box">
+                  <ion-icon name="person-outline" class="input-icon"></ion-icon>
+                  <ion-input 
+                    type="text" 
+                    formControlName="firstName" 
+                    placeholder="First Name"
+                    class="custom-input-field"
+                    [class.ion-invalid]="registerForm.get('firstName')?.invalid && registerForm.get('firstName')?.touched">
+                  </ion-input>
+                  <div class="input-border"></div>
+                  <div class="input-glow"></div>
+                </div>
+              </div>
+              <div class="error-message" *ngIf="getErrorMessage('firstName')">
+                <ion-icon name="alert-circle-outline"></ion-icon>
+                <span>{{ getErrorMessage('firstName') }}</span>
+              </div>
+            </div>
+            
+            <!-- Last Name -->
+            <div class="input-group">
+              <div class="input-wrapper">
+                <div class="input-box">
+                  <ion-icon name="person-outline" class="input-icon"></ion-icon>
+                  <ion-input 
+                    type="text" 
+                    formControlName="lastName" 
+                    placeholder="Last Name"
+                    class="custom-input-field"
+                    [class.ion-invalid]="registerForm.get('lastName')?.invalid && registerForm.get('lastName')?.touched">
+                  </ion-input>
+                  <div class="input-border"></div>
+                  <div class="input-glow"></div>
+                </div>
+              </div>
+              <div class="error-message" *ngIf="getErrorMessage('lastName')">
+                <ion-icon name="alert-circle-outline"></ion-icon>
+                <span>{{ getErrorMessage('lastName') }}</span>
+              </div>
+            </div>
+            
+            <!-- Email -->
+            <div class="input-group">
+              <div class="input-wrapper">
+                <div class="input-box">
+                  <ion-icon name="mail-outline" class="input-icon"></ion-icon>
+                  <ion-input 
+                    type="email" 
+                    formControlName="email" 
+                    placeholder="Email Address"
+                    class="custom-input-field"
+                    [class.ion-invalid]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">
+                  </ion-input>
+                  <div class="input-border"></div>
+                  <div class="input-glow"></div>
+                </div>
+              </div>
+              <div class="error-message" *ngIf="getErrorMessage('email')">
+                <ion-icon name="alert-circle-outline"></ion-icon>
+                <span>{{ getErrorMessage('email') }}</span>
+              </div>
+            </div>
+            
+            <!-- Phone Number -->
+            <div class="input-group">
+              <div class="input-wrapper">
+                <div class="input-box">
+                  <ion-icon name="call-outline" class="input-icon"></ion-icon>
+                  <ion-input 
+                    type="tel" 
+                    formControlName="phone" 
+                    placeholder="Phone Number"
+                    class="custom-input-field"
+                    [class.ion-invalid]="registerForm.get('phone')?.invalid && registerForm.get('phone')?.touched">
+                  </ion-input>
+                  <div class="input-border"></div>
+                  <div class="input-glow"></div>
+                </div>
+              </div>
+              <div class="error-message" *ngIf="getErrorMessage('phone')">
+                <ion-icon name="alert-circle-outline"></ion-icon>
+                <span>{{ getErrorMessage('phone') }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Security Section -->
+          <div class="form-section">
+            <h3>Security</h3>
+            
+            <!-- Password -->
+            <div class="input-group">
+              <div class="input-wrapper">
+                <div class="input-box">
+                  <ion-icon name="lock-closed-outline" class="input-icon"></ion-icon>
+                  <ion-input 
+                    [type]="showPassword ? 'text' : 'password'" 
+                    formControlName="password" 
+                    placeholder="Create Password"
+                    class="custom-input-field"
+                    [class.ion-invalid]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
+                  </ion-input>
+                  <ion-button
+                    fill="clear"
+                    class="password-toggle"
+                    (click)="togglePasswordVisibility()"
+                    type="button">
+                    <ion-icon [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+                  </ion-button>
+                  <div class="input-border"></div>
+                  <div class="input-glow"></div>
+                </div>
+              </div>
+              <div class="error-message" *ngIf="getErrorMessage('password')">
+                <ion-icon name="alert-circle-outline"></ion-icon>
+                <span>{{ getErrorMessage('password') }}</span>
+              </div>
+            </div>
+            
+            <!-- Confirm Password -->
+            <div class="input-group">
+              <div class="input-wrapper">
+                <div class="input-box">
+                  <ion-icon name="lock-closed-outline" class="input-icon"></ion-icon>
+                  <ion-input 
+                    [type]="showConfirmPassword ? 'text' : 'password'" 
+                    formControlName="confirmPassword" 
+                    placeholder="Confirm Password"
+                    class="custom-input-field"
+                    [class.ion-invalid]="registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched">
+                  </ion-input>
+                  <ion-button
+                    fill="clear"
+                    class="password-toggle"
+                    (click)="toggleConfirmPasswordVisibility()"
+                    type="button">
+                    <ion-icon [name]="showConfirmPassword ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+                  </ion-button>
+                  <div class="input-border"></div>
+                  <div class="input-glow"></div>
+                </div>
+              </div>
+              <div class="error-message" *ngIf="getErrorMessage('confirmPassword')">
+                <ion-icon name="alert-circle-outline"></ion-icon>
+                <span>{{ getErrorMessage('confirmPassword') }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Emergency Contact Section -->
+          <div class="form-section">
+            <h3>Emergency Contact</h3>
+            
+            <!-- Emergency Contact Name -->
+            <div class="input-group">
+              <div class="input-wrapper">
+                <div class="input-box">
+                  <ion-icon name="person-add-outline" class="input-icon"></ion-icon>
+                  <ion-input 
+                    type="text" 
+                    formControlName="emergencyContactName" 
+                    placeholder="Emergency Contact Name"
+                    class="custom-input-field"
+                    [class.ion-invalid]="registerForm.get('emergencyContactName')?.invalid && registerForm.get('emergencyContactName')?.touched">
+                  </ion-input>
+                  <div class="input-border"></div>
+                  <div class="input-glow"></div>
+                </div>
+              </div>
+              <div class="error-message" *ngIf="getErrorMessage('emergencyContactName')">
+                <ion-icon name="alert-circle-outline"></ion-icon>
+                <span>{{ getErrorMessage('emergencyContactName') }}</span>
+              </div>
+            </div>
+            
+            <!-- Emergency Contact Number -->
+            <div class="input-group">
+              <div class="input-wrapper">
+                <div class="input-box">
+                  <ion-icon name="call-outline" class="input-icon"></ion-icon>
+                  <ion-input 
+                    type="tel" 
+                    formControlName="emergencyContact" 
+                    placeholder="Emergency Contact Number"
+                    class="custom-input-field"
+                    [class.ion-invalid]="registerForm.get('emergencyContact')?.invalid && registerForm.get('emergencyContact')?.touched">
+                  </ion-input>
+                  <div class="input-border"></div>
+                  <div class="input-glow"></div>
+                </div>
+              </div>
+              <div class="error-message" *ngIf="getErrorMessage('emergencyContact')">
+                <ion-icon name="alert-circle-outline"></ion-icon>
+                <span>{{ getErrorMessage('emergencyContact') }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Terms and Conditions Section -->
+          <div class="form-section">
+            <div class="terms-section">
+              <div class="terms-checkbox">
+                <ion-checkbox
+                  formControlName="acceptTerms"
+                  class="custom-checkbox"
+                  [class.ion-invalid]="registerForm.get('acceptTerms')?.invalid && registerForm.get('acceptTerms')?.touched">
+                </ion-checkbox>
+                <span class="terms-text">
+                  I agree to the <a href="#" class="terms-link">Terms of Service</a> and <a href="#" class="terms-link">Privacy Policy</a> *
+                </span>
+              </div>
+              <div class="error-message" *ngIf="registerForm.get('acceptTerms')?.invalid && registerForm.get('acceptTerms')?.touched">
+                <ion-icon name="alert-circle-outline"></ion-icon>
+                <span>You must accept the terms and conditions</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Register Button -->
+          <div class="button-wrapper">
+            <ion-button 
+              expand="block" 
+              type="submit" 
+              [disabled]="registerForm.invalid"
+              class="register-button"
+              [class.button-disabled]="registerForm.invalid">
+              <div class="button-content">
+                <span>Create Account</span>
+                <ion-icon name="arrow-forward-outline"></ion-icon>
+              </div>
+              <div class="button-glow"></div>
             </ion-button>
-            and 
-            <ion-button fill="clear" size="small" class="terms-link" (click)="openPrivacy()">
-              Privacy Policy
-            </ion-button>
-          </ion-label>
-        </div>
-
-        <div class="safety-notice">
-          <ion-icon name="information-circle-outline" class="notice-icon"></ion-icon>
-          <div class="notice-text">
-            <strong>Safety First:</strong> Your location data will be used only for safety alerts and emergency response.
           </div>
+        </form>
+        
+        <!-- Login Link -->
+        <div class="login-section">
+          <p class="login-text">
+            Already have an account? 
+            <ion-button fill="clear" size="small" (click)="goToLogin()">
+              <span>Sign In</span>
+              <ion-icon name="arrow-forward-outline" slot="end"></ion-icon>
+            </ion-button>
+          </p>
         </div>
-
-        <ion-button 
-          expand="block" 
-          type="submit" 
-          class="register-button"
-          [disabled]="!isFormValid()">
-          <ion-icon name="shield-checkmark-outline" slot="start"></ion-icon>
-          Create Account
-        </ion-button>
-      </form>
-
-      <!-- Error Message -->
-      <ion-text color="danger" *ngIf="error" class="error-message">
-        <ion-icon name="alert-circle-outline"></ion-icon>
-        {{ error }}
-      </ion-text>
-
-      <!-- Social Registration Options -->
-      <div class="divider">
-        <span>or sign up with</span>
-      </div>
-
-      <div class="social-buttons">
-        <ion-button fill="outline" class="social-button google" (click)="registerWithGoogle()">
-          <ion-icon name="logo-google" slot="start"></ion-icon>
-          Google
-        </ion-button>
-        <ion-button fill="outline" class="social-button apple" (click)="registerWithApple()">
-          <ion-icon name="logo-apple" slot="start"></ion-icon>
-          Apple
-        </ion-button>
-      </div>
-
-      <!-- Login Link -->
-      <div class="login-link">
-        <span>Already have an account? </span>
-        <ion-button fill="clear" (click)="goToLogin()" class="login-button">
-          Sign In
-        </ion-button>
       </div>
     </div>
   </div>
