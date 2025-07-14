@@ -143,10 +143,11 @@ export class HomePage implements OnInit, OnDestroy {
       {
         level: 'Safe',
         coordinates: [
-          [123.9671, 10.3085],
-          [123.9705, 10.3100],
-          [123.9730, 10.3080],
-          [123.9700, 10.3065]
+          [123.9043, 10.3176],
+          [123.9062, 10.3179],
+          [123.9067, 10.3193],
+          [123.9048, 10.3192],
+          [123.9043, 10.3176]
         ]
       },
       {
@@ -247,15 +248,18 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   autoRouteToSafeZone() {
-    if (!this.map || !this.currentLocation) return;
-    const safeZone = { center: [123.9671, 10.3085] };
+  if (!this.map || !this.currentLocation) return;
 
-    const url = `https://api.mapbox.com/directions/v5/mapbox/walking/${this.currentLocation.lng},${this.currentLocation.lat};${safeZone.center[0]},${safeZone.center[1]}?geometries=geojson&access_token=${(mapboxgl as any).accessToken}`;
+  const safeZone = { center: [123.9050, 10.3180] };
+  const origin = `${this.currentLocation.lng.toFixed(6)},${this.currentLocation.lat.toFixed(6)}`;
+  const destination = `${safeZone.center[0].toFixed(6)},${safeZone.center[1].toFixed(6)}`;
 
-    this.http.get(url).subscribe((data: any) => {
-      this.drawRoute(data.routes[0].geometry);
-    });
-  }
+  const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${origin};${destination}?geometries=geojson&overview=full&access_token=${(mapboxgl as any).accessToken}`;
+
+  this.http.get(url).subscribe((data: any) => {
+    this.drawRoute(data.routes[0].geometry);
+  });
+}
 
   drawRoute(route: any) {
     if (!this.map) return;
@@ -287,10 +291,16 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   triggerPanicButton() {
-    const message = this.translate.instant('PANIC_BUTTON_MESSAGE') || 'Panic mode activated!';
-    alert(message);
-    this.autoRouteToSafeZone();
+  const alertMessage = this.translate.instant('Stay Safe and I already sent the message to your contactlist.');
+  alert(alertMessage);
+  this.autoRouteToSafeZone();
+  if (navigator.vibrate) {
+    navigator.vibrate([300, 100, 300]);
+  } else {
+    console.warn('Vibration API is not supported on this device.');
   }
+}
+
 
   changeLanguage(lang: string) {
     this.currentLanguage = lang;
