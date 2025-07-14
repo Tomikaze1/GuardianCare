@@ -1,666 +1,74 @@
 #map {
   width: 100%;
   height: 100%;
+  z-index: 1;
 }
 
-.map-header {
-  --background: transparent;
-  
-  .custom-toolbar {
-    --background: linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%);
-    --color: white;
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-    --border-width: 0;
-    
- #panic-button {
+.floating-ui {
   position: fixed;
-  top: 20px;
-  left: 20px;
+  bottom: 100px;
+  right: 20px;
   z-index: 10000;
-  background-color: red;
-  color: white;
-  width: 150px;
-  height: 50px;
-  border-radius: 5px;
-  font-size: 16px;
-}
-
-
-    .map-title {
-      .title-container {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        
-        .title-icon {
-          font-size: 20px;
-          color: white;
-        }
-        
-        .title-text {
-          font-weight: 600;
-          font-size: 18px;
-        }
-        
-        .safety-status {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          padding: 4px 8px;
-          border-radius: 12px;
-          font-size: 12px;
-          font-weight: 500;
-          margin-left: auto;
-          
-          .status-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-          }
-          
-          &.safe {
-            background: rgba(40, 167, 69, 0.2);
-            color: #28a745;
-            .status-dot { background: #28a745; }
-          }
-          
-          &.neutral {
-            background: rgba(255, 193, 7, 0.2);
-            color: #ffc107;
-            .status-dot { background: #ffc107; }
-          }
-          
-          &.caution {
-            background: rgba(255, 152, 0, 0.2);
-            color: #ff9800;
-            .status-dot { background: #ff9800; }
-          }
-          
-          &.danger {
-            background: rgba(220, 53, 69, 0.2);
-            color: #dc3545;
-            .status-dot { background: #dc3545; }
-          }
-        }
-      }
-    }
-    
-    .search-button, .settings-button {
-      --color: white;
-      --background: rgba(255, 255, 255, 0.1);
-      --border-radius: 8px;
-      width: 40px;
-      height: 40px;
-    }
-  }
-  
-  .search-container {
-    overflow: hidden;
-    height: 0;
-    transition: height 0.3s ease;
-    background: rgba(255, 255, 255, 0.95);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-    
-    &.expanded {
-      height: 60px;
-      padding: 8px 16px;
-    }
-    
-    .custom-searchbar {
-      --background: white;
-      --border-radius: 12px;
-      --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      --placeholder-color: #6c757d;
-      --icon-color: #667eea;
-    }
-  }
-}
-
-.map-content {
-  --background: #f8f9fa;
-  
-  .map-container {
-    width: 100%;
-    height: 100%;
-    position: relative;
-  }
-  
-  .safety-indicator {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    right: 20px;
-    z-index: 1000;
-    background: white;
-    border-radius: 16px;
-    padding: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-    
-    .indicator-content {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      
-      .safety-icon {
-        font-size: 24px;
-        padding: 8px;
-        border-radius: 12px;
-        background: rgba(102, 126, 234, 0.1);
-        color: #667eea;
-      }
-      
-      .safety-info {
-        flex: 1;
-        
-        .safety-level {
-          font-size: 16px;
-          font-weight: 600;
-          color: #2c3e50;
-          margin-bottom: 2px;
-        }
-        
-        .safety-description {
-          font-size: 14px;
-          color: #6c757d;
-        }
-      }
-    }
-    
-    &.safe {
-      border-left: 4px solid #28a745;
-      .safety-icon {
-        background: rgba(40, 167, 69, 0.1);
-        color: #28a745;
-      }
-    }
-    
-    &.neutral {
-      border-left: 4px solid #ffc107;
-      .safety-icon {
-        background: rgba(255, 193, 7, 0.1);
-        color: #ffc107;
-      }
-    }
-    
-    &.caution {
-      border-left: 4px solid #ff9800;
-      .safety-icon {
-        background: rgba(255, 152, 0, 0.1);
-        color: #ff9800;
-      }
-    }
-    
-    &.danger {
-      border-left: 4px solid #dc3545;
-      .safety-icon {
-        background: rgba(220, 53, 69, 0.1);
-        color: #dc3545;
-      }
-    }
-  }
-  
-  .map-controls {
-    position: absolute;
-    right: 20px;
-    top: 120px;
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    
-    .control-group {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      background: white;
-      border-radius: 12px;
-      padding: 8px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-      
-      .control-button {
-        --background: white;
-        --color: #6c757d;
-        --border-radius: 8px;
-        --box-shadow: none;
-        width: 44px;
-        height: 44px;
-        margin: 0;
-        
-        &:hover {
-          --background: #f8f9fa;
-          --color: #667eea;
-        }
-        
-        &.active {
-          --background: #667eea;
-          --color: white;
-        }
-        
-        &.time-button {
-          width: auto;
-          padding: 0 12px;
-          
-          .time-text {
-            font-size: 12px;
-            margin-left: 4px;
-          }
-        }
-      }
-    }
-  }
-  
-  .floating-actions {
-    .panic-fab {
-      .panic-button {
-        --background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-        --color: white;
-        width: 70px;
-        height: 70px;
-        --box-shadow: 0 8px 24px rgba(220, 53, 69, 0.4);
-        
-        &.pulsing {
-          animation: pulse 1s infinite;
-        }
-        
-        .panic-icon {
-          font-size: 32px;
-          animation: shake 0.5s infinite;
-        }
-      }
-    }
-    
-    .report-fab {
-      .report-button {
-        --background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        --color: white;
-        --box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
-      }
-      
-      ion-fab-list {
-        ion-fab-button {
-          --background: white;
-          --color: #6c757d;
-          --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-          
-          &.report-crime {
-            --color: #dc3545;
-            &:hover { --background: #fee; }
-          }
-          
-          &.report-accident {
-            --color: #ff9800;
-            &:hover { --background: #fff3e0; }
-          }
-          
-          &.report-emergency {
-            --color: #f44336;
-            &:hover { --background: #ffebee; }
-          }
-          
-          &.report-suspicious {
-            --color: #9c27b0;
-            &:hover { --background: #f3e5f5; }
-          }
-        }
-      }
-    }
-  }
-  
-  .bottom-sheet {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: white;
-    border-radius: 20px 20px 0 0;
-    transform: translateY(100%);
-    transition: transform 0.3s ease;
-    z-index: 2000;
-    max-height: 60vh;
-    
-    &.expanded {
-      transform: translateY(0);
-    }
-    
-    .sheet-header {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 16px;
-      position: relative;
-      
-      .sheet-handle {
-        width: 40px;
-        height: 4px;
-        background: #e0e0e0;
-        border-radius: 2px;
-      }
-      
-      .close-button {
-        position: absolute;
-        right: 8px;
-        --color: #6c757d;
-      }
-    }
-    
-    .sheet-content {
-      padding: 0 24px 24px;
-      
-      .incident-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 16px;
-        
-        .incident-type {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 6px 12px;
-          border-radius: 20px;
-          font-size: 14px;
-          font-weight: 500;
-          
-          &.crime {
-            background: rgba(220, 53, 69, 0.1);
-            color: #dc3545;
-          }
-          
-          &.accident {
-            background: rgba(255, 152, 0, 0.1);
-            color: #ff9800;
-          }
-          
-          &.emergency {
-            background: rgba(244, 67, 54, 0.1);
-            color: #f44336;
-          }
-          
-          &.suspicious {
-            background: rgba(156, 39, 176, 0.1);
-            color: #9c27b0;
-          }
-        }
-        
-        .incident-time {
-          font-size: 14px;
-          color: #6c757d;
-        }
-      }
-      
-      .incident-details {
-        margin-bottom: 24px;
-        
-        h3 {
-          font-size: 20px;
-          font-weight: 600;
-          color: #2c3e50;
-          margin: 0 0 8px;
-        }
-        
-        p {
-          font-size: 16px;
-          color: #6c757d;
-          line-height: 1.5;
-          margin: 0 0 16px;
-        }
-        
-        .incident-meta {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-          
-          .meta-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            color: #6c757d;
-            
-            ion-icon {
-              font-size: 16px;
-              color: #667eea;
-            }
-          }
-        }
-      }
-      
-      .incident-actions {
-        display: flex;
-        gap: 12px;
-        
-        .action-button {
-          flex: 1;
-          height: 48px;
-          --border-radius: 12px;
-          font-weight: 500;
-          
-          &.primary {
-            --background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --color: white;
-          }
-        }
-      }
-    }
-  }
-  
-  .navigation-banner {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    color: white;
-    padding: 16px 20px;
-    z-index: 1500;
-    
-    .nav-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      
-      .nav-info {
-        flex: 1;
-        
-        .nav-instruction {
-          font-size: 16px;
-          font-weight: 600;
-          margin-bottom: 4px;
-        }
-        
-        .nav-details {
-          display: flex;
-          gap: 16px;
-          font-size: 14px;
-          opacity: 0.9;
-          
-          .distance {
-            &::before {
-              content: "📍 ";
-            }
-          }
-          
-          .eta {
-            &::before {
-              content: "⏱️ ";
-            }
-          }
-        }
-      }
-      
-      .stop-nav-button {
-        --color: white;
-        --background: rgba(255, 255, 255, 0.2);
-        --border-radius: 8px;
-        width: 40px;
-        height: 40px;
-      }
-    }
-  }
-}
-
-.loading-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.9);
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  gap: 16px;
+}
+
+#panic-button,
+#heatmap-toggle {
+  background-color: #007bff;
+  color: white;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  font-size: 22px;
+  display: flex;
   align-items: center;
-  z-index: 3000;
-  
-  ion-spinner {
-    --color: #667eea;
-    width: 48px;
-    height: 48px;
-    margin-bottom: 16px;
-  }
-  
-  p {
-    color: #6c757d;
-    font-size: 16px;
-    margin: 0;
-  }
+  justify-content: center;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.3s ease;
+  cursor: pointer;
 }
 
-.legend-content {
-  .legend-section {
-    margin-bottom: 32px;
-    
-    h3 {
-      font-size: 18px;
-      font-weight: 600;
-      color: #2c3e50;
-      margin: 0 0 16px;
-      padding: 0 16px;
-    }
-    
-    .legend-items {
-      .legend-item {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        padding: 12px 16px;
-        border-bottom: 1px solid #f0f0f0;
-        
-        &:last-child {
-          border-bottom: none;
-        }
-        
-        .legend-color {
-          width: 20px;
-          height: 20px;
-          border-radius: 4px;
-          
-          &.safe { background: #28a745; }
-          &.neutral { background: #ffc107; }
-          &.caution { background: #ff9800; }
-          &.danger { background: #dc3545; }
-        }
-        
-        .incident-icon {
-          font-size: 20px;
-          
-          &.crime { color: #dc3545; }
-          &.accident { color: #ff9800; }
-          &.emergency { color: #f44336; }
-          &.suspicious { color: #9c27b0; }
-        }
-        
-        .legend-text {
-          flex: 1;
-          
-          strong {
-            display: block;
-            font-size: 16px;
-            color: #2c3e50;
-            margin-bottom: 4px;
-          }
-          
-          p {
-            font-size: 14px;
-            color: #6c757d;
-            margin: 0;
-            line-height: 1.4;
-          }
-        }
-      }
-    }
-  }
+#panic-button {
+  background-color: red;
 }
 
-@keyframes pulse {
-  0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.1); opacity: 0.7; }
-  100% { transform: scale(1); opacity: 1; }
+#panic-button:hover {
+  background-color: darkred;
 }
 
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-2px); }
-  75% { transform: translateX(2px); }
+#heatmap-toggle:hover {
+  background-color: #0056b3;
+}
+
+ion-icon {
+  font-size: 24px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 @media (max-width: 768px) {
-  .map-header {
-    .custom-toolbar {
-      .title-container {
-        .safety-status {
-          display: none;
-        }
-      }
-    }
+  .floating-ui {
+    bottom: 80px;
+    right: 16px;
+    gap: 12px;
   }
 
-  .map-content {
-    .safety-indicator {
-      top: 10px;
-      left: 10px;
-      right: 10px;
-      padding: 12px;
-      
-      .indicator-content {
-        .safety-icon {
-          font-size: 20px;
-          padding: 6px;
-        }
-        
-        .safety-info {
-          .safety-level {
-            font-size: 14px;
-          }
-          
-          .safety-description {
-            font-size: 12px;
-          }
-        }
-      }
-    }
-    
-    .map-controls {
-      right: 10px;
-      top: 80px;
-    }
-    
-    .floating-actions {
-      .panic-fab {
-        .panic-button {
-          width: 60px;
-          height: 60px;
-          
-          .panic-icon {
-            font-size: 28px;
-          }
-        }
-      }
-    }
+  #panic-button,
+  #heatmap-toggle {
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
   }
 }

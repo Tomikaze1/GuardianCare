@@ -15,22 +15,24 @@ import { AlertService } from '../services/alert.service';
 export class HomePage implements OnInit, OnDestroy {
   map: mapboxgl.Map | undefined;
   currentLocation: { lat: number; lng: number } | undefined;
+  isHeatmapVisible = false;
   inDangerZone = false;
   currentLanguage = 'en';
+  zoneLayers: string[] = [];
+
   languages = [
     { code: 'en', name: 'English' },
     { code: 'es', name: 'Español' },
     { code: 'fr', name: 'Français' },
     { code: 'ja', name: '日本語' }
   ];
-  zoneLayers: string[] = [];
 
   constructor(
     private locationService: LocationService,
     private http: HttpClient,
     private translate: TranslateService,
-    private zoneService: ZoneService,  
-    private alertService: AlertService  
+    private zoneService: ZoneService,
+    private alertService: AlertService
   ) {
     this.translate.setDefaultLang('en');
   }
@@ -118,17 +120,27 @@ export class HomePage implements OnInit, OnDestroy {
     }));
 
     this.map.on('load', () => {
-      this.addDangerZones();
+      if (this.isHeatmapVisible) this.addDangerZones();
       this.checkZoneSafety();
     });
+
     this.map.on('move', () => this.checkZoneSafety());
+  }
+
+  toggleHeatmap() {
+    this.isHeatmapVisible = !this.isHeatmapVisible;
+    if (this.isHeatmapVisible) {
+      this.addDangerZones();
+    } else {
+      this.removeDangerZones();
+    }
   }
 
   addDangerZones() {
     if (!this.map) return;
 
     const zones = [
-       {
+      {
         level: 'Safe',
         coordinates: [
           [123.9671, 10.3085],
@@ -166,21 +178,18 @@ export class HomePage implements OnInit, OnDestroy {
       }
     ];
 
-    const bounds = new mapboxgl.LngLatBounds();
     zones.forEach(zone => {
-      zone.coordinates.forEach(coord => bounds.extend([coord[0], coord[1]]));
-      
       const sourceId = `zone-${zone.level}`;
       const fillLayerId = `zone-${zone.level}-fill`;
       const outlineLayerId = `zone-${zone.level}-outline`;
 
-      if (this.map?.getSource(sourceId)) {
-        this.map?.removeLayer(fillLayerId);
-        this.map?.removeLayer(outlineLayerId);
-        this.map?.removeSource(sourceId);
+      if (this.map!.getSource(sourceId)) {
+        this.map!.removeLayer(fillLayerId);
+        this.map!.removeLayer(outlineLayerId);
+        this.map!.removeSource(sourceId);
       }
 
-      this.map?.addSource(sourceId, {
+      this.map!.addSource(sourceId, {
         type: 'geojson',
         data: {
           type: 'Feature',
@@ -194,7 +203,7 @@ export class HomePage implements OnInit, OnDestroy {
         }
       });
 
-      this.map?.addLayer({
+      this.map!.addLayer({
         id: fillLayerId,
         type: 'fill',
         source: sourceId,
@@ -204,7 +213,7 @@ export class HomePage implements OnInit, OnDestroy {
         }
       });
 
-      this.map?.addLayer({
+      this.map!.addLayer({
         id: outlineLayerId,
         type: 'line',
         source: sourceId,
@@ -216,8 +225,15 @@ export class HomePage implements OnInit, OnDestroy {
 
       this.zoneLayers.push(fillLayerId);
     });
+  }
 
-    this.map?.fitBounds(bounds, { padding: 40 });
+  removeDangerZones() {
+    if (!this.map) return;
+    this.zoneLayers.forEach(id => {
+      if (this.map!.getLayer(id)) this.map!.removeLayer(id);
+      if (this.map!.getSource(id)) this.map!.removeSource(id);
+    });
+    this.zoneLayers = [];
   }
 
   getZoneColor(level: string): string {
@@ -232,26 +248,13 @@ export class HomePage implements OnInit, OnDestroy {
 
   autoRouteToSafeZone() {
     if (!this.map || !this.currentLocation) return;
-    const safeZone = this.findNearestSafeZone();
-    if (!safeZone) return;
-    const directionsUrl = `https://api.mapbox.com/directions/v5/mapbox/walking/${
-      this.currentLocation.lng},${this.currentLocation.lat};${
-      safeZone.center[0]},${safeZone.center[1]}?geometries=geojson&access_token=${(mapboxgl as any).accessToken}`;
-    this.http.get(directionsUrl).subscribe((data: any) => {
+    const safeZone = { center: [123.9671, 10.3085] };
+
+    const url = `https://api.mapbox.com/directions/v5/mapbox/walking/${this.currentLocation.lng},${this.currentLocation.lat};${safeZone.center[0]},${safeZone.center[1]}?geometries=geojson&access_token=${(mapboxgl as any).accessToken}`;
+
+    this.http.get(url).subscribe((data: any) => {
       this.drawRoute(data.routes[0].geometry);
     });
-  }
-
-  findNearestSafeZone(): { center: [number, number]; coordinates: number[][] } | undefined {
-    return {
-      center: [123.9671, 10.3085],
-      coordinates: [
-        [123.9671, 10.3085],
-        [123.9705, 10.3100],
-        [123.9730, 10.3080],
-        [123.9700, 10.3065]
-      ]
-    };
   }
 
   drawRoute(route: any) {
@@ -264,8 +267,8 @@ export class HomePage implements OnInit, OnDestroy {
       type: 'geojson',
       data: {
         type: 'Feature',
-        properties: {},
-        geometry: route
+        geometry: route,
+         properties: {}
       }
     });
     this.map.addLayer({
@@ -284,8 +287,8 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   triggerPanicButton() {
-    const alertMessage = this.translate.instant('PANIC_BUTTON_MESSAGE');
-    alert(alertMessage);
+    const message = this.translate.instant('PANIC_BUTTON_MESSAGE') || 'Panic mode activated!';
+    alert(message);
     this.autoRouteToSafeZone();
   }
 
