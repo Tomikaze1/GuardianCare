@@ -4,14 +4,18 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
-  <div id="map" style="height: 100%;"></div>
+<ion-content fullscreen>
+  <div id="map" style="height: 100vh; width: 100%;"></div>
 
-    <ion-button 
-    id="panic-button"
-    expand="full" 
-    color="danger" 
-    (click)="triggerPanicButton()">
-    Panic Button
-  </ion-button>
+  <div class="floating-ui">
+    <button id="panic-button" (click)="triggerPanicButton()" title="Trigger Panic">
+      🚨
+      <span class="sr-only">Trigger Panic</span>
+    </button>
+
+    <button id="heatmap-toggle" (click)="toggleHeatmap()" title="Toggle Heatmap">
+      <ion-icon name="flame-outline" aria-hidden="true"></ion-icon>
+      <span class="sr-only">Toggle Heatmap</span>
+    </button>
+  </div>
 </ion-content>
