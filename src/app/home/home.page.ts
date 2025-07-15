@@ -49,18 +49,16 @@ export class HomePage implements OnInit, OnDestroy {
   async getCurrentLocation() {
     try {
       this.currentLocation = await this.locationService.getCurrentLocation();
-      this.initializeMap();
-    } catch (error) {
-      console.error('Error getting location:', error);
-      this.currentLocation = { lng: 123.8931, lat: 10.3111 };
-      this.initializeMap();
+    } catch {
+      this.currentLocation = { lat: 10.3173, lng: 123.9058 };
     }
+    this.initializeMap();
   }
 
   setupLocationMonitoring() {
-    this.locationService.currentLocation$.subscribe(location => {
-      if (location) {
-        this.currentLocation = location;
+    this.locationService.currentLocation$.subscribe(loc => {
+      if (loc) {
+        this.currentLocation = loc;
         this.checkZoneSafety();
       }
     });
@@ -68,12 +66,10 @@ export class HomePage implements OnInit, OnDestroy {
 
   checkZoneSafety() {
     if (!this.currentLocation || !this.map || this.zoneLayers.length === 0) return;
-
     const features = this.map.queryRenderedFeatures(
       this.map.project([this.currentLocation.lng, this.currentLocation.lat]),
       { layers: this.zoneLayers }
     );
-
     if (features.length > 0) {
       const zoneLevel = features[0].properties?.['level'] || 'Unknown';
       this.handleZoneEnter(zoneLevel);
@@ -248,18 +244,15 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   autoRouteToSafeZone() {
-  if (!this.map || !this.currentLocation) return;
-
-  const safeZone = { center: [123.9050, 10.3180] };
-  const origin = `${this.currentLocation.lng.toFixed(6)},${this.currentLocation.lat.toFixed(6)}`;
-  const destination = `${safeZone.center[0].toFixed(6)},${safeZone.center[1].toFixed(6)}`;
-
-  const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${origin};${destination}?geometries=geojson&overview=full&access_token=${(mapboxgl as any).accessToken}`;
-
-  this.http.get(url).subscribe((data: any) => {
-    this.drawRoute(data.routes[0].geometry);
-  });
-}
+    if (!this.map || !this.currentLocation) return;
+    const safeZone = { center: [123.9050, 10.3180] };
+    const origin = `${this.currentLocation.lng.toFixed(6)},${this.currentLocation.lat.toFixed(6)}`;
+    const destination = `${safeZone.center[0].toFixed(6)},${safeZone.center[1].toFixed(6)}`;
+    const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${origin};${destination}?geometries=geojson&overview=full&access_token=${(mapboxgl as any).accessToken}`;
+    this.http.get(url).subscribe((data: any) => {
+      this.drawRoute(data.routes[0].geometry);
+    });
+  }
 
   drawRoute(route: any) {
     if (!this.map) return;
@@ -272,7 +265,7 @@ export class HomePage implements OnInit, OnDestroy {
       data: {
         type: 'Feature',
         geometry: route,
-         properties: {}
+        properties: {}
       }
     });
     this.map.addLayer({
@@ -291,16 +284,13 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   triggerPanicButton() {
-  const alertMessage = this.translate.instant('Stay Safe and I already sent the message to your contactlist.');
-  alert(alertMessage);
-  this.autoRouteToSafeZone();
-  if (navigator.vibrate) {
-    navigator.vibrate([300, 100, 300]);
-  } else {
-    console.warn('Vibration API is not supported on this device.');
+    const alertMessage = this.translate.instant('Stay Safe and I already sent the message to your contactlist.');
+    alert(alertMessage);
+    this.autoRouteToSafeZone();
+    if (navigator.vibrate) {
+      navigator.vibrate([300, 100, 300]);
+    }
   }
-}
-
 
   changeLanguage(lang: string) {
     this.currentLanguage = lang;

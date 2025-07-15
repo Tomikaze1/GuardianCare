@@ -17,12 +17,14 @@ export class SettingsPage {
     { code: 'ja', name: '日本語' }
   ];
 
-  constructor(
-    private translate: TranslateService,
-    private toastController: ToastController
-  ) {
-    this.currentLanguage = this.translate.currentLang || 'en';
-  }
+ constructor(
+  private translate: TranslateService,
+  private toastController: ToastController
+) {
+  const savedLang = localStorage.getItem('userLanguage') || 'en';
+  this.currentLanguage = savedLang;
+  this.translate.use(savedLang);
+}
 
   async setLanguage(lang: string) {
     this.currentLanguage = lang;
