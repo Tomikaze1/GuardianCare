@@ -1,8 +1,9 @@
 import { NgModule } from '@angular/core';
 import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
+import { AuthGuard } from './auth/auth.guard';  
 
 const routes: Routes = [
-  { path: '', redirectTo: 'tabs/home', pathMatch: 'full' },
+  { path: '', redirectTo: 'auth/login', pathMatch: 'full' },
   {
     path: 'auth',
     children: [
@@ -18,13 +19,15 @@ const routes: Routes = [
   },
   {
     path: 'tabs',
-    loadChildren: () => import('./tabs/tabs.module').then(m => m.TabsPageModule)
+    loadChildren: () => import('./tabs/tabs.module').then(m => m.TabsPageModule),
+    canActivate: [AuthGuard]  // Protect this route with AuthGuard
   },
   {
     path: 'reports',
-    loadChildren: () => import('./reports/reports.module').then(m => m.ReportsPageModule)
+    loadChildren: () => import('./reports/reports.module').then(m => m.ReportsPageModule),
+    canActivate: [AuthGuard]  // Protect this route with AuthGuard
   },
-  { path: '**', redirectTo: 'tabs/home', pathMatch: 'full' }
+  { path: '**', redirectTo: 'auth/login', pathMatch: 'full' }
 ];
 
 @NgModule({

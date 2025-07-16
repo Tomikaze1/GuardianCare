@@ -45,22 +45,45 @@ export class LoginPage implements OnInit {
   }
 
   async onLogin(): Promise<void> {
-    if (this.loginForm.valid) {
+    if (this.loginForm.valid && !this.isLoading) {
       this.isLoading = true;
-      
+
+      const loading = await this.loadingController.create({
+        message: 'Logging in...',
+        spinner: 'crescent',
+      });
+      await loading.present();
+
+      const { email, password } = this.loginForm.value;
+
       try {
-        const { email, password } = this.loginForm.value;
-        const result = await this.authService.login(email, password);
-        
-        if (result.success) {
+        const userCredential = await this.authService.login(email, password);
+
+        if (userCredential.success) {
           await this.showToast('Login successful!', 'success');
           this.router.navigate(['/tabs/home']);
         } else {
-          await this.showAlert('Login Failed', result.error || 'Invalid credentials');
+          await this.showAlert('Login Failed', userCredential.error || 'Invalid credentials');
         }
-      } catch (error) {
-        console.error('Login error:', error);
-        await this.showAlert('Error', 'An unexpected error occurred. Please try again.');
+      } catch (error: any) {
+        await loading.dismiss();
+        this.isLoading = false;
+
+        let errorMessage = 'An error occurred. Please try again.';
+        if (error.code === 'auth/user-not-found') {
+          errorMessage = 'No user found with this email.';
+        } else if (error.code === 'auth/wrong-password') {
+          errorMessage = 'Incorrect password.';
+        } else if (error.code === 'auth/invalid-email') {
+          errorMessage = 'Please enter a valid email address.';
+        }
+
+        const alert = await this.alertController.create({
+          header: 'Login Failed',
+          message: errorMessage,
+          buttons: ['OK']
+        });
+        await alert.present();
       } finally {
         this.isLoading = false;
       }
@@ -73,7 +96,7 @@ export class LoginPage implements OnInit {
     try {
       this.isLoading = true;
       const result = await this.authService.loginWithGoogle();
-      
+
       if (result.success) {
         await this.showToast('Google login successful!', 'success');
         this.router.navigate(['/tabs/home']);
@@ -92,7 +115,7 @@ export class LoginPage implements OnInit {
     try {
       this.isLoading = true;
       const result = await this.authService.loginWithFacebook();
-      
+
       if (result.success) {
         await this.showToast('Facebook login successful!', 'success');
         this.router.navigate(['/tabs/home']);

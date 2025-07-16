@@ -19,28 +19,27 @@ export class AuthService {
     private firestore: AngularFirestore
   ) {}
 
-  // Email/password login
   async login(email: string, password: string): Promise<AuthResult> {
     try {
       const result = await this.afAuth.signInWithEmailAndPassword(email, password);
+      await this.createUserInFirestore(result.user);
       return { success: true, user: result.user };
     } catch (error: any) {
       return { success: false, error: this.getErrorMessage(error.code) };
     }
   }
 
-  // Google login (via Firebase popup)
   async loginWithGoogle(): Promise<AuthResult> {
     try {
       const provider = new firebase.auth.GoogleAuthProvider();
       const result = await this.afAuth.signInWithPopup(provider);
+      await this.createUserInFirestore(result.user);
       return { success: true, user: result.user };
     } catch (error: any) {
       return { success: false, error: this.getErrorMessage(error.code) || 'Google login failed' };
     }
   }
 
-  // Facebook login (via Capacitor plugin)
   async loginWithFacebook(): Promise<AuthResult> {
     try {
       const result = await FacebookLogin.login({ permissions: ['email', 'public_profile'] });
@@ -48,6 +47,7 @@ export class AuthService {
       if (result.accessToken) {
         const credential = firebase.auth.FacebookAuthProvider.credential(result.accessToken.token);
         const authResult = await this.afAuth.signInWithCredential(credential);
+        await this.createUserInFirestore(authResult.user);
         return { success: true, user: authResult.user };
       } else {
         return { success: false, error: 'Facebook login was cancelled' };
@@ -57,7 +57,25 @@ export class AuthService {
     }
   }
 
-  // Password reset
+  private async createUserInFirestore(user: firebase.User | null) {
+    if (user) {
+      const userRef = this.firestore.collection('users').doc(user.uid);
+      const userDoc = await userRef.get().toPromise();
+
+      if (userDoc && userDoc.exists) {
+        return;
+      }
+
+      await userRef.set({
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+  }
+
   async resetPassword(email: string): Promise<AuthResult> {
     try {
       await this.afAuth.sendPasswordResetEmail(email);
@@ -67,7 +85,6 @@ export class AuthService {
     }
   }
 
-  // Check auth status
   async isAuthenticated(): Promise<boolean> {
     return new Promise(resolve => {
       this.afAuth.authState.subscribe(user => {
@@ -76,17 +93,14 @@ export class AuthService {
     });
   }
 
-  // Get current user
   getCurrentUser() {
     return this.afAuth.currentUser;
   }
 
-  // Logout
   async logout(): Promise<void> {
     await this.afAuth.signOut();
   }
 
-  // Friendly error messages
   private getErrorMessage(errorCode: string): string {
     switch (errorCode) {
       case 'auth/user-not-found': return 'No user found with this email address.';

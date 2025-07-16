@@ -1,19 +1,35 @@
-// src/app/services/firestore.service.ts
-
 import { Injectable } from '@angular/core';
-import { FirebaseService } from './firebase.service';  // Import the FirebaseService
+import { FirebaseService } from './firebase.service';  
+import { Firestore, collection, getDocs, query, where, doc } from 'firebase/firestore';
+import { inject } from '@angular/core';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FirestoreService {
-  constructor(private firebaseService: FirebaseService) {}
+  private firestore: Firestore;
 
-  // Example method to fetch reports from Firestore
-  getReports() {
-    const db = this.firebaseService.getFirestoreInstance();
-    // Now you can use the Firestore instance (db) to interact with Firestore
+  constructor(private firebaseService: FirebaseService) {
+    this.firestore = firebaseService.getFirestoreInstance(); 
   }
 
-  // Add more Firestore logic here
+  getReports() {
+    const reportsCollection = collection(this.firestore, 'reports'); 
+    const q = query(reportsCollection); 
+
+    return getDocs(q).then(querySnapshot => {
+      const reports = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      return reports;
+    }).catch(error => {
+      console.error('Error getting reports:', error);
+      throw error;
+    });
+  }
+
+  getDangerZoneRef(zoneId: string) {
+    return doc(this.firestore, 'dangerZones', zoneId);
+  }
 }

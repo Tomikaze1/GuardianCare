@@ -1,7 +1,7 @@
-
 import { Injectable } from '@angular/core';
 import { FirebaseService } from './firebase.service';
 import { BehaviorSubject } from 'rxjs';
+import { writeBatch, doc, collection } from 'firebase/firestore';
 
 export interface DangerZone {
   id: string;
@@ -159,17 +159,19 @@ export class ZoneDangerEngineService {
     }
   }
 
-  private syncToFirestore(zones: DangerZone[]) {
-    const batch = this.firebaseService.getFirestoreInstance().firestore.batch();
+  private async syncToFirestore(zones: DangerZone[]) {
+    const firestore = this.firebaseService.getFirestoreInstance();
+    const batch = writeBatch(firestore);
+    
     zones.forEach(zone => {
-      const ref = this.firebaseService.getFirestoreInstance()
-        .collection('dangerZones').doc(zone.id).ref;
-      batch.update(ref, {
+      const zoneRef = doc(firestore, 'dangerZones', zone.id);
+      batch.update(zoneRef, {
         level: zone.level,
         currentSeverity: zone.currentSeverity,
         incidents: zone.incidents
       });
     });
-    batch.commit();
+    
+    await batch.commit();
   }
 }

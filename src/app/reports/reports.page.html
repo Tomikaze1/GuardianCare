@@ -1,5 +1,4 @@
 <ion-content class="report-content" fullscreen>
-  <!-- Top logo and title -->
   <div class="logo-container">
     <ion-icon name="shield-checkmark" class="app-logo"></ion-icon>
     <div class="app-title">Incident Report</div>
@@ -8,27 +7,23 @@
   </div>
 
   <form [formGroup]="reportForm" (ngSubmit)="submitReport()" class="report-form">
-    <!-- Section: Incident Details -->
     <div class="section-header">
       <span>Incident Details</span>
       <div class="section-underline"></div>
     </div>
 
-    <!-- Incident Type Selector -->
     <div class="form-row incident-types">
       <button *ngFor="let type of incidentTypes"
         type="button"
         [class.selected]="selectedIncidentType === type.value"
         class="input-box incident-type-btn"
-        (click)="selectIncidentType(type.value)">
+        (click)="selectIncidentType(type.value)"
+        [title]="type.label">
         <ion-icon [name]="type.icon"></ion-icon>
         {{ type.label }}
       </button>
     </div>
 
-    <!-- Description -->
-     <form [formGroup]="reportForm" (ngSubmit)="submitReport()" class="report-form">
-    <!-- Section: Incident Details -->
     <div class="section-header">
       <span>Descriptions</span>
       <div class="section-underline"></div>
@@ -45,40 +40,38 @@
       </div>
     </div>
 
-    <!-- Media Upload -->
-     <form [formGroup]="reportForm" (ngSubmit)="submitReport()" class="report-form">
-    <!-- Section: Incident Details -->
     <div class="section-header">
       <span>Media Upload</span>
       <div class="section-underline"></div>
     </div>
+
     <div class="form-row">
       <div class="input-box media-box">
-        <button type="button" (click)="takePicture()">
+        <button type="button" (click)="takePicture()" title="Take Photo">
           <ion-icon name="camera-outline"></ion-icon>
         </button>
-        <button type="button" (click)="selectFromGallery()">
+        <button type="button" (click)="selectFromGallery()" title="Select from Gallery">
           <ion-icon name="image-outline"></ion-icon>
         </button>
         <div class="media-list" *ngIf="uploadedMedia.length > 0">
           <div class="media-chip" *ngFor="let media of uploadedMedia; let i = index">
-            <img *ngIf="media.type==='image'" [src]="media.url" alt="media" />
-            <ion-icon name="close" class="remove" (click)="removeMedia(i)"></ion-icon>
+            <img *ngIf="media.type === 'image'" [src]="media.url" alt="media" />
+            <ion-icon name="close" class="remove" (click)="removeMedia(i)" title="Remove"></ion-icon>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Section: Location -->
     <div class="section-header">
       <span>Location</span>
       <div class="section-underline"></div>
     </div>
+
     <div class="form-row">
       <div class="input-box location-box">
         <ion-icon name="location-outline"></ion-icon>
         <span class="address">{{ currentLocation?.address || "Getting location..." }}</span>
-        <ion-button fill="clear" size="small" (click)="refreshLocation()">
+        <ion-button fill="clear" size="small" (click)="refreshLocation()" title="Refresh Location">
           <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
         </ion-button>
         <div id="map" class="mapbox-card"></div>
@@ -86,7 +79,6 @@
       </div>
     </div>
 
-    <!-- Anonymous Toggle -->
     <div class="form-row anon-row">
       <div class="input-box anon-box">
         <ion-label>Send as anonymous</ion-label>
@@ -94,7 +86,6 @@
       </div>
     </div>
 
-    <!-- Emergency Call and Submit -->
     <div class="button-row">
       <ion-button expand="block" color="danger" fill="solid" class="call-btn" (click)="callEmergency()">
         <ion-icon name="call" slot="start"></ion-icon>
@@ -106,3 +97,4 @@
       </button>
     </div>
   </form>
+</ion-content>
