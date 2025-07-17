@@ -1,0 +1,22 @@
+.user-activity-container {
+  padding: 16px;
+}
+
+.center-spinner {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+ion-avatar {
+  --border-radius: 50%;
+  background: var(--ion-color-light);
+  color: var(--ion-color-medium);
+}
+
+ion-item {
+  --padding-start: 8px;
+  --inner-padding-end: 8px;
+  margin-bottom: 8px;
+}

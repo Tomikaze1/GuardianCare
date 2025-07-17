@@ -1,0 +1,103 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Admin Dashboard</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-refresher slot="fixed" (ionRefresh)="refreshData($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="dashboard-container">
+    <ion-grid>
+      <ion-row>
+        <ion-col size="12" size-md="6">
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>Quick Stats</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <ion-grid>
+                <ion-row>
+                  <ion-col size="6">
+                    <div class="stat-card">
+                      <h3>{{ stats.totalIncidents || 0 }}</h3>
+                      <p>Total Incidents</p>
+                    </div>
+                  </ion-col>
+                  <ion-col size="6">
+                    <div class="stat-card">
+                      <h3>{{ pendingIncidentsCount }}</h3>
+                      <p>Pending Validation</p>
+                    </div>
+                  </ion-col>
+                  <ion-col size="6">
+                    <div class="stat-card">
+                      <h3>{{ stats.activeUsers || 0 }}</h3>
+                      <p>Active Users</p>
+                    </div>
+                  </ion-col>
+                  <ion-col size="6">
+                    <div class="stat-card">
+                      <h3>{{ stats.zonesCount || 0 }}</h3>
+                      <p>Danger Zones</p>
+                    </div>
+                  </ion-col>
+                </ion-row>
+              </ion-grid>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+
+        <ion-col size="12" size-md="6">
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>Danger Levels</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <div class="chart-container">
+                <canvas id="dangerLevels"></canvas>
+              </div>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+
+        <ion-col size="12">
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>Incident Trends (30 Days)</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <div class="chart-container">
+                <canvas id="incidentTrends"></canvas>
+              </div>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+
+        <ion-col size="12">
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>Recent Activity</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <ion-list>
+                <ion-item *ngFor="let activity of recentActivity">
+                  <ion-label>
+                    <h3>{{ activity.userName || 'System' }}</h3>
+                    <p>{{ activity.action }}</p>
+                    <p>{{ activity.timestamp | date:'medium' }}</p>
+                  </ion-label>
+                </ion-item>
+                <ion-item *ngIf="recentActivity.length === 0">
+                  <ion-label>No recent activity</ion-label>
+                </ion-item>
+              </ion-list>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </div>
+</ion-content>

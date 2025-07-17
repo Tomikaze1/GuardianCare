@@ -14,6 +14,9 @@ import { AngularFirestoreModule } from '@angular/fire/compat/firestore';
 import { AngularFireAuthModule } from '@angular/fire/compat/auth';
 
 import { environment } from '../environments/environment';
+import { TruncatePipe } from './pipes/truncate.pipe';  
+import { AuthGuard } from './auth/auth.guard';  
+import { AdminGuard } from './auth/admin.guard';  
 
 export function createTranslateLoader(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/lang/', '.json');
@@ -21,7 +24,8 @@ export function createTranslateLoader(http: HttpClient) {
 
 @NgModule({
   declarations: [
-    AppComponent   // ONLY AppComponent here!
+    AppComponent,
+    TruncatePipe   
   ],
   imports: [
     BrowserModule,
@@ -40,7 +44,9 @@ export function createTranslateLoader(http: HttpClient) {
     })
   ],
   providers: [
-    { provide: RouteReuseStrategy, useClass: IonicRouteStrategy }
+    { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
+    AuthGuard,   
+    AdminGuard  
   ],
   bootstrap: [AppComponent]
 })

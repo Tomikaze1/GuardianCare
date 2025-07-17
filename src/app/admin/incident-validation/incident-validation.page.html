@@ -1,0 +1,58 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Incident Validation</ion-title>
+  </ion-toolbar>
+  <ion-toolbar>
+    <ion-segment [(ngModel)]="filter" (ionChange)="segmentChanged($event)">
+      <ion-segment-button value="pending">
+        <ion-label>Pending</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="verified">
+        <ion-label>Verified</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="rejected">
+        <ion-label>Rejected</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="all">
+        <ion-label>All</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="incident-validation-container">
+    <ion-list>
+      <ion-item *ngFor="let incident of incidents" (click)="showIncidentDetails(incident)">
+        <ion-label>
+          <h2>{{ incident.type | titlecase }}</h2>
+          <p>{{ (incident.description || '').length > 50 ? (incident.description || '').substring(0, 50) + '...' : (incident.description || '') }}</p>
+          <p>
+            <ion-badge [color]="getStatusColor(incident.status)">
+              {{ incident.status }}
+            </ion-badge>
+            <span class="incident-date">
+              {{ incident.timestamp | date:'short' }}
+            </span>
+          </p>
+        </ion-label>
+        <ion-note slot="end">
+          <ion-button *ngIf="incident.status === 'pending'" fill="clear" color="success" (click)="validateIncident(incident.id, true); $event.stopPropagation()">
+            <ion-icon name="checkmark"></ion-icon>
+          </ion-button>
+          <ion-button *ngIf="incident.status === 'pending'" fill="clear" color="danger" (click)="validateIncident(incident.id, false); $event.stopPropagation()">
+            <ion-icon name="close"></ion-icon>
+          </ion-button>
+        </ion-note>
+      </ion-item>
+      
+      <ion-item *ngIf="incidents.length === 0 && !loading">
+        <ion-label class="ion-text-center">
+          No incidents found
+        </ion-label>
+      </ion-item>
+    </ion-list>
+
+    <ion-spinner *ngIf="loading" class="center-spinner"></ion-spinner>
+  </div>
+</ion-content>
