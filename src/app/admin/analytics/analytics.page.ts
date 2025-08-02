@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AdminService } from '../../services/admin.service';
 import { Chart, registerables } from 'chart.js';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-analytics',
@@ -13,7 +14,7 @@ export class AnalyticsPage implements OnInit {
   loading = true;
   charts: Chart[] = [];
 
-  constructor(private adminService: AdminService) {
+  constructor(private adminService: AdminService, private router: Router) {
     Chart.register(...registerables);
   }
 
@@ -116,5 +117,9 @@ export class AnalyticsPage implements OnInit {
 
   ngOnDestroy() {
     this.destroyCharts();
+  }
+
+  goBack() {
+    this.router.navigate(['/tabs/settings']);
   }
 }

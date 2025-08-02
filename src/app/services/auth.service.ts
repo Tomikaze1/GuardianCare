@@ -3,6 +3,7 @@ import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { FacebookLogin } from '@capacitor-community/facebook-login';
 import firebase from 'firebase/compat/app';
+import { Subscription } from 'rxjs';
 
 export interface AuthResult {
   success: boolean;
@@ -87,7 +88,8 @@ export class AuthService {
 
   async isAuthenticated(): Promise<boolean> {
     return new Promise(resolve => {
-      this.afAuth.authState.subscribe(user => {
+      const subscription = this.afAuth.authState.subscribe(user => {
+        subscription.unsubscribe();
         resolve(!!user);
       });
     });

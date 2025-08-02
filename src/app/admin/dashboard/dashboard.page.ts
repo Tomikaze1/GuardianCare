@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AdminService } from '../../services/admin.service';
-import { Chart } from 'chart.js';
+import { Chart, registerables } from 'chart.js';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-dashboard',
@@ -14,7 +15,9 @@ export class DashboardPage implements OnInit {
   pendingIncidentsCount = 0;
   loading = true;
 
-  constructor(private adminService: AdminService) {}
+  constructor(private adminService: AdminService, private router: Router) {
+    Chart.register(...registerables);
+  }
 
   async ngOnInit() {
     await this.loadDashboardData();
@@ -91,5 +94,9 @@ export class DashboardPage implements OnInit {
     this.loadDashboardData().then(() => {
       event.target.complete();
     });
+  }
+
+  goBack() {
+    this.router.navigate(['/tabs/settings']);
   }
 }

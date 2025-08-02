@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ToastController } from '@ionic/angular';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { Router } from '@angular/router';
+import { UserService } from '../services/user.service';
 
 @Component({
   selector: 'app-settings',
@@ -10,8 +11,9 @@ import { Router } from '@angular/router';
   styleUrls: ['./settings.page.scss'],
   standalone: false,
 })
-export class SettingsPage {
+export class SettingsPage implements OnInit {
   currentLanguage = 'en';
+  isAdmin = false;
   languages = [
     { code: 'en', name: 'English' },
     { code: 'es', name: 'Español' },
@@ -23,11 +25,18 @@ export class SettingsPage {
     private translate: TranslateService,
     private toastController: ToastController,
     private afAuth: AngularFireAuth,
-    private router: Router
+    private router: Router,
+    private userService: UserService
   ) {
     const savedLang = localStorage.getItem('userLanguage') || 'en';
     this.currentLanguage = savedLang;
     this.translate.use(savedLang);
+  }
+
+  ngOnInit() {
+    this.userService.isAdmin().subscribe(isAdmin => {
+      this.isAdmin = isAdmin;
+    });
   }
 
   async setLanguage(lang: string) {
@@ -56,5 +65,9 @@ export class SettingsPage {
       const message = this.translate.instant('ALERTS.LOGOUT_FAILED');
       await this.showToast(message);
     }
+  }
+
+  navigateToAdmin(route: string) {
+    this.router.navigate([`/admin/${route}`]);
   }
 }

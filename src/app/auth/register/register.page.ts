@@ -113,66 +113,73 @@ export class RegisterPage implements OnInit {
         const userCredential = await this.afAuth.createUserWithEmailAndPassword(email, password);
 
         if (userCredential.user) {
-          await userCredential.user.updateProfile({
-            displayName: `${firstName} ${lastName}`,
-            photoURL: null
-          });
+          try {
+            await userCredential.user.updateProfile({
+              displayName: `${firstName} ${lastName}`,
+              photoURL: null
+            });
 
-          await userCredential.user.sendEmailVerification();
+            try {
+              await userCredential.user.sendEmailVerification();
+            } catch (emailError) {
+              console.warn('Email verification failed, but user account created:', emailError);
+            }
 
-          const batch = this.firestore.firestore.batch();
-          const userRef = this.firestore.collection('users').doc(userCredential.user.uid).ref;
-          const settingsRef = this.firestore.collection('userSettings').doc(userCredential.user.uid).ref;
+            const batch = this.firestore.firestore.batch();
+            const userRef = this.firestore.collection('users').doc(userCredential.user.uid).ref;
+            const settingsRef = this.firestore.collection('userSettings').doc(userCredential.user.uid).ref;
 
-          batch.set(userRef, {
-            uid: userCredential.user.uid,
-            firstName: firstName.trim(),
-            lastName: lastName.trim(),
-            email: email.toLowerCase().trim(),
-            phone: phone.trim(),
-            emergencyContact: emergencyContact.trim(),
-            emergencyContactName: emergencyContactName.trim(),
-            role: 'user',
-            isActive: true,
-            isVerified: false,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            lastLogin: new Date()
-          });
+            batch.set(userRef, {
+              uid: userCredential.user.uid,
+              firstName: firstName.trim(),
+              lastName: lastName.trim(),
+              email: email.toLowerCase().trim(),
+              phone: phone.trim(),
+              emergencyContact: emergencyContact.trim(),
+              emergencyContactName: emergencyContactName.trim(),
+              role: 'user',
+              isActive: true,
+              isVerified: false,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              lastLogin: new Date()
+            });
 
-          batch.set(settingsRef, {
-            userId: userCredential.user.uid,
-            privacy: {
-              shareLocation: true,
-              showProfile: true,
-              allowDirectMessages: true
-            },
-            notifications: {
-              emergencyAlerts: true,
-              communityUpdates: true,
-              safetyTips: true,
-              emailNotifications: true,
-              pushNotifications: true
-            },
-            createdAt: new Date(),
-            updatedAt: new Date()
-          });
+            batch.set(settingsRef, {
+              userId: userCredential.user.uid,
+              privacy: {
+                shareLocation: true,
+                showProfile: true,
+                allowDirectMessages: true
+              },
+              notifications: {
+                emergencyAlerts: true,
+                communityUpdates: true,
+                safetyTips: true,
+                emailNotifications: true,
+                pushNotifications: true
+              },
+              createdAt: new Date(),
+              updatedAt: new Date()
+            });
 
-          await batch.commit();
+            await batch.commit();
+          } catch (profileError) {
+            console.error('Profile update or Firestore error:', profileError);
+            throw new Error('Failed to complete user profile setup');
+          }
           await loading.dismiss();
           this.isLoading = false;
           
           const toast = await this.toastController.create({
-            message: '🎉 Account created successfully! Please check your email to verify your account.',
+            message: '🎉 Account created successfully! You can now sign in with your email and password.',
             duration: 5000,
             color: 'success',
             position: 'top'
           });
           await toast.present();
 
-          this.router.navigate(['/auth/verify-email'], { 
-            queryParams: { email: email } 
-          });
+          this.router.navigate(['/auth/login']);
         }
       } catch (error: any) {
         await loading.dismiss();

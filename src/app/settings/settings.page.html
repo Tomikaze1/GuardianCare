@@ -12,5 +12,41 @@
     </ion-select>
   </ion-item>
 
+  <div *ngIf="isAdmin" class="admin-section">
+    <ion-item-divider>
+      <ion-label>Admin Panel</ion-label>
+    </ion-item-divider>
+    
+    <ion-item button (click)="navigateToAdmin('dashboard')">
+      <ion-icon name="analytics" slot="start"></ion-icon>
+      <ion-label>Dashboard</ion-label>
+      <ion-icon name="chevron-forward" slot="end"></ion-icon>
+    </ion-item>
+
+    <ion-item button (click)="navigateToAdmin('zone-management')">
+      <ion-icon name="map" slot="start"></ion-icon>
+      <ion-label>Zone Management</ion-label>
+      <ion-icon name="chevron-forward" slot="end"></ion-icon>
+    </ion-item>
+
+    <ion-item button (click)="navigateToAdmin('incident-validation')">
+      <ion-icon name="checkmark-circle" slot="start"></ion-icon>
+      <ion-label>Incident Validation</ion-label>
+      <ion-icon name="chevron-forward" slot="end"></ion-icon>
+    </ion-item>
+
+    <ion-item button (click)="navigateToAdmin('analytics')">
+      <ion-icon name="bar-chart" slot="start"></ion-icon>
+      <ion-label>Analytics</ion-label>
+      <ion-icon name="chevron-forward" slot="end"></ion-icon>
+    </ion-item>
+
+    <ion-item button (click)="navigateToAdmin('user-activity')">
+      <ion-icon name="people" slot="start"></ion-icon>
+      <ion-label>User Activity</ion-label>
+      <ion-icon name="chevron-forward" slot="end"></ion-icon>
+    </ion-item>
+  </div>
+
   <ion-button expand="full" color="danger" (click)="logOut()">LOGOUT</ion-button>
 </ion-content>

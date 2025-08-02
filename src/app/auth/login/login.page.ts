@@ -60,9 +60,16 @@ export class LoginPage implements OnInit {
         const userCredential = await this.authService.login(email, password);
 
         if (userCredential.success) {
+          await loading.dismiss();
           await this.showToast('Login successful!', 'success');
-          this.router.navigate(['/tabs/home']);
+          const isAuthenticated = await this.authService.isAuthenticated();
+          if (isAuthenticated) {
+            this.router.navigate(['/tabs/home']);
+          } else {
+            await this.showAlert('Login Error', 'Authentication failed. Please try again.');
+          }
         } else {
+          await loading.dismiss();
           await this.showAlert('Login Failed', userCredential.error || 'Invalid credentials');
         }
       } catch (error: any) {
@@ -93,17 +100,33 @@ export class LoginPage implements OnInit {
   }
 
   async loginWithGoogle(): Promise<void> {
+    if (this.isLoading) return;
+    
+    this.isLoading = true;
+    const loading = await this.loadingController.create({
+      message: 'Logging in with Google...',
+      spinner: 'crescent',
+    });
+    await loading.present();
+
     try {
-      this.isLoading = true;
       const result = await this.authService.loginWithGoogle();
 
       if (result.success) {
+        await loading.dismiss();
         await this.showToast('Google login successful!', 'success');
-        this.router.navigate(['/tabs/home']);
+        const isAuthenticated = await this.authService.isAuthenticated();
+        if (isAuthenticated) {
+          this.router.navigate(['/tabs/home']);
+        } else {
+          await this.showAlert('Login Error', 'Authentication failed. Please try again.');
+        }
       } else {
+        await loading.dismiss();
         await this.showAlert('Google Login Failed', result.error || 'Unable to login with Google');
       }
     } catch (error) {
+      await loading.dismiss();
       console.error('Google login error:', error);
       await this.showAlert('Error', 'Google login failed. Please try again.');
     } finally {
@@ -112,17 +135,33 @@ export class LoginPage implements OnInit {
   }
 
   async loginWithFacebook(): Promise<void> {
+    if (this.isLoading) return;
+    
+    this.isLoading = true;
+    const loading = await this.loadingController.create({
+      message: 'Logging in with Facebook...',
+      spinner: 'crescent',
+    });
+    await loading.present();
+
     try {
-      this.isLoading = true;
       const result = await this.authService.loginWithFacebook();
 
       if (result.success) {
+        await loading.dismiss();
         await this.showToast('Facebook login successful!', 'success');
-        this.router.navigate(['/tabs/home']);
+        const isAuthenticated = await this.authService.isAuthenticated();
+        if (isAuthenticated) {
+          this.router.navigate(['/tabs/home']);
+        } else {
+          await this.showAlert('Login Error', 'Authentication failed. Please try again.');
+        }
       } else {
+        await loading.dismiss();
         await this.showAlert('Facebook Login Failed', result.error || 'Unable to login with Facebook');
       }
     } catch (error) {
+      await loading.dismiss();
       console.error('Facebook login error:', error);
       await this.showAlert('Error', 'Facebook login failed. Please try again.');
     } finally {

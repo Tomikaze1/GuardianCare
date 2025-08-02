@@ -1,0 +1,18 @@
+.admin-section {
+  margin-top: 20px;
+  
+  ion-item-divider {
+    --background: var(--ion-color-primary);
+    --color: white;
+    font-weight: bold;
+  }
+  
+  ion-item {
+    --padding-start: 16px;
+    --padding-end: 16px;
+    
+    ion-icon[slot="start"] {
+      color: var(--ion-color-primary);
+    }
+  }
+}
