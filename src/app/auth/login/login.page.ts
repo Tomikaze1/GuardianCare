@@ -30,7 +30,15 @@ export class LoginPage implements OnInit {
   }
 
   ngOnInit(): void {
-    this.checkAuthStatus();
+    this.initializeApp();
+  }
+
+  private async initializeApp(): Promise<void> {
+    try {
+      await this.checkAuthStatus();
+    } catch (error) {
+      console.error('App initialization error:', error);
+    }
   }
 
   async checkAuthStatus(): Promise<void> {
@@ -76,13 +84,13 @@ export class LoginPage implements OnInit {
         await loading.dismiss();
         this.isLoading = false;
 
+        console.error('Login error details:', error);
         let errorMessage = 'An error occurred. Please try again.';
-        if (error.code === 'auth/user-not-found') {
-          errorMessage = 'No user found with this email.';
-        } else if (error.code === 'auth/wrong-password') {
-          errorMessage = 'Incorrect password.';
-        } else if (error.code === 'auth/invalid-email') {
-          errorMessage = 'Please enter a valid email address.';
+        
+        if (error.code) {
+          errorMessage = this.getErrorMessage(error.code);
+        } else if (error.message) {
+          errorMessage = error.message;
         }
 
         const alert = await this.alertController.create({
@@ -236,5 +244,17 @@ export class LoginPage implements OnInit {
       position: 'top'
     });
     await toast.present();
+  }
+
+  private getErrorMessage(errorCode: string): string {
+    switch (errorCode) {
+      case 'auth/user-not-found': return 'No user found with this email address.';
+      case 'auth/wrong-password': return 'Incorrect password.';
+      case 'auth/invalid-email': return 'Invalid email address.';
+      case 'auth/user-disabled': return 'This account has been disabled.';
+      case 'auth/too-many-requests': return 'Too many failed attempts. Please try again later.';
+      case 'auth/network-request-failed': return 'Network error. Please check your connection.';
+      default: return 'An error occurred. Please try again.';
+    }
   }
 }

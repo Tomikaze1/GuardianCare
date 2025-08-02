@@ -14,33 +14,66 @@
   gap: 16px;
 }
 
-#panic-button,
-#heatmap-toggle {
-  background-color: #007bff;
+#panic-button {
+  background-color: #dc3545;
   color: white;
-  width: 60px;
-  height: 60px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
-  font-size: 22px;
+  font-size: 16px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   border: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  transition: background-color 0.3s ease;
+  box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+  transition: all 0.3s ease;
   cursor: pointer;
-}
-
-#panic-button {
-  background-color: red;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 #panic-button:hover {
-  background-color: darkred;
+  background-color: #c82333;
+  transform: scale(1.05);
+  box-shadow: 0 8px 25px rgba(220, 53, 69, 0.6);
 }
 
-#heatmap-toggle:hover {
-  background-color: #0056b3;
+#panic-button.active {
+  background-color: #6c757d;
+  animation: pulse 1.5s infinite;
+}
+
+#panic-button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.panic-icon {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.panic-text {
+  font-size: 10px;
+  line-height: 1;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 8px 25px rgba(220, 53, 69, 0.8);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+  }
 }
 
 ion-icon {
@@ -58,6 +91,14 @@ ion-icon {
   border: 0;
 }
 
+.status-indicator {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+}
+
 @media (max-width: 768px) {
   .floating-ui {
     bottom: 80px;
@@ -65,10 +106,48 @@ ion-icon {
     gap: 12px;
   }
 
-  #panic-button,
-  #heatmap-toggle {
-    width: 50px;
-    height: 50px;
+  #panic-button {
+    width: 70px;
+    height: 70px;
+    font-size: 14px;
+  }
+
+  .panic-icon {
     font-size: 20px;
   }
+
+  .panic-text {
+    font-size: 9px;
+  }
+}
+
+.panic-alert {
+  --background: #dc3545;
+  --color: white;
+  --header-color: white;
+  --button-color: white;
+}
+
+.panic-alert .alert-wrapper {
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(220, 53, 69, 0.4);
+}
+
+.panic-alert .alert-head {
+  background: transparent;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.panic-alert .alert-message {
+  font-size: 16px;
+  line-height: 1.5;
+  padding: 20px 0;
+}
+
+.panic-alert .alert-button {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  margin: 8px;
+  font-weight: bold;
 }

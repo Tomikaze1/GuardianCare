@@ -23,9 +23,9 @@ export class AuthService {
   async login(email: string, password: string): Promise<AuthResult> {
     try {
       const result = await this.afAuth.signInWithEmailAndPassword(email, password);
-      await this.createUserInFirestore(result.user);
       return { success: true, user: result.user };
     } catch (error: any) {
+      console.error('Login error:', error);
       return { success: false, error: this.getErrorMessage(error.code) };
     }
   }
@@ -90,6 +90,7 @@ export class AuthService {
     return new Promise(resolve => {
       const subscription = this.afAuth.authState.subscribe(user => {
         subscription.unsubscribe();
+        console.log('Auth state check:', user ? 'User authenticated' : 'No user');
         resolve(!!user);
       });
     });

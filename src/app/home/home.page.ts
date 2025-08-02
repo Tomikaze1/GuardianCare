@@ -4,7 +4,12 @@ import * as mapboxgl from 'mapbox-gl';
 import { HttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { ZoneService } from '../services/zone.service';  
-import { AlertService } from '../services/alert.service';  
+import { AlertService } from '../services/alert.service';
+import { ZoneDangerEngineService, DangerZone } from '../services/zone-danger-engine.service';
+import { IncidentService } from '../services/incident.service';
+import { AngularFireAuth } from '@angular/fire/compat/auth';
+import { AngularFirestore } from '@angular/fire/compat/firestore';
+import { AlertController, ToastController } from '@ionic/angular';  
 
 @Component({
   selector: 'app-home',
@@ -19,6 +24,8 @@ export class HomePage implements OnInit, OnDestroy {
   inDangerZone = false;
   currentLanguage = 'en';
   zoneLayers: string[] = [];
+  zones: DangerZone[] = [];
+  isPanicActive = false;
 
   languages = [
     { code: 'en', name: 'English' },
@@ -32,7 +39,13 @@ export class HomePage implements OnInit, OnDestroy {
     private http: HttpClient,
     private translate: TranslateService,
     private zoneService: ZoneService,
-    private alertService: AlertService
+    private alertService: AlertService,
+    private zoneEngine: ZoneDangerEngineService,
+    private incidentService: IncidentService,
+    private afAuth: AngularFireAuth,
+    private firestore: AngularFirestore,
+    private alertController: AlertController,
+    private toastController: ToastController
   ) {
     this.translate.setDefaultLang('en');
   }
@@ -40,6 +53,7 @@ export class HomePage implements OnInit, OnDestroy {
   ngOnInit() {
     this.getCurrentLocation();
     this.setupLocationMonitoring();
+    this.loadZones();
   }
 
   ngOnDestroy() {
@@ -123,14 +137,7 @@ export class HomePage implements OnInit, OnDestroy {
     this.map.on('move', () => this.checkZoneSafety());
   }
 
-  toggleHeatmap() {
-    this.isHeatmapVisible = !this.isHeatmapVisible;
-    if (this.isHeatmapVisible) {
-      this.addDangerZones();
-    } else {
-      this.removeDangerZones();
-    }
-  }
+
 
   addDangerZones() {
     if (!this.map) return;
@@ -283,12 +290,165 @@ export class HomePage implements OnInit, OnDestroy {
     });
   }
 
-  triggerPanicButton() {
-    const alertMessage = this.translate.instant('Stay Safe and I already sent the message to your contactlist.');
-    alert(alertMessage);
-    this.autoRouteToSafeZone();
+
+
+  loadZones() {
+    this.zoneEngine.zones$.subscribe(zones => {
+      this.zones = zones;
+      if (this.map && this.isHeatmapVisible) {
+        this.updateHeatmap();
+      }
+    });
+  }
+
+  updateHeatmap() {
+    if (!this.map || !this.map.isStyleLoaded()) {
+      return;
+    }
+
+    this.removeDangerZones();
+
+    this.zones.forEach((zone: DangerZone) => {
+      const sourceId = `zone-${zone.id}`;
+      const fillLayerId = `${sourceId}-fill`;
+      const outlineLayerId = `${sourceId}-outline`;
+
+      this.map!.addSource(sourceId, {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          geometry: {
+            type: 'Polygon',
+            coordinates: [zone.coordinates]
+          },
+          properties: {
+            level: zone.level,
+            severity: zone.currentSeverity
+          }
+        }
+      });
+
+      this.map!.addLayer({
+        id: fillLayerId,
+        type: 'fill',
+        source: sourceId,
+        paint: {
+          'fill-color': [
+            'interpolate',
+            ['linear'],
+            ['get', 'severity'],
+            1, '#00ff00',
+            4, '#ffff00',
+            6, '#ffaa00',
+            8, '#ff0000'
+          ],
+          'fill-opacity': 0.7
+        }
+      });
+
+      this.map!.addLayer({
+        id: outlineLayerId,
+        type: 'line',
+        source: sourceId,
+        paint: {
+          'line-color': [
+            'case',
+            ['==', ['get', 'level'], 'Danger'], '#ff0000',
+            ['==', ['get', 'level'], 'Caution'], '#ffaa00',
+            ['==', ['get', 'level'], 'Neutral'], '#ffff00',
+            '#00ff00'
+          ],
+          'line-width': 2
+        }
+      });
+
+      this.zoneLayers.push(fillLayerId, outlineLayerId);
+    });
+  }
+
+  async triggerPanicButton() {
+    if (this.isPanicActive) return;
+
+    this.isPanicActive = true;
+    
     if (navigator.vibrate) {
-      navigator.vibrate([300, 100, 300]);
+      navigator.vibrate([300, 100, 300, 100, 300]);
+    }
+
+    const user = await this.afAuth.currentUser;
+    if (!user || !this.currentLocation) {
+      this.showPanicAlert('Error: Unable to get user location or authentication');
+      this.isPanicActive = false;
+      return;
+    }
+
+    try {
+      const userDoc = await this.firestore.collection('users').doc(user.uid).get().toPromise();
+      const userData = userDoc?.data() as any;
+
+      const panicIncident = {
+        id: Date.now().toString(),
+        userId: user.uid,
+        userName: (userData?.firstName + ' ' + userData?.lastName) || 'Unknown User',
+        type: 'emergency',
+        title: 'PANIC ALERT',
+        description: 'User triggered panic button',
+        coordinates: this.currentLocation,
+        timestamp: new Date(),
+        severity: 'high' as const,
+        verified: false,
+        status: 'pending'
+      };
+
+      await this.firestore.collection('incidents').add(panicIncident);
+
+      const alert = await this.alertController.create({
+        header: '🚨 PANIC ALERT SENT',
+        message: `Emergency services and your emergency contacts have been notified of your location at ${this.currentLocation.lat.toFixed(4)}, ${this.currentLocation.lng.toFixed(4)}. Stay safe and follow emergency instructions.`,
+        buttons: [
+          {
+            text: 'OK',
+            handler: () => {
+              this.isPanicActive = false;
+            }
+          }
+        ],
+        cssClass: 'panic-alert'
+      });
+
+      await alert.present();
+
+      const toast = await this.toastController.create({
+        message: '🚨 Panic alert sent! Emergency contacts notified.',
+        duration: 5000,
+        color: 'danger',
+        position: 'top'
+      });
+      await toast.present();
+
+      this.autoRouteToSafeZone();
+    } catch (error) {
+      console.error('Panic button error:', error);
+      this.showPanicAlert('Failed to send panic alert. Please try again.');
+      this.isPanicActive = false;
+    }
+  }
+
+  private async showPanicAlert(message: string) {
+    const alert = await this.alertController.create({
+      header: 'Panic Alert Error',
+      message: message,
+      buttons: ['OK']
+    });
+    await alert.present();
+  }
+
+  toggleHeatmap() {
+    this.isHeatmapVisible = !this.isHeatmapVisible;
+    if (this.isHeatmapVisible) {
+      this.updateHeatmap();
+    } else {
+      this.removeDangerZones();
     }
   }
 

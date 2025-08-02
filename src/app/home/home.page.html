@@ -1,6 +1,12 @@
 <ion-header>
   <ion-toolbar>
     <ion-title>Guardian Care Map</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="toggleHeatmap()" [color]="isHeatmapVisible ? 'warning' : 'medium'">
+        <ion-icon [name]="isHeatmapVisible ? 'flame' : 'flame-outline'"></ion-icon>
+        {{ isHeatmapVisible ? 'Hide' : 'Show' }} Heatmap
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
@@ -8,14 +14,21 @@
   <div id="map" style="height: 100vh; width: 100%;"></div>
 
   <div class="floating-ui">
-    <button id="panic-button" (click)="triggerPanicButton()" title="Trigger Panic">
-      🚨
-      <span class="sr-only">Trigger Panic</span>
+    <button 
+      id="panic-button" 
+      (click)="triggerPanicButton()" 
+      [disabled]="isPanicActive"
+      [class.active]="isPanicActive"
+      title="Trigger Panic Alert">
+      <span class="panic-icon">🚨</span>
+      <span class="panic-text">{{ isPanicActive ? 'SENDING...' : 'PANIC' }}</span>
     </button>
+  </div>
 
-    <button id="heatmap-toggle" (click)="toggleHeatmap()" title="Toggle Heatmap">
-      <ion-icon name="flame-outline" aria-hidden="true"></ion-icon>
-      <span class="sr-only">Toggle Heatmap</span>
-    </button>
+  <div class="status-indicator" *ngIf="inDangerZone">
+    <ion-chip color="danger">
+      <ion-icon name="warning"></ion-icon>
+      <ion-label>You are in a danger zone!</ion-label>
+    </ion-chip>
   </div>
 </ion-content>
