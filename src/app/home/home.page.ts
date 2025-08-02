@@ -233,11 +233,29 @@ export class HomePage implements OnInit, OnDestroy {
 
   removeDangerZones() {
     if (!this.map) return;
-    this.zoneLayers.forEach(id => {
-      if (this.map!.getLayer(id)) this.map!.removeLayer(id);
-      if (this.map!.getSource(id)) this.map!.removeSource(id);
+    
+    console.log('Removing danger zones, current layers:', this.zoneLayers);
+    
+    // Remove all layers first
+    this.zoneLayers.forEach(layerId => {
+      if (this.map!.getLayer(layerId)) {
+        this.map!.removeLayer(layerId);
+        console.log('Removed layer:', layerId);
+      }
     });
+    
+    // Remove all sources
+    this.zones.forEach(zone => {
+      const sourceId = `zone-${zone.id}`;
+      if (this.map!.getSource(sourceId)) {
+        this.map!.removeSource(sourceId);
+        console.log('Removed source:', sourceId);
+      }
+    });
+    
+    // Clear the layers array
     this.zoneLayers = [];
+    console.log('All danger zones removed');
   }
 
   getZoneColor(level: string): string {
@@ -293,25 +311,110 @@ export class HomePage implements OnInit, OnDestroy {
 
 
   loadZones() {
-    this.zoneEngine.zones$.subscribe(zones => {
-      this.zones = zones;
-      if (this.map && this.isHeatmapVisible) {
-        this.updateHeatmap();
+    console.log('Loading zones...');
+    this.zoneEngine.zones$.subscribe({
+      next: (zones) => {
+        console.log('Zones loaded from service:', zones);
+        
+        // If no zones from service, add some sample zones for testing
+        if (!zones || zones.length === 0) {
+          console.log('No zones from service, adding sample zones');
+          this.zones = this.getSampleZones();
+        } else {
+          this.zones = zones;
+        }
+        
+        console.log('Final zones array:', this.zones);
+        if (this.map && this.isHeatmapVisible) {
+          console.log('Updating heatmap with zones:', this.zones.length);
+          this.updateHeatmap();
+        }
+      },
+      error: (error) => {
+        console.error('Error loading zones:', error);
+        // Fallback to sample zones
+        this.zones = this.getSampleZones();
+        if (this.map && this.isHeatmapVisible) {
+          this.updateHeatmap();
+        }
       }
     });
   }
 
+  private getSampleZones(): DangerZone[] {
+    return [
+      {
+        id: 'sample-zone-1',
+        name: 'Sample Danger Zone',
+        level: 'Danger',
+        coordinates: [
+          [123.9043, 10.3176],
+          [123.9062, 10.3179],
+          [123.9067, 10.3193],
+          [123.9048, 10.3192],
+          [123.9043, 10.3176]
+        ],
+        timeSlots: [
+          { startHour: 0, endHour: 24, baseSeverity: 8 }
+        ],
+        incidents: [
+          { id: '1', timestamp: new Date(), severity: 8 }
+        ],
+        currentSeverity: 8
+      },
+      {
+        id: 'sample-zone-2',
+        name: 'Sample Caution Zone',
+        level: 'Caution',
+        coordinates: [
+          [123.9080, 10.3180],
+          [123.9100, 10.3185],
+          [123.9105, 10.3200],
+          [123.9085, 10.3195],
+          [123.9080, 10.3180]
+        ],
+        timeSlots: [
+          { startHour: 0, endHour: 24, baseSeverity: 5 }
+        ],
+        incidents: [
+          { id: '2', timestamp: new Date(), severity: 5 }
+        ],
+        currentSeverity: 5
+      }
+    ];
+  }
+
   updateHeatmap() {
+    console.log('updateHeatmap called, map loaded:', !!this.map, 'style loaded:', this.map?.isStyleLoaded());
     if (!this.map || !this.map.isStyleLoaded()) {
+      console.log('Map not ready, will retry when loaded');
+      this.map?.once('styledata', () => {
+        this.updateHeatmap();
+      });
       return;
     }
 
+    console.log('Removing existing danger zones...');
     this.removeDangerZones();
 
+    if (this.zones.length === 0) {
+      console.log('No zones available for heatmap');
+      return;
+    }
+
+    console.log('Adding zones to heatmap:', this.zones.length);
     this.zones.forEach((zone: DangerZone) => {
       const sourceId = `zone-${zone.id}`;
       const fillLayerId = `${sourceId}-fill`;
       const outlineLayerId = `${sourceId}-outline`;
+
+      console.log('Adding zone:', zone.id, 'with coordinates:', zone.coordinates);
+
+      // Check if source already exists and remove it
+      if (this.map!.getSource(sourceId)) {
+        console.log('Source already exists, removing:', sourceId);
+        this.map!.removeSource(sourceId);
+      }
 
       this.map!.addSource(sourceId, {
         type: 'geojson',
@@ -375,14 +478,14 @@ export class HomePage implements OnInit, OnDestroy {
       navigator.vibrate([300, 100, 300, 100, 300]);
     }
 
-    const user = await this.afAuth.currentUser;
-    if (!user || !this.currentLocation) {
-      this.showPanicAlert('Error: Unable to get user location or authentication');
-      this.isPanicActive = false;
-      return;
-    }
-
     try {
+      const user = await this.afAuth.currentUser;
+      if (!user || !this.currentLocation) {
+        this.showPanicAlert('Error: Unable to get user location or authentication');
+        this.isPanicActive = false;
+        return;
+      }
+
       const userDoc = await this.firestore.collection('users').doc(user.uid).get().toPromise();
       const userData = userDoc?.data() as any;
 
@@ -444,10 +547,25 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   toggleHeatmap() {
+    console.log('Toggle heatmap called, current state:', this.isHeatmapVisible);
+    
+    // Toggle the state
     this.isHeatmapVisible = !this.isHeatmapVisible;
+    console.log('New heatmap state:', this.isHeatmapVisible);
+    
     if (this.isHeatmapVisible) {
-      this.updateHeatmap();
+      console.log('Showing heatmap...');
+      // Ensure map is ready before updating heatmap
+      if (this.map && this.map.isStyleLoaded()) {
+        this.updateHeatmap();
+      } else if (this.map) {
+        // Wait for map to be ready
+        this.map.once('styledata', () => {
+          this.updateHeatmap();
+        });
+      }
     } else {
+      console.log('Hiding heatmap...');
       this.removeDangerZones();
     }
   }

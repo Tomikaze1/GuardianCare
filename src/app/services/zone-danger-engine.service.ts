@@ -38,15 +38,33 @@ export class ZoneDangerEngineService {
   };
 
   constructor(private firebaseService: FirebaseService) {
-    this.loadZones();
+    // Defer initialization to avoid injection context issues
+    setTimeout(() => {
+      this.loadZones();
+    }, 100);
+    
+    // Set up periodic updates
     setInterval(() => this.updateAllZones(), 60 * 60 * 1000);
   }
 
   private loadZones() {
-    this.firebaseService.getDocuments('dangerZones').subscribe(zones => {
-      this.zones.next(zones as DangerZone[]);
-      this.updateAllZones();
-    });
+    try {
+      this.firebaseService.getDocuments('dangerZones').subscribe({
+        next: (zones) => {
+          console.log('ZoneDangerEngineService: Zones loaded from Firestore:', zones);
+          this.zones.next(zones as DangerZone[]);
+          this.updateAllZones();
+        },
+        error: (error) => {
+          console.error('ZoneDangerEngineService: Error loading zones:', error);
+          // Initialize with empty array if there's an error
+          this.zones.next([]);
+        }
+      });
+    } catch (error) {
+      console.error('ZoneDangerEngineService: Error in loadZones:', error);
+      this.zones.next([]);
+    }
   }
 
   public processIncident(location: { lat: number; lng: number }, severity: 'low' | 'medium' | 'high') {
@@ -66,11 +84,21 @@ export class ZoneDangerEngineService {
   }
 
   private updateAllZones() {
-    const updatedZones = this.zones.value.map(zone => 
-      this.calculateZoneDanger(zone)
-    );
-    this.zones.next(updatedZones);
-    this.syncToFirestore(updatedZones);
+    try {
+      const currentZones = this.zones.value;
+      if (!currentZones || currentZones.length === 0) {
+        console.log('ZoneDangerEngineService: No zones to update');
+        return;
+      }
+      
+      const updatedZones = currentZones.map(zone => 
+        this.calculateZoneDanger(zone)
+      );
+      this.zones.next(updatedZones);
+      this.syncToFirestore(updatedZones);
+    } catch (error) {
+      console.error('ZoneDangerEngineService: Error updating zones:', error);
+    }
   }
 
   private calculateZoneDanger(zone: DangerZone): DangerZone {
