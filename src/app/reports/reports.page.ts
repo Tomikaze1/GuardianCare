@@ -1,34 +1,9 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
-import { Geolocation } from '@capacitor/geolocation';
 import { AlertController, LoadingController, ToastController } from '@ionic/angular';
-import { IncidentService } from '../services/incident.service';
 import { LocationService } from '../services/location.service';
+import { IncidentService } from '../services/incident.service';
 import * as mapboxgl from 'mapbox-gl';
-
-interface IncidentType {
-  value: string;
-  label: string;
-  icon: string;
-}
-
-interface SeverityLevel {
-  value: string;
-  label: string;
-}
-
-interface MediaItem {
-  url: string;
-  type: 'image' | 'video';
-  file?: File;
-}
-
-interface LocationData {
-  lat: number;
-  lng: number;
-  address: string;
-}
 
 @Component({
   selector: 'app-reports',
@@ -36,119 +11,59 @@ interface LocationData {
   styleUrls: ['./reports.page.scss'],
   standalone: false
 })
-export class ReportsPage implements OnInit, OnDestroy {
+export class ReportsPage implements OnInit {
   reportForm: FormGroup;
-  isSubmitting = false;
-  selectedIncidentType = '';
-  selectedSeverity = '';
-  uploadedMedia: MediaItem[] = [];
-  currentLocation: LocationData | null = null;
-  
-  // Mapbox properties
   map: mapboxgl.Map | null = null;
-  marker: mapboxgl.Marker | null = null;
+  currentLocation: { lat: number; lng: number } | null = null;
+  selectedLocation: { lat: number; lng: number } | null = null;
+  isAnonymous = false;
 
-  incidentTypes: IncidentType[] = [
-    { value: 'theft', label: 'Theft', icon: 'bag' },
-    { value: 'assault', label: 'Assault', icon: 'person' },
-    { value: 'vandalism', label: 'Vandalism', icon: 'hammer' },
-    { value: 'suspicious', label: 'Suspicious Activity', icon: 'eye' },
-    { value: 'accident', label: 'Accident', icon: 'car' },
-    { value: 'fire', label: 'Fire', icon: 'flame' },
-    { value: 'medical', label: 'Medical Emergency', icon: 'medical' },
-    { value: 'other', label: 'Other', icon: 'ellipsis-horizontal' }
-  ];
-
-  severityLevels: SeverityLevel[] = [
-    { value: 'low', label: 'Low' },
-    { value: 'medium', label: 'Medium' },
-    { value: 'high', label: 'High' }
+  incidentTypes = [
+    { value: 'crime', label: 'Crime', icon: 'shield-outline' },
+    { value: 'accident', label: 'Accident', icon: 'car-outline' },
+    { value: 'emergency', label: 'Emergency', icon: 'medical-outline' },
+    { value: 'suspicious', label: 'Suspicious Activity', icon: 'eye-outline' }
   ];
 
   constructor(
     private formBuilder: FormBuilder,
-    private incidentService: IncidentService,
     private locationService: LocationService,
+    private incidentService: IncidentService,
     private alertController: AlertController,
     private loadingController: LoadingController,
     private toastController: ToastController
   ) {
     this.reportForm = this.formBuilder.group({
+      type: ['', Validators.required],
       description: ['', [Validators.required, Validators.minLength(10)]],
+      severity: ['medium', Validators.required],
+      media: [[]],
       anonymous: [false]
     });
   }
 
   ngOnInit() {
-    this.getCurrentLocation();
+    this.initializeLocation();
   }
 
-  ngOnDestroy() {
-    if (this.map) {
-      this.map.remove();
-    }
-  }
-
-  selectIncidentType(type: string) {
-    this.selectedIncidentType = type;
-  }
-
-  selectSeverity(severity: string) {
-    this.selectedSeverity = severity;
-  }
-
-  async getCurrentLocation() {
+  private async initializeLocation() {
     try {
-      const loading = await this.loadingController.create({
-        message: 'Getting your location...',
-        spinner: 'crescent'
-      });
-      await loading.present();
-
-      const coordinates = await Geolocation.getCurrentPosition({
-        enableHighAccuracy: true,
-        timeout: 10000
-      });
-
-      const address = await this.locationService.reverseGeocode(
-        coordinates.coords.latitude,
-        coordinates.coords.longitude
-      );
-
-      this.currentLocation = {
-        lat: coordinates.coords.latitude,
-        lng: coordinates.coords.longitude,
-        address: address
-      };
-
-      await loading.dismiss();
-      
-      // Initialize map after getting location
-      setTimeout(() => {
-        this.initializeMap();
-      }, 100);
-
+      this.currentLocation = await this.locationService.getCurrentLocation();
+      this.selectedLocation = this.currentLocation;
+      this.initializeMap();
     } catch (error) {
       console.error('Error getting location:', error);
-      await this.loadingController.dismiss();
-      
-      const toast = await this.toastController.create({
-        message: 'Unable to get current location. Please try again.',
-        duration: 3000,
-        color: 'warning',
-        position: 'top'
-      });
-      await toast.present();
+      this.currentLocation = { lat: 10.3111, lng: 123.8931 };
+      this.selectedLocation = this.currentLocation;
+      this.initializeMap();
     }
   }
 
-  initializeMap() {
+  private initializeMap() {
     if (!this.currentLocation) return;
-    
-    // Set Mapbox access token
+
     (mapboxgl as any).accessToken = 'pk.eyJ1IjoidG9taWthemUxIiwiYSI6ImNtY25rM3NxazB2ZG8ybHFxeHVoZWthd28ifQ.Vnf9pMEQAryEI2rMJeMQGQ';
-    
-    // Initialize map
+
     this.map = new mapboxgl.Map({
       container: 'map',
       style: 'mapbox://styles/mapbox/streets-v11',
@@ -156,211 +71,147 @@ export class ReportsPage implements OnInit, OnDestroy {
       zoom: 15
     });
 
-    // Add navigation controls
-    this.map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    this.map.addControl(new mapboxgl.NavigationControl());
 
-    // Create custom marker element
     const markerElement = document.createElement('div');
     markerElement.className = 'custom-marker';
-    markerElement.style.backgroundImage = 'url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDOC4xMyAyIDUgNS4xMyA1IDlDNSAxNC4yNSAxMiAyMiAxMiAyMkMxMiAyMiAxOSAxNC4yNSAxOSA5QzE5IDUuMTMgMTUuODcgMiAxMiAyWk0xMiAxMS41QzEwLjYyIDExLjUgOS41IDEwLjM4IDkuNSA5QzkuNSA3LjYyIDEwLjYyIDYuNSAxMiA2LjVDMTMuMzggNi41IDE0LjUgNy42MiAxNC41IDlDMTQuNSAxMC4zOCAxMy4zOCAxMS41IDEyIDExLjVaIiBmaWxsPSIjNjY3ZWVhIi8+Cjwvc3ZnPgo=)';
-    markerElement.style.backgroundSize = 'contain';
-    markerElement.style.width = '30px';
-    markerElement.style.height = '30px';
+    markerElement.style.width = '20px';
+    markerElement.style.height = '20px';
+    markerElement.style.backgroundColor = '#ff4444';
+    markerElement.style.borderRadius = '50%';
+    markerElement.style.border = '2px solid white';
+    markerElement.style.cursor = 'pointer';
 
-    // Add marker to map
-    this.marker = new mapboxgl.Marker(markerElement)
+    new mapboxgl.Marker(markerElement)
       .setLngLat([this.currentLocation.lng, this.currentLocation.lat])
       .addTo(this.map);
 
-    // Add click event to allow users to adjust location
     this.map.on('click', (e) => {
-      this.updateLocationFromMap(e.lngLat.lng, e.lngLat.lat);
+      this.selectedLocation = {
+        lat: e.lngLat.lat,
+        lng: e.lngLat.lng
+      };
+      
+      if (this.map) {
+        this.map.getSource('selected-location') ? 
+          this.map.removeLayer('selected-location') : null;
+        this.map.getSource('selected-location') ? 
+          this.map.removeSource('selected-location') : null;
+
+        this.map.addSource('selected-location', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'Point',
+              coordinates: [e.lngLat.lng, e.lngLat.lat]
+            }
+          }
+        });
+
+        this.map.addLayer({
+          id: 'selected-location',
+          type: 'circle',
+          source: 'selected-location',
+          paint: {
+            'circle-radius': 8,
+            'circle-color': '#ff4444',
+            'circle-stroke-color': '#ffffff',
+            'circle-stroke-width': 2
+          }
+        });
+      }
     });
 
-    // Add map load event
     this.map.on('load', () => {
       console.log('Map loaded successfully');
     });
   }
 
-  async updateLocationFromMap(lng: number, lat: number) {
+  async onSubmit() {
+    if (this.reportForm.invalid) {
+      await this.showAlert('Error', 'Please fill in all required fields correctly.');
+      return;
+    }
+
+    if (!this.selectedLocation) {
+      await this.showAlert('Error', 'Please select a location on the map.');
+      return;
+    }
+
+    const loading = await this.loadingController.create({
+      message: 'Submitting report...'
+    });
+    await loading.present();
+
     try {
-      const address = await this.locationService.reverseGeocode(lat, lng);
-      
-      this.currentLocation = {
-        lat: lat,
-        lng: lng,
-        address: address
+      const formData = this.reportForm.value;
+      const locationWithAddress = await this.locationService.getAddressFromCoordinates(
+        this.selectedLocation.lat,
+        this.selectedLocation.lng
+      );
+
+      const incidentData = {
+        type: formData.type,
+        description: formData.description,
+        location: {
+          lat: this.selectedLocation.lat,
+          lng: this.selectedLocation.lng,
+          address: locationWithAddress
+        },
+        severity: formData.severity,
+        reporterId: 'anonymous',
+        reporterName: formData.anonymous ? 'Anonymous' : 'User',
+        media: formData.media || [],
+        anonymous: formData.anonymous
       };
 
-      // Update marker position
-      if (this.marker) {
-        this.marker.setLngLat([lng, lat]);
-      }
+      await this.incidentService.addIncident(incidentData).toPromise();
 
-      const toast = await this.toastController.create({
-        message: 'Location updated successfully',
-        duration: 2000,
-        color: 'success',
-        position: 'top'
-      });
-      await toast.present();
+      await this.showToast('Report submitted successfully!');
+      this.reportForm.reset();
+      this.selectedLocation = this.currentLocation;
 
     } catch (error) {
-      console.error('Error updating location:', error);
+      console.error('Error submitting report:', error);
+      await this.showAlert('Error', 'Failed to submit report. Please try again.');
+    } finally {
+      await loading.dismiss();
     }
   }
 
-  async refreshLocation() {
-    await this.getCurrentLocation();
-  }
-
-  async takePicture() {
-    try {
-      const image = await Camera.getPhoto({
-        quality: 80,
-        allowEditing: false,
-        resultType: CameraResultType.DataUrl,
-        source: CameraSource.Camera
-      });
-
-      if (image.dataUrl) {
-        this.uploadedMedia.push({
-          url: image.dataUrl,
-          type: 'image'
-        });
-      }
-    } catch (error) {
-      console.error('Error taking picture:', error);
-      const toast = await this.toastController.create({
-        message: 'Unable to take picture. Please try again.',
-        duration: 3000,
-        color: 'danger',
-        position: 'top'
-      });
-      await toast.present();
-    }
-  }
-
-  async selectFromGallery() {
-    try {
-      const image = await Camera.getPhoto({
-        quality: 80,
-        allowEditing: false,
-        resultType: CameraResultType.DataUrl,
-        source: CameraSource.Photos
-      });
-
-      if (image.dataUrl) {
-        this.uploadedMedia.push({
-          url: image.dataUrl,
-          type: 'image'
-        });
-      }
-    } catch (error) {
-      console.error('Error selecting from gallery:', error);
-      const toast = await this.toastController.create({
-        message: 'Unable to select image. Please try again.',
-        duration: 3000,
-        color: 'danger',
-        position: 'top'
-      });
-      await toast.present();
-    }
-  }
-
-  removeMedia(index: number) {
-    this.uploadedMedia.splice(index, 1);
-  }
-
-  async callEmergency() {
+  private async showAlert(header: string, message: string) {
     const alert = await this.alertController.create({
-      header: 'Emergency Services',
-      message: 'This will call emergency services (911). Continue?',
-      buttons: [
-        {
-          text: 'Cancel',
-          role: 'cancel'
-        },
-        {
-          text: 'Call',
-          handler: () => {
-            window.open('tel:911', '_system');
-          }
-        }
-      ]
+      header,
+      message,
+      buttons: ['OK']
     });
-
     await alert.present();
   }
 
-  async submitReport() {
-  if (!this.reportForm.valid || !this.selectedIncidentType || !this.selectedSeverity || !this.currentLocation) {
+  private async showToast(message: string) {
     const toast = await this.toastController.create({
-      message: 'Please fill in all required fields.',
+      message,
       duration: 3000,
-      color: 'warning',
-      position: 'top'
+      position: 'bottom'
     });
     await toast.present();
-    return;
   }
 
-  this.isSubmitting = true;
-
-  try {
-    const reportData = {
-      type: this.selectedIncidentType,
-      severity: this.selectedSeverity,
-      description: this.reportForm.value.description,
-      location: this.currentLocation,
-      media: this.uploadedMedia,
-      anonymous: this.reportForm.value.anonymous,
-      timestamp: new Date().toISOString(),
-      status: 'pending'
-    };
-
-    // Type assertion as temporary workaround
-    await (this.incidentService as any).submitReport(reportData);
-
-    const toast = await this.toastController.create({
-      message: 'Report submitted successfully. Thank you for helping keep the community safe!',
-      duration: 4000,
-      color: 'success',
-      position: 'top'
-    });
-    await toast.present();
-
-    this.resetForm();
-
-  } catch (error) {
-    console.error('Error submitting report:', error);
-    const toast = await this.toastController.create({
-      message: 'Error submitting report. Please try again.',
-      duration: 3000,
-      color: 'danger',
-      position: 'top'
-    });
-    await toast.present();
-  } finally {
-    this.isSubmitting = false;
-  }
-}
-
-
-  private resetForm() {
-    this.reportForm.reset();
-    this.selectedIncidentType = '';
-    this.selectedSeverity = '';
-    this.uploadedMedia = [];
-    this.reportForm.patchValue({ anonymous: false });
-    
-    // Reset map if exists
-    if (this.map && this.marker) {
-      this.marker.remove();
-      this.map.remove();
-      this.map = null;
-      this.marker = null;
+  onFileSelected(event: any) {
+    const files = event.target.files;
+    if (files) {
+      const currentMedia = this.reportForm.get('media')?.value || [];
+      this.reportForm.patchValue({
+        media: [...currentMedia, ...Array.from(files)]
+      });
     }
+  }
+
+  removeFile(index: number) {
+    const currentMedia = this.reportForm.get('media')?.value || [];
+    currentMedia.splice(index, 1);
+    this.reportForm.patchValue({ media: currentMedia });
   }
 }

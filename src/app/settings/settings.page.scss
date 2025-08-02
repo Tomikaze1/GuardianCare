@@ -16,3 +16,22 @@
     }
   }
 }
+
+.language-buttons {
+  display: flex;
+  justify-content: space-around;
+  padding: 16px;
+  gap: 10px;
+  
+  ion-button {
+    flex: 1;
+    --border-radius: 8px;
+    font-weight: bold;
+    
+    &.active {
+      --background: var(--ion-color-primary);
+      --color: white;
+      --border-color: var(--ion-color-primary);
+    }
+  }
+}

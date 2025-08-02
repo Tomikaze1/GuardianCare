@@ -7,10 +7,34 @@
 <ion-content>
   <ion-item>
     <ion-label>{{ 'SETTINGS.LANGUAGE' | translate }}</ion-label>
-    <ion-select [(ngModel)]="currentLanguage" (ionChange)="setLanguage($event.detail.value)">
-      <ion-select-option *ngFor="let language of languages" [value]="language.code">{{ language.name }}</ion-select-option>
-    </ion-select>
   </ion-item>
+  
+  <div class="language-buttons">
+    <ion-button 
+      (click)="changeLanguage('en')" 
+      [class.active]="currentLanguage === 'en'"
+      fill="outline">
+      EN
+    </ion-button>
+    <ion-button 
+      (click)="changeLanguage('es')" 
+      [class.active]="currentLanguage === 'es'"
+      fill="outline">
+      ES
+    </ion-button>
+    <ion-button 
+      (click)="changeLanguage('fr')" 
+      [class.active]="currentLanguage === 'fr'"
+      fill="outline">
+      FR
+    </ion-button>
+    <ion-button 
+      (click)="changeLanguage('ja')" 
+      [class.active]="currentLanguage === 'ja'"
+      fill="outline">
+      JA
+    </ion-button>
+  </div>
 
   <div *ngIf="isAdmin" class="admin-section">
     <ion-item-divider>

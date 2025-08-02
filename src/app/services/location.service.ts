@@ -1,104 +1,136 @@
 import { Injectable } from '@angular/core';
-import { Geolocation } from '@capacitor/geolocation';
-import { BehaviorSubject } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, Observable } from 'rxjs';
+
+export interface Location {
+  lat: number;
+  lng: number;
+  address?: string;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class LocationService {
-  private currentLocation = new BehaviorSubject<{lat: number, lng: number} | null>(null);
-  currentLocation$ = this.currentLocation.asObservable();
+  private currentLocationSubject = new BehaviorSubject<Location | null>(null);
+  public currentLocation$ = this.currentLocationSubject.asObservable();
 
-  constructor(private http: HttpClient) {
-    this.startTracking();
+  constructor() {
+    this.initializeLocation();
   }
 
-  private async startTracking() {
+  private async initializeLocation() {
     try {
-      Geolocation.watchPosition({ enableHighAccuracy: true }, (position) => {
-        if (position) {
-          this.currentLocation.next({
+      const location = await this.getCurrentLocation();
+      this.currentLocationSubject.next(location);
+    } catch (error) {
+      console.error('Error initializing location:', error);
+    }
+  }
+
+  async getCurrentLocation(): Promise<Location> {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation is not supported by this browser'));
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const location: Location = {
             lat: position.coords.latitude,
             lng: position.coords.longitude
-          });
+          };
+          this.currentLocationSubject.next(location);
+          resolve(location);
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          const fallbackLocation: Location = { lat: 10.3111, lng: 123.8931 };
+          this.currentLocationSubject.next(fallbackLocation);
+          resolve(fallbackLocation);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000
         }
-      });
-    } catch (error) {
-      console.error('Location tracking error:', error);
-    }
+      );
+    });
   }
 
-  async getCurrentLocation(): Promise<{ lat: number; lng: number }> {
+  async getAddressFromCoordinates(latitude: number, longitude: number): Promise<string> {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`;
+    
     try {
-      const coordinates = await Geolocation.getCurrentPosition({
-        enableHighAccuracy: true,
-        timeout: 10000
-      });
-      return {
-        lat: coordinates.coords.latitude,
-        lng: coordinates.coords.longitude
-      };
-    } catch (error) {
-      console.error('Error getting location:', error);
-      return { lat: 10.3111, lng: 123.8931 }; // Cebu, Philippines fallback
-    }
-  }
-
-  // Added method for reverse geocoding (required by incident reporting form)
-  async reverseGeocode(latitude: number, longitude: number): Promise<string> {
-    try {
-      // Using OpenStreetMap Nominatim (free alternative)
-      const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`;
+      const response = await fetch(url);
+      const data = await response.json();
       
-      const response = await this.http.get<any>(url).toPromise();
-      
-      if (response && response.display_name) {
-        return response.display_name;
+      if (data.display_name) {
+        return data.display_name;
       } else {
-        throw new Error('No address found');
+        return `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
       }
     } catch (error) {
-      console.error('Reverse geocoding error:', error);
-      // Fallback to coordinates if geocoding fails
+      console.error('Error getting address:', error);
       return `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
     }
   }
 
-  // Get current location with address
-  async getCurrentLocationWithAddress(): Promise<{ lat: number; lng: number; address: string }> {
-    try {
-      const coords = await this.getCurrentLocation();
-      const address = await this.reverseGeocode(coords.lat, coords.lng);
-      
-      return {
-        lat: coords.lat,
-        lng: coords.lng,
-        address: address
-      };
-    } catch (error) {
-      console.error('Error getting location with address:', error);
-      return {
-        lat: 10.3111,
-        lng: 123.8931,
-        address: 'Cebu City, Philippines'
-      };
-    }
+  async getCurrentLocationWithAddress(): Promise<Location> {
+    const location = await this.getCurrentLocation();
+    const address = await this.getAddressFromCoordinates(location.lat, location.lng);
+    
+    return {
+      ...location,
+      address
+    };
   }
 
-  // Calculate distance between two points (useful for proximity features)
-  calculateDistance(pos1: {lat: number, lng: number}, pos2: {lat: number, lng: number}): number {
-    const R = 6371e3; // Earth's radius in meters
-    const φ1 = pos1.lat * Math.PI / 180;
-    const φ2 = pos2.lat * Math.PI / 180;
-    const Δφ = (pos2.lat - pos1.lat) * Math.PI / 180;
-    const Δλ = (pos2.lng - pos1.lng) * Math.PI / 180;
+  watchLocation(): Observable<Location> {
+    return new Observable(observer => {
+      if (!navigator.geolocation) {
+        observer.error(new Error('Geolocation is not supported'));
+        return;
+      }
 
-    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+      const watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          const location: Location = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          this.currentLocationSubject.next(location);
+          observer.next(location);
+        },
+        (error) => {
+          console.error('Error watching location:', error);
+          observer.error(error);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000
+        }
+      );
+
+      return () => {
+        navigator.geolocation.clearWatch(watchId);
+      };
+    });
+  }
+
+  calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371e3;
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
               Math.cos(φ1) * Math.cos(φ2) *
-              Math.sin(Δλ/2) * Math.sin(Δλ/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+              Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-    return R * c; // Distance in meters
+    return R * c;
   }
 }

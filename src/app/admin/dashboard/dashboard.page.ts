@@ -1,102 +1,85 @@
 import { Component, OnInit } from '@angular/core';
-import { AdminService } from '../../services/admin.service';
 import { Chart, registerables } from 'chart.js';
-import { Router } from '@angular/router';
+
+Chart.register(...registerables);
 
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.page.html',
   styleUrls: ['./dashboard.page.scss'],
-  standalone: false,
+  standalone: false
 })
 export class DashboardPage implements OnInit {
-  stats: any = {};
-  recentActivity: any[] = [];
-  pendingIncidentsCount = 0;
-  loading = true;
+  incidentTrendsChart: Chart | null = null;
+  dangerLevelChart: Chart | null = null;
 
-  constructor(private adminService: AdminService, private router: Router) {
-    Chart.register(...registerables);
+  constructor() {}
+
+  ngOnInit() {
+    this.createIncidentTrendsChart();
+    this.createDangerLevelChart();
   }
 
-  async ngOnInit() {
-    await this.loadDashboardData();
-    this.loading = false;
-  }
-
-  async loadDashboardData() {
-    this.adminService.getIncidentAnalytics().subscribe(data => {
-      this.stats = data;
-      this.createCharts();
-    });
-
-    this.adminService.getUserActivity(5).subscribe(activity => {
-      this.recentActivity = activity;
-    });
-
-    this.adminService.getPendingIncidents().subscribe(incidents => {
-      this.pendingIncidentsCount = incidents.length;
-    });
-  }
-
-  createCharts() {
-    // Incident Trends Chart
-    new Chart('incidentTrends', {
-      type: 'line',
-      data: {
-        labels: this.stats.last30Days?.labels || [],
-        datasets: [{
-          label: 'Incidents Reported',
-          data: this.stats.last30Days?.counts || [],
-          borderColor: '#ff5722',
-          backgroundColor: 'rgba(255, 87, 34, 0.1)',
-          fill: true,
-          tension: 0.3
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: { beginAtZero: true }
+  private createIncidentTrendsChart() {
+    const ctx = document.getElementById('incidentTrendsChart') as HTMLCanvasElement;
+    if (ctx) {
+      this.incidentTrendsChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+          datasets: [{
+            label: 'Incidents',
+            data: [12, 19, 3, 5, 2, 3],
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'top',
+            },
+            title: {
+              display: true,
+              text: 'Incident Trends'
+            }
+          }
         }
-      }
-    });
-
-    // Danger Level Chart
-    new Chart('dangerLevels', {
-      type: 'doughnut',
-      data: {
-        labels: ['Danger', 'Caution', 'Neutral', 'Safe'],
-        datasets: [{
-          data: [
-            this.stats.zoneStats?.danger || 0,
-            this.stats.zoneStats?.caution || 0,
-            this.stats.zoneStats?.neutral || 0,
-            this.stats.zoneStats?.safe || 0
-          ],
-          backgroundColor: [
-            '#f44336',
-            '#ff9800',
-            '#ffeb3b',
-            '#4caf50'
-          ]
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false
-      }
-    });
+      });
+    }
   }
 
-  refreshData(event: any) {
-    this.loadDashboardData().then(() => {
-      event.target.complete();
-    });
-  }
-
-  goBack() {
-    this.router.navigate(['/tabs/settings']);
+  private createDangerLevelChart() {
+    const ctx = document.getElementById('dangerLevelChart') as HTMLCanvasElement;
+    if (ctx) {
+      this.dangerLevelChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Safe', 'Neutral', 'Caution', 'Danger'],
+          datasets: [{
+            data: [12, 19, 3, 5],
+            backgroundColor: [
+              'rgb(75, 192, 192)',
+              'rgb(255, 205, 86)',
+              'rgb(255, 159, 64)',
+              'rgb(255, 99, 132)'
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'top',
+            },
+            title: {
+              display: true,
+              text: 'Danger Level Distribution'
+            }
+          }
+        }
+      });
+    }
   }
 }

@@ -16,10 +16,6 @@ const routes: Routes = [
         loadChildren: () => import('../reports/reports.module').then(m => m.ReportsPageModule)
       },
       {
-        path: 'heatmap',
-        loadChildren: () => import('../heatmap/heatmap.module').then(m => m.HeatmapPageModule)
-      },
-      {
         path: 'settings',
         loadChildren: () => import('../settings/settings.module').then(m => m.SettingsPageModule)
       },

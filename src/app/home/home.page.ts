@@ -1,233 +1,129 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { LocationService } from '../services/location.service';
-import * as mapboxgl from 'mapbox-gl';
-import { HttpClient } from '@angular/common/http';
+import { AlertController, LoadingController, ToastController } from '@ionic/angular';
 import { TranslateService } from '@ngx-translate/core';
-import { ZoneService } from '../services/zone.service';  
-import { AlertService } from '../services/alert.service';
+import { LocationService } from '../services/location.service';
 import { ZoneDangerEngineService, DangerZone } from '../services/zone-danger-engine.service';
-import { IncidentService } from '../services/incident.service';
-import { AngularFireAuth } from '@angular/fire/compat/auth';
-import { AngularFirestore } from '@angular/fire/compat/firestore';
-import { AlertController, ToastController } from '@ionic/angular';  
+import { AuthService } from '../services/auth.service';
+import { FirebaseService } from '../services/firebase.service';
+import * as mapboxgl from 'mapbox-gl';
 
 @Component({
   selector: 'app-home',
   templateUrl: './home.page.html',
   styleUrls: ['./home.page.scss'],
-  standalone: false,
+  standalone: false
 })
 export class HomePage implements OnInit, OnDestroy {
-  map: mapboxgl.Map | undefined;
-  currentLocation: { lat: number; lng: number } | undefined;
+  map: mapboxgl.Map | null = null;
+  currentLocation: { lat: number; lng: number } | null = null;
+  zones: DangerZone[] = [];
+  zoneLayers: string[] = [];
   isHeatmapVisible = false;
+  isPanicActive = false;
   inDangerZone = false;
   currentLanguage = 'en';
-  zoneLayers: string[] = [];
-  zones: DangerZone[] = [];
-  isPanicActive = false;
-
-  languages = [
-    { code: 'en', name: 'English' },
-    { code: 'es', name: 'Español' },
-    { code: 'fr', name: 'Français' },
-    { code: 'ja', name: '日本語' }
-  ];
+  private subscriptions: any[] = [];
 
   constructor(
     private locationService: LocationService,
-    private http: HttpClient,
-    private translate: TranslateService,
-    private zoneService: ZoneService,
-    private alertService: AlertService,
     private zoneEngine: ZoneDangerEngineService,
-    private incidentService: IncidentService,
-    private afAuth: AngularFireAuth,
-    private firestore: AngularFirestore,
+    private authService: AuthService,
+    private firebaseService: FirebaseService,
     private alertController: AlertController,
-    private toastController: ToastController
-  ) {
-    this.translate.setDefaultLang('en');
-  }
+    private loadingController: LoadingController,
+    private toastController: ToastController,
+    private translate: TranslateService
+  ) {}
 
   ngOnInit() {
-    this.getCurrentLocation();
-    this.setupLocationMonitoring();
-    this.loadZones();
+    this.initializeApp();
+    this.loadUserLanguage();
   }
 
   ngOnDestroy() {
-    if (this.map) this.map.remove();
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+    if (this.map) {
+      this.map.remove();
+    }
   }
 
-  async getCurrentLocation() {
+  private async initializeApp() {
     try {
-      this.currentLocation = await this.locationService.getCurrentLocation();
-    } catch {
-      this.currentLocation = { lat: 10.3173, lng: 123.9058 };
-    }
+      const location = await this.locationService.getCurrentLocation();
+      this.currentLocation = location;
+      this.initializeMap();
+    } catch (error) {
+      console.error('Error initializing app:', error);
+      this.currentLocation = { lat: 10.3111, lng: 123.8931 };
     this.initializeMap();
   }
+  }
 
-  setupLocationMonitoring() {
-    this.locationService.currentLocation$.subscribe(loc => {
-      if (loc) {
-        this.currentLocation = loc;
-        this.checkZoneSafety();
-      }
+  private loadUserLanguage() {
+    const savedLanguage = localStorage.getItem('userLanguage');
+    if (savedLanguage) {
+      this.currentLanguage = savedLanguage;
+      this.translate.use(savedLanguage);
+    }
+  }
+
+  async changeLanguage(lang: string) {
+    this.currentLanguage = lang;
+    this.translate.use(lang);
+    localStorage.setItem('userLanguage', lang);
+    
+    const message = this.translate.instant('ALERTS.LANGUAGE_CHANGED');
+    await this.showToast(message);
+  }
+
+  private async showToast(message: string) {
+    const toast = await this.toastController.create({
+      message,
+      duration: 2000,
+      position: 'bottom'
     });
-  }
-
-  checkZoneSafety() {
-    if (!this.currentLocation || !this.map || this.zoneLayers.length === 0) return;
-    const features = this.map.queryRenderedFeatures(
-      this.map.project([this.currentLocation.lng, this.currentLocation.lat]),
-      { layers: this.zoneLayers }
-    );
-    if (features.length > 0) {
-      const zoneLevel = features[0].properties?.['level'] || 'Unknown';
-      this.handleZoneEnter(zoneLevel);
-    } else {
-      this.inDangerZone = false;
-    }
-  }
-
-  handleZoneEnter(zoneLevel: string) {
-    if (zoneLevel === 'Danger' || zoneLevel === 'Caution') {
-      this.inDangerZone = true;
-      this.showWarningAlert(zoneLevel);
-      this.autoRouteToSafeZone();
-    } else {
-      this.inDangerZone = false;
-    }
-  }
-
-  showWarningAlert(zoneLevel: string) {
-    const alertMessage = this.translate.instant(
-      zoneLevel === 'Danger' ? 'DANGER_ZONE_WARNING' : 'CAUTION_ZONE_WARNING'
-    );
-    alert(alertMessage);
+    await toast.present();
   }
 
   initializeMap() {
     if (!this.currentLocation) return;
     (mapboxgl as any).accessToken = 'pk.eyJ1IjoidG9taWthemUxIiwiYSI6ImNtY25rM3NxazB2ZG8ybHFxeHVoZWthd28ifQ.Vnf9pMEQAryEI2rMJeMQGQ';
+    
+    const mapStyle = this.isHeatmapVisible ? 'mapbox://styles/mapbox/dark-v10' : 'mapbox://styles/mapbox/streets-v11';
+    
     this.map = new mapboxgl.Map({
       container: 'map',
-      style: 'mapbox://styles/mapbox/streets-v11',
+      style: mapStyle,
       center: [this.currentLocation.lng, this.currentLocation.lat],
-      zoom: 12
+      zoom: 12,
+      interactive: true,
+      trackResize: true,
+      attributionControl: false
     });
 
     new mapboxgl.Marker()
       .setLngLat([this.currentLocation.lng, this.currentLocation.lat])
       .addTo(this.map);
 
-    this.map.addControl(new mapboxgl.NavigationControl());
-    this.map.addControl(new mapboxgl.GeolocateControl({
-      positionOptions: { enableHighAccuracy: true },
-      trackUserLocation: true
-    }));
-
     this.map.on('load', () => {
-      if (this.isHeatmapVisible) this.addDangerZones();
-      this.checkZoneSafety();
-    });
-
-    this.map.on('move', () => this.checkZoneSafety());
-  }
-
-
-
-  addDangerZones() {
-    if (!this.map) return;
-
-    const zones = [
-      {
-        level: 'Safe',
-        coordinates: [
-          [123.9043, 10.3176],
-          [123.9062, 10.3179],
-          [123.9067, 10.3193],
-          [123.9048, 10.3192],
-          [123.9043, 10.3176]
-        ]
-      },
-      {
-        level: 'Neutral',
-        coordinates: [
-          [123.8937, 10.3151],
-          [123.8950, 10.3164],
-          [123.8965, 10.3159],
-          [123.8945, 10.3149]
-        ]
-      },
-      {
-        level: 'Danger',
-        coordinates: [
-          [123.8965, 10.2950],
-          [123.8970, 10.2955],
-          [123.8975, 10.2950],
-          [123.8970, 10.2945]
-        ]
-      },
-      {
-        level: 'Caution',
-        coordinates: [
-          [123.8790, 10.3195],
-          [123.8795, 10.3200],
-          [123.8800, 10.3195],
-          [123.8795, 10.3190]
-        ]
-      }
-    ];
-
-    zones.forEach(zone => {
-      const sourceId = `zone-${zone.level}`;
-      const fillLayerId = `zone-${zone.level}-fill`;
-      const outlineLayerId = `zone-${zone.level}-outline`;
-
-      if (this.map!.getSource(sourceId)) {
-        this.map!.removeLayer(fillLayerId);
-        this.map!.removeLayer(outlineLayerId);
-        this.map!.removeSource(sourceId);
-      }
-
-      this.map!.addSource(sourceId, {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          geometry: {
-            type: 'Polygon',
-            coordinates: [zone.coordinates]
+      console.log('Map loaded in HomePage');
+      setTimeout(() => {
+        this.map!.addControl(new mapboxgl.NavigationControl(), 'top-right');
+        console.log('NavigationControl added.');
+        this.map!.addControl(new mapboxgl.GeolocateControl({
+          positionOptions: {
+            enableHighAccuracy: true
           },
-          properties: {
-            level: zone.level
-          }
-        }
-      });
-
-      this.map!.addLayer({
-        id: fillLayerId,
-        type: 'fill',
-        source: sourceId,
-        paint: {
-          'fill-color': this.getZoneColor(zone.level),
-          'fill-opacity': 0.5
-        }
-      });
-
-      this.map!.addLayer({
-        id: outlineLayerId,
-        type: 'line',
-        source: sourceId,
-        paint: {
-          'line-color': this.getZoneColor(zone.level),
-          'line-width': 2
-        }
-      });
-
-      this.zoneLayers.push(fillLayerId);
+          trackUserLocation: true,
+          showUserHeading: true
+        }), 'top-left');
+        console.log('GeolocateControl added.');
+      }, 500);
+      
+      this.loadZones();
+      if (this.isHeatmapVisible) {
+        this.updateHeatmap();
+      }
     });
   }
 
@@ -236,7 +132,6 @@ export class HomePage implements OnInit, OnDestroy {
     
     console.log('Removing danger zones, current layers:', this.zoneLayers);
     
-    // Remove all layers first
     this.zoneLayers.forEach(layerId => {
       if (this.map!.getLayer(layerId)) {
         this.map!.removeLayer(layerId);
@@ -244,7 +139,6 @@ export class HomePage implements OnInit, OnDestroy {
       }
     });
     
-    // Remove all sources
     this.zones.forEach(zone => {
       const sourceId = `zone-${zone.id}`;
       if (this.map!.getSource(sourceId)) {
@@ -253,62 +147,58 @@ export class HomePage implements OnInit, OnDestroy {
       }
     });
     
-    // Clear the layers array
     this.zoneLayers = [];
     console.log('All danger zones removed');
   }
 
-  getZoneColor(level: string): string {
-    switch (level) {
-      case 'Danger': return '#ff0000';
-      case 'Caution': return '#ffaa00';
-      case 'Neutral': return '#ffff00';
-      case 'Safe': return '#00ff00';
-      default: return '#aaaaaa';
+  async getDirections(destination: [number, number]) {
+    if (!this.currentLocation || !this.map) return;
+
+    const origin = `${this.currentLocation.lng},${this.currentLocation.lat}`;
+    const dest = `${destination[0]},${destination[1]}`;
+    
+    const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${origin};${dest}?geometries=geojson&overview=full&access_token=${(mapboxgl as any).accessToken}`;
+    
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      if (data.routes && data.routes.length > 0) {
+        const route = data.routes[0];
+        
+        if (this.map.getSource('route')) {
+          this.map.removeLayer('route');
+          this.map.removeSource('route');
+        }
+        
+        this.map.addSource('route', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            properties: {},
+            geometry: route.geometry
+          }
+        });
+        
+        this.map.addLayer({
+          id: 'route',
+          type: 'line',
+          source: 'route',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': '#007cbf',
+            'line-width': 4,
+            'line-opacity': 0.8
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching directions:', error);
     }
   }
-
-  autoRouteToSafeZone() {
-    if (!this.map || !this.currentLocation) return;
-    const safeZone = { center: [123.9050, 10.3180] };
-    const origin = `${this.currentLocation.lng.toFixed(6)},${this.currentLocation.lat.toFixed(6)}`;
-    const destination = `${safeZone.center[0].toFixed(6)},${safeZone.center[1].toFixed(6)}`;
-    const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${origin};${destination}?geometries=geojson&overview=full&access_token=${(mapboxgl as any).accessToken}`;
-    this.http.get(url).subscribe((data: any) => {
-      this.drawRoute(data.routes[0].geometry);
-    });
-  }
-
-  drawRoute(route: any) {
-    if (!this.map) return;
-    if (this.map.getSource('route')) {
-      this.map.removeLayer('route');
-      this.map.removeSource('route');
-    }
-    this.map.addSource('route', {
-      type: 'geojson',
-      data: {
-        type: 'Feature',
-        geometry: route,
-        properties: {}
-      }
-    });
-    this.map.addLayer({
-      id: 'route',
-      type: 'line',
-      source: 'route',
-      layout: {
-        'line-join': 'round',
-        'line-cap': 'round'
-      },
-      paint: {
-        'line-color': '#3a7bd5',
-        'line-width': 5
-      }
-    });
-  }
-
-
 
   loadZones() {
     console.log('Loading zones...');
@@ -316,7 +206,6 @@ export class HomePage implements OnInit, OnDestroy {
       next: (zones) => {
         console.log('Zones loaded from service:', zones);
         
-        // If no zones from service, add some sample zones for testing
         if (!zones || zones.length === 0) {
           console.log('No zones from service, adding sample zones');
           this.zones = this.getSampleZones();
@@ -332,11 +221,6 @@ export class HomePage implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error loading zones:', error);
-        // Fallback to sample zones
-        this.zones = this.getSampleZones();
-        if (this.map && this.isHeatmapVisible) {
-          this.updateHeatmap();
-        }
       }
     });
   }
@@ -345,233 +229,238 @@ export class HomePage implements OnInit, OnDestroy {
     return [
       {
         id: 'sample-zone-1',
-        name: 'Sample Danger Zone',
-        level: 'Danger',
+        name: 'Sample Zone 1',
         coordinates: [
-          [123.9043, 10.3176],
-          [123.9062, 10.3179],
-          [123.9067, 10.3193],
-          [123.9048, 10.3192],
-          [123.9043, 10.3176]
+          [123.89, 10.31],
+          [123.90, 10.31],
+          [123.90, 10.32],
+          [123.89, 10.32],
+          [123.89, 10.31]
+        ],
+        level: 'Danger',
+        currentSeverity: 0.8,
+        incidents: [
+          {
+            id: '1',
+            timestamp: new Date(),
+            severity: 8
+          }
         ],
         timeSlots: [
-          { startHour: 0, endHour: 24, baseSeverity: 8 }
-        ],
-        incidents: [
-          { id: '1', timestamp: new Date(), severity: 8 }
-        ],
-        currentSeverity: 8
+          {
+            startHour: 0,
+            endHour: 24,
+            baseSeverity: 8
+          }
+        ]
       },
       {
         id: 'sample-zone-2',
-        name: 'Sample Caution Zone',
-        level: 'Caution',
+        name: 'Sample Zone 2',
         coordinates: [
-          [123.9080, 10.3180],
-          [123.9100, 10.3185],
-          [123.9105, 10.3200],
-          [123.9085, 10.3195],
-          [123.9080, 10.3180]
+          [123.91, 10.33],
+          [123.92, 10.33],
+          [123.92, 10.34],
+          [123.91, 10.34],
+          [123.91, 10.33]
+        ],
+        level: 'Caution',
+        currentSeverity: 0.6,
+        incidents: [
+          {
+            id: '2',
+            timestamp: new Date(),
+            severity: 5
+          }
         ],
         timeSlots: [
-          { startHour: 0, endHour: 24, baseSeverity: 5 }
-        ],
-        incidents: [
-          { id: '2', timestamp: new Date(), severity: 5 }
-        ],
-        currentSeverity: 5
+          {
+            startHour: 0,
+            endHour: 24,
+            baseSeverity: 5
+          }
+        ]
       }
     ];
   }
 
   updateHeatmap() {
-    console.log('updateHeatmap called, map loaded:', !!this.map, 'style loaded:', this.map?.isStyleLoaded());
-    if (!this.map || !this.map.isStyleLoaded()) {
-      console.log('Map not ready, will retry when loaded');
-      this.map?.once('styledata', () => {
-        this.updateHeatmap();
-      });
+    if (!this.map || !this.zones || this.zones.length === 0) {
+      console.log('Cannot update heatmap: map or zones not available');
       return;
     }
 
-    console.log('Removing existing danger zones...');
-    this.removeDangerZones();
+    console.log('Updating heatmap with zones:', this.zones.length);
 
-    if (this.zones.length === 0) {
-      console.log('No zones available for heatmap');
-      return;
-    }
-
-    console.log('Adding zones to heatmap:', this.zones.length);
-    this.zones.forEach((zone: DangerZone) => {
+    this.zones.forEach((zone, index) => {
       const sourceId = `zone-${zone.id}`;
-      const fillLayerId = `${sourceId}-fill`;
-      const outlineLayerId = `${sourceId}-outline`;
+      const layerId = `zone-layer-${zone.id}`;
 
-      console.log('Adding zone:', zone.id, 'with coordinates:', zone.coordinates);
-
-      // Check if source already exists and remove it
       if (this.map!.getSource(sourceId)) {
-        console.log('Source already exists, removing:', sourceId);
+        this.map!.removeLayer(layerId);
         this.map!.removeSource(sourceId);
       }
+
+      const color = this.getZoneColor(zone.level);
 
       this.map!.addSource(sourceId, {
         type: 'geojson',
         data: {
           type: 'Feature',
+          properties: {
+            level: zone.level,
+            severity: zone.currentSeverity,
+            incidents: zone.incidents
+          },
           geometry: {
             type: 'Polygon',
             coordinates: [zone.coordinates]
-          },
-          properties: {
-            level: zone.level,
-            severity: zone.currentSeverity
           }
         }
       });
 
       this.map!.addLayer({
-        id: fillLayerId,
+        id: layerId,
         type: 'fill',
         source: sourceId,
         paint: {
-          'fill-color': [
-            'interpolate',
-            ['linear'],
-            ['get', 'severity'],
-            1, '#00ff00',
-            4, '#ffff00',
-            6, '#ffaa00',
-            8, '#ff0000'
-          ],
-          'fill-opacity': 0.7
+          'fill-color': color,
+          'fill-opacity': 0.6
         }
       });
 
       this.map!.addLayer({
-        id: outlineLayerId,
+        id: `${layerId}-border`,
         type: 'line',
         source: sourceId,
         paint: {
-          'line-color': [
-            'case',
-            ['==', ['get', 'level'], 'Danger'], '#ff0000',
-            ['==', ['get', 'level'], 'Caution'], '#ffaa00',
-            ['==', ['get', 'level'], 'Neutral'], '#ffff00',
-            '#00ff00'
-          ],
-          'line-width': 2
+          'line-color': color,
+          'line-width': 2,
+          'line-opacity': 0.8
         }
       });
 
-      this.zoneLayers.push(fillLayerId, outlineLayerId);
+      this.zoneLayers.push(layerId);
+      this.zoneLayers.push(`${layerId}-border`);
     });
+
+    console.log('Heatmap updated successfully');
   }
 
-  async triggerPanicButton() {
-    if (this.isPanicActive) return;
-
-    this.isPanicActive = true;
-    
-    if (navigator.vibrate) {
-      navigator.vibrate([300, 100, 300, 100, 300]);
+  private getZoneColor(level: string): string {
+    switch (level) {
+      case 'Safe':
+        return '#00ff00';
+      case 'Neutral':
+        return '#ffff00';
+      case 'Caution':
+        return '#ffaa00';
+      case 'Danger':
+        return '#ff0000';
+      default:
+        return '#cccccc';
     }
-
-    try {
-      const user = await this.afAuth.currentUser;
-      if (!user || !this.currentLocation) {
-        this.showPanicAlert('Error: Unable to get user location or authentication');
-        this.isPanicActive = false;
-        return;
-      }
-
-      const userDoc = await this.firestore.collection('users').doc(user.uid).get().toPromise();
-      const userData = userDoc?.data() as any;
-
-      const panicIncident = {
-        id: Date.now().toString(),
-        userId: user.uid,
-        userName: (userData?.firstName + ' ' + userData?.lastName) || 'Unknown User',
-        type: 'emergency',
-        title: 'PANIC ALERT',
-        description: 'User triggered panic button',
-        coordinates: this.currentLocation,
-        timestamp: new Date(),
-        severity: 'high' as const,
-        verified: false,
-        status: 'pending'
-      };
-
-      await this.firestore.collection('incidents').add(panicIncident);
-
-      const alert = await this.alertController.create({
-        header: '🚨 PANIC ALERT SENT',
-        message: `Emergency services and your emergency contacts have been notified of your location at ${this.currentLocation.lat.toFixed(4)}, ${this.currentLocation.lng.toFixed(4)}. Stay safe and follow emergency instructions.`,
-        buttons: [
-          {
-            text: 'OK',
-            handler: () => {
-              this.isPanicActive = false;
-            }
-          }
-        ],
-        cssClass: 'panic-alert'
-      });
-
-      await alert.present();
-
-      const toast = await this.toastController.create({
-        message: '🚨 Panic alert sent! Emergency contacts notified.',
-        duration: 5000,
-        color: 'danger',
-        position: 'top'
-      });
-      await toast.present();
-
-      this.autoRouteToSafeZone();
-    } catch (error) {
-      console.error('Panic button error:', error);
-      this.showPanicAlert('Failed to send panic alert. Please try again.');
-      this.isPanicActive = false;
-    }
-  }
-
-  private async showPanicAlert(message: string) {
-    const alert = await this.alertController.create({
-      header: 'Panic Alert Error',
-      message: message,
-      buttons: ['OK']
-    });
-    await alert.present();
   }
 
   toggleHeatmap() {
     console.log('Toggle heatmap called, current state:', this.isHeatmapVisible);
     
-    // Toggle the state
     this.isHeatmapVisible = !this.isHeatmapVisible;
     console.log('New heatmap state:', this.isHeatmapVisible);
     
     if (this.isHeatmapVisible) {
       console.log('Showing heatmap...');
-      // Ensure map is ready before updating heatmap
-      if (this.map && this.map.isStyleLoaded()) {
-        this.updateHeatmap();
-      } else if (this.map) {
-        // Wait for map to be ready
+      if (this.map) {
+        this.map.setStyle('mapbox://styles/mapbox/dark-v10');
         this.map.once('styledata', () => {
           this.updateHeatmap();
         });
       }
     } else {
       console.log('Hiding heatmap...');
-      this.removeDangerZones();
+      if (this.map) {
+        this.map.setStyle('mapbox://styles/mapbox/streets-v11');
+        this.map.once('styledata', () => {
+          this.removeDangerZones();
+        });
+      }
     }
   }
 
-  changeLanguage(lang: string) {
-    this.currentLanguage = lang;
-    this.translate.use(lang);
+  async triggerPanicButton() {
+    if (this.isPanicActive) return;
+
+    this.isPanicActive = true;
+
+    const alert = await this.alertController.create({
+      header: 'Emergency Alert',
+      message: 'Are you sure you want to send an emergency alert? This will notify authorities and emergency contacts.',
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel',
+          handler: () => {
+            this.isPanicActive = false;
+          }
+        },
+        {
+          text: 'Send Alert',
+          handler: async () => {
+            await this.sendEmergencyAlert();
+          }
+        }
+      ],
+      cssClass: 'panic-alert'
+    });
+
+    await alert.present();
+  }
+
+  private async sendEmergencyAlert() {
+    try {
+      const loading = await this.loadingController.create({
+        message: 'Sending emergency alert...',
+        duration: 3000
+      });
+      await loading.present();
+
+      const user = await this.authService.getCurrentUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      const userDoc = await this.firebaseService.getFirestoreInstance()
+        .collection('users')
+        .doc(user.uid)
+        .get()
+        .toPromise();
+
+      const userData = userDoc?.data() as any;
+      const currentLocation = await this.locationService.getCurrentLocation();
+
+      const alertData = {
+        userId: user.uid,
+        userName: `${userData?.firstName || 'Unknown'} ${userData?.lastName || 'User'}`,
+        userEmail: user.email,
+        location: {
+          lat: currentLocation.lat,
+          lng: currentLocation.lng
+        },
+        timestamp: new Date(),
+        status: 'active',
+        type: 'panic'
+      };
+
+      await this.firebaseService.addDocument('emergencyAlerts', alertData);
+
+      await this.showToast('Emergency alert sent successfully!');
+      console.log('Emergency alert sent:', alertData);
+
+    } catch (error) {
+      console.error('Error sending emergency alert:', error);
+      await this.showToast('Failed to send emergency alert. Please try again.');
+    } finally {
+      this.isPanicActive = false;
+    }
   }
 }

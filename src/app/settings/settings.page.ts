@@ -48,6 +48,15 @@ export class SettingsPage implements OnInit {
     await this.showToast(message);
   }
 
+  async changeLanguage(lang: string) {
+    this.currentLanguage = lang;
+    this.translate.use(lang);
+    localStorage.setItem('userLanguage', lang);
+    
+    const message = this.translate.instant('ALERTS.LANGUAGE_CHANGED');
+    await this.showToast(message);
+  }
+
   async showToast(message: string) {
     const toast = await this.toastController.create({
       message: message,

@@ -1,7 +1,7 @@
 <ion-header>
   <ion-toolbar>
     <ion-buttons slot="start">
-      <ion-button (click)="goBack()">
+      <ion-button routerLink="/tabs/settings">
         <ion-icon name="arrow-back"></ion-icon>
         Back
       </ion-button>
@@ -11,10 +11,6 @@
 </ion-header>
 
 <ion-content>
-  <ion-refresher slot="fixed" (ionRefresh)="refreshData($event)">
-    <ion-refresher-content></ion-refresher-content>
-  </ion-refresher>
-
   <div class="dashboard-container">
     <ion-grid>
       <ion-row>
@@ -28,25 +24,25 @@
                 <ion-row>
                   <ion-col size="6">
                     <div class="stat-card">
-                      <h3>{{ stats.totalIncidents || 0 }}</h3>
+                      <h3>25</h3>
                       <p>Total Incidents</p>
                     </div>
                   </ion-col>
                   <ion-col size="6">
                     <div class="stat-card">
-                      <h3>{{ pendingIncidentsCount }}</h3>
+                      <h3>8</h3>
                       <p>Pending Validation</p>
                     </div>
                   </ion-col>
                   <ion-col size="6">
                     <div class="stat-card">
-                      <h3>{{ stats.activeUsers || 0 }}</h3>
+                      <h3>150</h3>
                       <p>Active Users</p>
                     </div>
                   </ion-col>
                   <ion-col size="6">
                     <div class="stat-card">
-                      <h3>{{ stats.zonesCount || 0 }}</h3>
+                      <h3>12</h3>
                       <p>Danger Zones</p>
                     </div>
                   </ion-col>
@@ -63,7 +59,7 @@
             </ion-card-header>
             <ion-card-content>
               <div class="chart-container">
-                <canvas id="dangerLevels"></canvas>
+                <canvas id="dangerLevelChart"></canvas>
               </div>
             </ion-card-content>
           </ion-card>
@@ -76,7 +72,7 @@
             </ion-card-header>
             <ion-card-content>
               <div class="chart-container">
-                <canvas id="incidentTrends"></canvas>
+                <canvas id="incidentTrendsChart"></canvas>
               </div>
             </ion-card-content>
           </ion-card>
@@ -89,15 +85,26 @@
             </ion-card-header>
             <ion-card-content>
               <ion-list>
-                <ion-item *ngFor="let activity of recentActivity">
+                <ion-item>
                   <ion-label>
-                    <h3>{{ activity.userName || 'System' }}</h3>
-                    <p>{{ activity.action }}</p>
-                    <p>{{ activity.timestamp | date:'medium' }}</p>
+                    <h3>John Doe</h3>
+                    <p>Reported incident in Zone A</p>
+                    <p>{{ '2024-01-15T10:30:00' | date:'medium' }}</p>
                   </ion-label>
                 </ion-item>
-                <ion-item *ngIf="recentActivity.length === 0">
-                  <ion-label>No recent activity</ion-label>
+                <ion-item>
+                  <ion-label>
+                    <h3>Jane Smith</h3>
+                    <p>Updated zone status</p>
+                    <p>{{ '2024-01-15T09:15:00' | date:'medium' }}</p>
+                  </ion-label>
+                </ion-item>
+                <ion-item>
+                  <ion-label>
+                    <h3>System</h3>
+                    <p>Emergency alert triggered</p>
+                    <p>{{ '2024-01-15T08:45:00' | date:'medium' }}</p>
+                  </ion-label>
                 </ion-item>
               </ion-list>
             </ion-card-content>

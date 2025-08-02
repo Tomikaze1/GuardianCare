@@ -6,7 +6,7 @@
     <div class="title-underline"></div>
   </div>
 
-  <form [formGroup]="reportForm" (ngSubmit)="submitReport()" class="report-form">
+  <form [formGroup]="reportForm" (ngSubmit)="onSubmit()" class="report-form">
     <div class="section-header">
       <span>Incident Details</span>
       <div class="section-underline"></div>
@@ -15,9 +15,7 @@
     <div class="form-row incident-types">
       <button *ngFor="let type of incidentTypes"
         type="button"
-        [class.selected]="selectedIncidentType === type.value"
         class="input-box incident-type-btn"
-        (click)="selectIncidentType(type.value)"
         [title]="type.label">
         <ion-icon [name]="type.icon"></ion-icon>
         {{ type.label }}
@@ -47,16 +45,14 @@
 
     <div class="form-row">
       <div class="input-box media-box">
-        <button type="button" (click)="takePicture()" title="Take Photo">
-          <ion-icon name="camera-outline"></ion-icon>
-        </button>
-        <button type="button" (click)="selectFromGallery()" title="Select from Gallery">
+        <input type="file" multiple accept="image/*" (change)="onFileSelected($event)" style="display: none;" #fileInput>
+        <button type="button" (click)="fileInput.click()" title="Select Files">
           <ion-icon name="image-outline"></ion-icon>
         </button>
-        <div class="media-list" *ngIf="uploadedMedia.length > 0">
-          <div class="media-chip" *ngFor="let media of uploadedMedia; let i = index">
-            <img *ngIf="media.type === 'image'" [src]="media.url" alt="media" />
-            <ion-icon name="close" class="remove" (click)="removeMedia(i)" title="Remove"></ion-icon>
+        <div class="media-list" *ngIf="reportForm.get('media')?.value?.length > 0">
+          <div class="media-chip" *ngFor="let media of reportForm.get('media')?.value; let i = index">
+            <span>{{ media.name }}</span>
+            <ion-icon name="close" class="remove" (click)="removeFile(i)" title="Remove"></ion-icon>
           </div>
         </div>
       </div>
@@ -70,10 +66,7 @@
     <div class="form-row">
       <div class="input-box location-box">
         <ion-icon name="location-outline"></ion-icon>
-        <span class="address">{{ currentLocation?.address || "Getting location..." }}</span>
-        <ion-button fill="clear" size="small" (click)="refreshLocation()" title="Refresh Location">
-          <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
-        </ion-button>
+        <span class="address">Location selected on map</span>
         <div id="map" class="mapbox-card"></div>
         <div class="tip">Tap on the map to update the pin</div>
       </div>
@@ -87,13 +80,12 @@
     </div>
 
     <div class="button-row">
-      <ion-button expand="block" color="danger" fill="solid" class="call-btn" (click)="callEmergency()">
+      <ion-button expand="block" color="danger" fill="solid" class="call-btn">
         <ion-icon name="call" slot="start"></ion-icon>
         Emergency Call (911)
       </ion-button>
-      <button type="submit" [disabled]="isSubmitting" class="submit-btn">
-        <ion-spinner *ngIf="isSubmitting"></ion-spinner>
-        <span *ngIf="!isSubmitting">Submit Report</span>
+      <button type="submit" class="submit-btn">
+        <span>Submit Report</span>
       </button>
     </div>
   </form>

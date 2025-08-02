@@ -1,28 +1,56 @@
-<ion-header>
+<ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>Guardian Care Map</ion-title>
+    <ion-title>Guardian Care</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="toggleHeatmap()" [color]="isHeatmapVisible ? 'warning' : 'medium'">
-        <ion-icon [name]="isHeatmapVisible ? 'flame' : 'flame-outline'"></ion-icon>
-        {{ isHeatmapVisible ? 'Hide' : 'Show' }} Heatmap
+      <ion-button>
+        <ion-icon name="notifications"></ion-icon>
+      </ion-button>
+      <ion-button>
+        <ion-icon name="person"></ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content fullscreen>
-  <div id="map" style="height: 100vh; width: 100%;"></div>
+<ion-content [fullscreen]="true">
+  <div id="map"></div>
+  
+  <!-- Heatmap Legend -->
+  <div class="heatmap-legend" *ngIf="isHeatmapVisible">
+    <div class="legend-title">Zone Levels</div>
+    <div class="legend-item">
+      <div class="legend-color safe"></div>
+      <span class="legend-label">Safe</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color neutral"></div>
+      <span class="legend-label">Neutral</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color caution"></div>
+      <span class="legend-label">Caution</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color danger"></div>
+      <span class="legend-label">Danger</span>
+    </div>
+  </div>
 
   <div class="floating-ui">
-    <button 
+    <ion-button 
       id="panic-button" 
       (click)="triggerPanicButton()" 
       [disabled]="isPanicActive"
-      [class.active]="isPanicActive"
-      title="Trigger Panic Alert">
-      <span class="panic-icon">🚨</span>
-      <span class="panic-text">{{ isPanicActive ? 'SENDING...' : 'PANIC' }}</span>
-    </button>
+      color="danger">
+      <ion-icon name="warning"></ion-icon>
+    </ion-button>
+
+    <ion-button 
+      id="heatmap-toggle" 
+      (click)="toggleHeatmap()" 
+      [color]="isHeatmapVisible ? 'warning' : 'primary'">
+      <ion-icon name="flame"></ion-icon>
+    </ion-button>
   </div>
 
   <div class="status-indicator" *ngIf="inDangerZone">

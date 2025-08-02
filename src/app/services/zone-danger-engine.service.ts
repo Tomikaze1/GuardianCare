@@ -38,12 +38,10 @@ export class ZoneDangerEngineService {
   };
 
   constructor(private firebaseService: FirebaseService) {
-    // Defer initialization to avoid injection context issues
     setTimeout(() => {
       this.loadZones();
     }, 100);
     
-    // Set up periodic updates
     setInterval(() => this.updateAllZones(), 60 * 60 * 1000);
   }
 
@@ -57,7 +55,6 @@ export class ZoneDangerEngineService {
         },
         error: (error) => {
           console.error('ZoneDangerEngineService: Error loading zones:', error);
-          // Initialize with empty array if there's an error
           this.zones.next([]);
         }
       });
@@ -102,45 +99,45 @@ export class ZoneDangerEngineService {
   }
 
   private calculateZoneDanger(zone: DangerZone): DangerZone {
-    const now = new Date();
-    const currentHour = now.getHours();
+    const currentTime = new Date();
+    const timeSlotSeverity = this.calculateTimeSlotSeverity(zone, currentTime);
+    const incidentSeverity = this.calculateIncidentSeverity(zone, currentTime);
+    
+    const totalSeverity = (
+      timeSlotSeverity * this.weights.timeSlot +
+      incidentSeverity * this.weights.frequency +
+      incidentSeverity * this.weights.recentness
+    );
+    
+    zone.currentSeverity = Math.min(10, Math.max(0, totalSeverity));
+    zone.level = this.classifyDangerLevel(zone.currentSeverity);
+    
+    return zone;
+  }
 
+  private calculateTimeSlotSeverity(zone: DangerZone, currentTime: Date): number {
+    const currentHour = currentTime.getHours();
     const activeSlot = zone.timeSlots.find(slot => 
       this.isTimeInSlot(currentHour, slot)
     );
-    const timeSeverity = activeSlot?.baseSeverity || 1;
-
-    const incidentSeverity = this.calculateIncidentSeverity(zone, now);
-
-    const totalSeverity = 
-      (timeSeverity * this.weights.timeSlot) + 
-      (incidentSeverity * this.weights.frequency);
-
-    const level = this.classifyDangerLevel(totalSeverity);
-
-    return {
-      ...zone,
-      currentSeverity: totalSeverity,
-      level,
-      incidents: zone.incidents.filter(i => 
-        (now.getTime() - i.timestamp.getTime()) < (30 * 24 * 60 * 60 * 1000)
-      )
-    };
+    return activeSlot ? activeSlot.baseSeverity : 0;
   }
 
   private calculateIncidentSeverity(zone: DangerZone, currentTime: Date): number {
-    if (zone.incidents.length === 0) return 1;
-
-    const recentIncidents = zone.incidents.filter(i => 
-      (currentTime.getTime() - i.timestamp.getTime()) < (7 * 24 * 60 * 60 * 1000)
+    if (zone.incidents.length === 0) return 0;
+    
+    const recentIncidents = zone.incidents.filter(incident => {
+      const timeDiff = currentTime.getTime() - incident.timestamp.getTime();
+      return timeDiff <= 24 * 60 * 60 * 1000;
+    });
+    
+    if (recentIncidents.length === 0) return 0;
+    
+    const totalSeverity = recentIncidents.reduce((sum, incident) => 
+      sum + incident.severity, 0
     );
-
-    if (recentIncidents.length === 0) return 1;
-
-    const avgSeverity = recentIncidents.reduce((sum, i) => sum + i.severity, 0) / recentIncidents.length;
-    const frequencyFactor = Math.min(recentIncidents.length / 5, 2);
-
-    return avgSeverity * frequencyFactor;
+    
+    return Math.min(10, totalSeverity / recentIncidents.length);
   }
 
   private findZonesContainingLocation(location: { lat: number; lng: number }, zones: DangerZone[]): DangerZone[] {
@@ -150,39 +147,42 @@ export class ZoneDangerEngineService {
   }
 
   private isPointInPolygon(point: [number, number], polygon: [number, number][]): boolean {
+    const [x, y] = point;
     let inside = false;
+    
     for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-      const xi = polygon[i][0], yi = polygon[i][1];
-      const xj = polygon[j][0], yj = polygon[j][1];
+      const [xi, yi] = polygon[i];
+      const [xj, yj] = polygon[j];
       
-      const intersect = ((yi > point[1]) !== (yj > point[1]))
-        && (point[0] < (xj - xi) * (point[1] - yi) / (yj - yi) + xi);
-      if (intersect) inside = !inside;
+      if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
+        inside = !inside;
+      }
     }
+    
     return inside;
   }
 
   private isTimeInSlot(hour: number, slot: TimeSlot): boolean {
     if (slot.startHour <= slot.endHour) {
-      return hour >= slot.startHour && hour < slot.endHour;
+      return hour >= slot.startHour && hour <= slot.endHour;
     } else {
-      return hour >= slot.startHour || hour < slot.endHour; 
+      return hour >= slot.startHour || hour <= slot.endHour;
     }
   }
 
   private classifyDangerLevel(severity: number): 'Safe' | 'Neutral' | 'Caution' | 'Danger' {
-    if (severity > 7.5) return 'Danger';
-    if (severity > 5) return 'Caution';
-    if (severity > 2.5) return 'Neutral';
-    return 'Safe';
+    if (severity <= 2) return 'Safe';
+    if (severity <= 4) return 'Neutral';
+    if (severity <= 7) return 'Caution';
+    return 'Danger';
   }
 
   private mapSeverityToValue(severity: 'low' | 'medium' | 'high'): number {
-    switch(severity) {
-      case 'low': return 2;
-      case 'medium': return 5;
-      case 'high': return 8;
-      default: return 1;
+    switch (severity) {
+      case 'low': return 3;
+      case 'medium': return 6;
+      case 'high': return 9;
+      default: return 5;
     }
   }
 
