@@ -7,7 +7,8 @@
     "ENGLISH": "Inglés",
     "SPANISH": "Español",
     "FRENCH": "Francés",
-    "JAPANESE": "Japonés"
+    "JAPANESE": "Japonés",
+    "FILIPINO": "Filipino"
   },
   "ALERTS": {
     "LANGUAGE_CHANGED": "Idioma cambiado correctamente",

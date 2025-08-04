@@ -1,0 +1,25 @@
+{
+  "SETTINGS": {
+    "TITLE": "Mga Setting",
+    "LANGUAGE": "Mga Setting ng Wika"
+  },
+  "LANGUAGES": {
+    "ENGLISH": "English",
+    "SPANISH": "Español",
+    "FRENCH": "Français",
+    "JAPANESE": "日本語",
+    "FILIPINO": "Filipino"
+  },
+  "ALERTS": {
+    "LANGUAGE_CHANGED": "Matagumpay na nabago ang wika",
+    "DANGER_ZONE": "Babala! Nakita ang mapanganib na lugar!",
+    "CAUTION_ZONE": "Mag-ingat! Potensyal na mapanganib na lugar",
+    "PANIC_BUTTON": "Naipadala ang emergency alert! Darating ang tulong!"
+  },
+  "TABS": {
+    "HOME": "Tahanan",
+    "REPORTS": "Mga Ulat",
+    "HEATMAP": "Heatmap",
+    "SETTINGS": "Mga Setting"
+  }
+} 

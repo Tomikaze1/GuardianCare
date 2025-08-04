@@ -65,9 +65,7 @@ export class SettingsPage implements OnInit {
     private notificationService: NotificationService,
     private loadingController: LoadingController
   ) {
-    this.currentLanguage = 'en';
-    this.translate.use('en');
-    localStorage.setItem('userLanguage', 'en');
+    // Don't set language here - let initializeLanguage() handle it
   }
 
   ngOnInit() {
@@ -90,30 +88,73 @@ export class SettingsPage implements OnInit {
     
     this.initializeLanguage();
     this.loadSettings();
+    
+    // Check GPS status on page load
+    this.checkGPSStatus();
   }
 
   private initializeLanguage() {
-    this.currentLanguage = 'en';
-    this.translate.use('en');
-    localStorage.setItem('userLanguage', 'en');
+    // Load saved language from localStorage, default to 'en' if not found
+    const savedLanguage = localStorage.getItem('userLanguage') || 'en';
+    this.currentLanguage = savedLanguage;
+    this.translate.use(savedLanguage);
     
-    console.log('Current Language:', this.currentLanguage);
-    console.log('Should only be English selected');
+    console.log('Current Language loaded from localStorage:', this.currentLanguage);
   }
 
   private loadSettings() {
-    // Load saved settings from localStorage
-    this.gpsEnabled = localStorage.getItem('gpsEnabled') !== 'false';
-    this.timeBasedAlerts = localStorage.getItem('timeBasedAlerts') !== 'false';
-    this.dangerZoneAlerts = localStorage.getItem('dangerZoneAlerts') !== 'false';
-    this.doNotDisturbEnabled = localStorage.getItem('doNotDisturbEnabled') === 'true';
-    this.smartVibration = localStorage.getItem('smartVibration') !== 'false';
-    this.panicModeVisuals = localStorage.getItem('panicModeVisuals') !== 'false';
-    this.touristTranslationMode = localStorage.getItem('touristTranslationMode') === 'true';
-    this.twoFactorEnabled = localStorage.getItem('twoFactorEnabled') === 'true';
+    // Load saved settings from localStorage with proper default values
+    this.gpsEnabled = localStorage.getItem('gpsEnabled') !== 'false'; // Default to true
+    this.timeBasedAlerts = localStorage.getItem('timeBasedAlerts') !== 'false'; // Default to true
+    this.dangerZoneAlerts = localStorage.getItem('dangerZoneAlerts') !== 'false'; // Default to true
+    this.doNotDisturbEnabled = localStorage.getItem('doNotDisturbEnabled') === 'true'; // Default to false
+    this.smartVibration = localStorage.getItem('smartVibration') !== 'false'; // Default to true
+    this.panicModeVisuals = localStorage.getItem('panicModeVisuals') !== 'false'; // Default to true
+    this.touristTranslationMode = localStorage.getItem('touristTranslationMode') === 'true'; // Default to false
+    this.twoFactorEnabled = localStorage.getItem('twoFactorEnabled') === 'true'; // Default to false
     
     this.selectedAlertSound = localStorage.getItem('selectedAlertSound') || 'Default';
     this.selectedUnit = localStorage.getItem('selectedUnit') || 'Metric';
+    
+    // Load saved language
+    const savedLanguage = localStorage.getItem('userLanguage') || 'en';
+    this.currentLanguage = savedLanguage;
+    this.translate.use(savedLanguage);
+    
+    console.log('Settings loaded:', {
+      gpsEnabled: this.gpsEnabled,
+      timeBasedAlerts: this.timeBasedAlerts,
+      dangerZoneAlerts: this.dangerZoneAlerts,
+      doNotDisturbEnabled: this.doNotDisturbEnabled,
+      smartVibration: this.smartVibration,
+      panicModeVisuals: this.panicModeVisuals,
+      currentLanguage: this.currentLanguage
+    });
+  }
+
+  private async checkGPSStatus() {
+    if ('geolocation' in navigator) {
+      try {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            console.log('GPS is working correctly');
+            if (!this.gpsEnabled) {
+              this.gpsEnabled = true;
+              localStorage.setItem('gpsEnabled', 'true');
+            }
+          },
+          (error) => {
+            console.log('GPS access denied or unavailable');
+            if (this.gpsEnabled) {
+              this.gpsEnabled = false;
+              localStorage.setItem('gpsEnabled', 'false');
+            }
+          }
+        );
+      } catch (error) {
+        console.error('Error checking GPS status:', error);
+      }
+    }
   }
 
   // Account & Security Methods
@@ -141,31 +182,106 @@ export class SettingsPage implements OnInit {
 
   // Location & Alerts Methods
   async toggleGPS() {
-    localStorage.setItem('gpsEnabled', this.gpsEnabled.toString());
-    const message = this.gpsEnabled ? 'GPS access enabled' : 'GPS access disabled';
-    this.notificationService.success('Success', message, 'OK', 2000);
+    try {
+      // Check if GPS is actually available
+      if (this.gpsEnabled && 'geolocation' in navigator) {
+        // Test GPS access
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            localStorage.setItem('gpsEnabled', this.gpsEnabled.toString());
+            const message = this.gpsEnabled ? 'GPS access enabled and working' : 'GPS access disabled';
+            this.notificationService.success('Success', message, 'OK', 2000);
+          },
+          (error) => {
+            this.gpsEnabled = false;
+            localStorage.setItem('gpsEnabled', 'false');
+            this.notificationService.error('GPS Error', 'Unable to access GPS. Please check your location permissions.', 'OK', 3000);
+          }
+        );
+      } else {
+        localStorage.setItem('gpsEnabled', this.gpsEnabled.toString());
+        const message = this.gpsEnabled ? 'GPS access enabled' : 'GPS access disabled';
+        this.notificationService.success('Success', message, 'OK', 2000);
+      }
+    } catch (error) {
+      console.error('GPS toggle error:', error);
+      this.notificationService.error('Error', 'Failed to toggle GPS setting', 'OK', 3000);
+    }
   }
 
   async toggleTimeBasedAlerts() {
     localStorage.setItem('timeBasedAlerts', this.timeBasedAlerts.toString());
     const message = this.timeBasedAlerts ? 'Time-based alerts enabled' : 'Time-based alerts disabled';
     this.notificationService.success('Success', message, 'OK', 2000);
+    
+    // If enabling, show a brief explanation
+    if (this.timeBasedAlerts) {
+      setTimeout(() => {
+        this.notificationService.info('Time-Based Alerts', 'You will receive smart alerts during high-risk hours based on your location and time of day.', 'OK', 4000);
+      }, 1000);
+    }
   }
 
   async toggleDangerZoneAlerts() {
     localStorage.setItem('dangerZoneAlerts', this.dangerZoneAlerts.toString());
     const message = this.dangerZoneAlerts ? 'Danger zone alerts enabled' : 'Danger zone alerts disabled';
     this.notificationService.success('Success', message, 'OK', 2000);
+    
+    // If enabling, show a brief explanation
+    if (this.dangerZoneAlerts) {
+      setTimeout(() => {
+        this.notificationService.info('Danger Zone Alerts', 'You will be notified when approaching or entering high-risk areas in your vicinity.', 'OK', 4000);
+      }, 1000);
+    }
   }
 
   async toggleDoNotDisturb() {
     localStorage.setItem('doNotDisturbEnabled', this.doNotDisturbEnabled.toString());
     const message = this.doNotDisturbEnabled ? 'Do not disturb mode enabled' : 'Do not disturb mode disabled';
     this.notificationService.success('Success', message, 'OK', 2000);
+    
+    // If enabling, show current schedule
+    if (this.doNotDisturbEnabled) {
+      setTimeout(() => {
+        this.notificationService.info('Do Not Disturb Active', 'Notifications will be silenced from 10:00 PM to 6:00 AM. Tap to customize schedule.', 'OK', 4000);
+      }, 1000);
+    }
   }
 
   async doNotDisturbSettings() {
-    this.notificationService.info('Coming Soon', 'Do not disturb settings will be available soon!', 'OK', 3000);
+    const alert = await this.alertController.create({
+      header: 'Do Not Disturb Settings',
+      message: 'Configure your quiet hours when notifications will be silenced.',
+      inputs: [
+        {
+          name: 'startTime',
+          type: 'time',
+          value: '22:00',
+          label: 'Start Time'
+        },
+        {
+          name: 'endTime',
+          type: 'time',
+          value: '06:00',
+          label: 'End Time'
+        }
+      ],
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'Save',
+          handler: (data) => {
+            localStorage.setItem('dndStartTime', data.startTime);
+            localStorage.setItem('dndEndTime', data.endTime);
+            this.notificationService.success('Success', 'Do not disturb schedule updated!', 'OK', 2000);
+          }
+        }
+      ]
+    });
+    await alert.present();
   }
 
   // Notifications Methods
@@ -298,6 +414,88 @@ export class SettingsPage implements OnInit {
     localStorage.setItem('touristTranslationMode', this.touristTranslationMode.toString());
     const message = this.touristTranslationMode ? 'Tourist translation mode enabled' : 'Tourist translation mode disabled';
     this.notificationService.success('Success', message, 'OK', 2000);
+    
+    // If enabling, show explanation
+    if (this.touristTranslationMode) {
+      setTimeout(() => {
+        this.notificationService.info('Tourist Mode Active', 'The app will provide translations and tourist-friendly information for your current location.', 'OK', 4000);
+      }, 1000);
+    }
+  }
+
+  // Utility method to reset all settings to defaults
+  async resetToDefaults() {
+    const alert = await this.alertController.create({
+      header: 'Reset Settings',
+      message: 'Are you sure you want to reset all settings to their default values? This action cannot be undone.',
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'Reset',
+          handler: () => {
+            // Reset to default values
+            this.gpsEnabled = true;
+            this.timeBasedAlerts = true;
+            this.dangerZoneAlerts = true;
+            this.doNotDisturbEnabled = false;
+            this.smartVibration = true;
+            this.panicModeVisuals = true;
+            this.touristTranslationMode = false;
+            this.twoFactorEnabled = false;
+            this.selectedAlertSound = 'Default';
+            this.selectedUnit = 'Metric';
+            
+            // Clear localStorage and set defaults
+            localStorage.removeItem('gpsEnabled');
+            localStorage.removeItem('timeBasedAlerts');
+            localStorage.removeItem('dangerZoneAlerts');
+            localStorage.removeItem('doNotDisturbEnabled');
+            localStorage.removeItem('smartVibration');
+            localStorage.removeItem('panicModeVisuals');
+            localStorage.removeItem('touristTranslationMode');
+            localStorage.removeItem('twoFactorEnabled');
+            localStorage.removeItem('selectedAlertSound');
+            localStorage.removeItem('selectedUnit');
+            localStorage.removeItem('dndStartTime');
+            localStorage.removeItem('dndEndTime');
+            
+            this.notificationService.success('Success', 'All settings have been reset to defaults!', 'OK', 2000);
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  // Method to check if location services are available
+  async checkLocationServices() {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          this.notificationService.success('Location Services', 'GPS is working correctly!', 'OK', 2000);
+        },
+        (error) => {
+          let errorMessage = 'Location access denied';
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = 'Location permission denied. Please enable location access in your browser settings.';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = 'Location information is unavailable.';
+              break;
+            case error.TIMEOUT:
+              errorMessage = 'Location request timed out.';
+              break;
+          }
+          this.notificationService.error('Location Error', errorMessage, 'OK', 4000);
+        }
+      );
+    } else {
+      this.notificationService.error('Location Error', 'Geolocation is not supported by this browser.', 'OK', 3000);
+    }
   }
 
   // Legal & Support Methods
@@ -446,14 +644,26 @@ export class SettingsPage implements OnInit {
     await alert.present();
   }
 
+  getLanguageName(langCode: string): string {
+    const language = this.languages.find(lang => lang.code === langCode);
+    return language ? language.name : langCode.toUpperCase();
+  }
+
   async changeLanguage(lang: string) {
     console.log('Changing language to:', lang);
     this.currentLanguage = lang;
     this.translate.use(lang);
     localStorage.setItem('userLanguage', lang);
     
-    const message = this.translate.instant('ALERTS.LANGUAGE_CHANGED');
-    this.notificationService.success('Success', message, 'OK', 2000);
+    // Force a small delay to ensure the language change is applied
+    setTimeout(() => {
+      const message = this.translate.instant('ALERTS.LANGUAGE_CHANGED');
+      this.notificationService.success('Success', message, 'OK', 2000);
+      
+      // Log the current language to verify the change
+      console.log('Language changed to:', this.currentLanguage);
+      console.log('Translate service current lang:', this.translate.currentLang);
+    }, 100);
   }
 
   async logOut(): Promise<void> {

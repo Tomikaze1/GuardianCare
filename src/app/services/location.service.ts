@@ -34,27 +34,59 @@ export class LocationService {
         return;
       }
 
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const location: Location = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-          this.currentLocationSubject.next(location);
-          resolve(location);
-        },
-        (error) => {
-          console.error('Error getting location:', error);
-          const fallbackLocation: Location = { lat: 10.3111, lng: 123.8931 };
-          this.currentLocationSubject.next(fallbackLocation);
-          resolve(fallbackLocation);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 60000
-        }
-      );
+      // First try with high accuracy and longer timeout
+      const highAccuracyOptions = {
+        enableHighAccuracy: true,
+        timeout: 30000, // 30 seconds for high accuracy
+        maximumAge: 0 // Don't use cached position
+      };
+
+      const standardOptions = {
+        enableHighAccuracy: false,
+        timeout: 15000, // 15 seconds for standard accuracy
+        maximumAge: 300000 // 5 minutes cache
+      };
+
+      const tryGetLocation = (options: PositionOptions, isRetry = false) => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            console.log('GPS Position obtained:', {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              accuracy: position.coords.accuracy + ' meters',
+              timestamp: new Date(position.timestamp).toLocaleString()
+            });
+
+            const location: Location = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            };
+            this.currentLocationSubject.next(location);
+            resolve(location);
+          },
+          (error) => {
+            console.error('GPS Error:', {
+              code: error.code,
+              message: error.message,
+              isRetry: isRetry
+            });
+
+            // If high accuracy failed and this is not a retry, try standard accuracy
+            if (!isRetry && options.enableHighAccuracy) {
+              console.log('High accuracy failed, trying standard accuracy...');
+              tryGetLocation(standardOptions, true);
+              return;
+            }
+
+            // If both failed, reject with error
+            reject(new Error(`Location error: ${error.message} (Code: ${error.code})`));
+          },
+          options
+        );
+      };
+
+      // Start with high accuracy
+      tryGetLocation(highAccuracyOptions);
     });
   }
 
@@ -95,6 +127,13 @@ export class LocationService {
 
       const watchId = navigator.geolocation.watchPosition(
         (position) => {
+          console.log('GPS Position updated:', {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy + ' meters',
+            timestamp: new Date(position.timestamp).toLocaleString()
+          });
+
           const location: Location = {
             lat: position.coords.latitude,
             lng: position.coords.longitude
@@ -108,8 +147,8 @@ export class LocationService {
         },
         {
           enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 60000
+          timeout: 30000, // 30 seconds for high accuracy
+          maximumAge: 0 // Don't use cached position for watching
         }
       );
 
@@ -132,5 +171,69 @@ export class LocationService {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
     return R * c;
+  }
+
+  // Method to check GPS accuracy and status
+  async checkGPSAccuracy(): Promise<{ accuracy: number; status: string; coordinates?: { lat: number; lng: number } }> {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        resolve({ accuracy: 0, status: 'GPS not supported' });
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const accuracy = position.coords.accuracy;
+          let status = 'Excellent';
+          
+          if (accuracy <= 5) {
+            status = 'Excellent (≤5m)';
+          } else if (accuracy <= 10) {
+            status = 'Good (≤10m)';
+          } else if (accuracy <= 20) {
+            status = 'Fair (≤20m)';
+          } else if (accuracy <= 50) {
+            status = 'Poor (≤50m)';
+          } else {
+            status = 'Very Poor (>50m)';
+          }
+
+          resolve({
+            accuracy,
+            status,
+            coordinates: {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            }
+          });
+        },
+        (error) => {
+          let status = 'Error';
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              status = 'Permission Denied';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              status = 'Position Unavailable';
+              break;
+            case error.TIMEOUT:
+              status = 'Timeout';
+              break;
+          }
+          resolve({ accuracy: 0, status });
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 30000,
+          maximumAge: 0
+        }
+      );
+    });
+  }
+
+  // Method to force refresh location with high accuracy
+  async refreshLocationWithHighAccuracy(): Promise<Location> {
+    console.log('Forcing high accuracy location refresh...');
+    return this.getCurrentLocation();
   }
 }

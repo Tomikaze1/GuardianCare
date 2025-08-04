@@ -7,7 +7,8 @@
     "ENGLISH": "英語",
     "SPANISH": "スペイン語",
     "FRENCH": "フランス語",
-    "JAPANESE": "日本語"
+    "JAPANESE": "日本語",
+    "FILIPINO": "フィリピン語"
   },
   "ALERTS": {
     "LANGUAGE_CHANGED": "言語が正常に変更されました",

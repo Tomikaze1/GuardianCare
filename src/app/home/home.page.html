@@ -33,6 +33,14 @@
     </ion-button>
 
     <ion-button 
+      id="refresh-location" 
+      (click)="refreshLocation()" 
+      [disabled]="isRefreshingLocation"
+      color="primary">
+      <ion-icon name="refresh" [class.spin]="isRefreshingLocation"></ion-icon>
+    </ion-button>
+
+    <ion-button 
       id="heatmap-toggle" 
       (click)="toggleHeatmap()" 
       [color]="isHeatmapVisible ? 'warning' : 'primary'">
@@ -62,6 +70,13 @@
       class="test-button">
       <ion-icon name="time"></ion-icon>
     </ion-button>
+  </div>
+
+  <div class="gps-status" *ngIf="gpsAccuracy">
+    <ion-chip [color]="getGPSStatusColor()">
+      <ion-icon name="location"></ion-icon>
+      <ion-label>GPS: {{ gpsAccuracy.status }}</ion-label>
+    </ion-chip>
   </div>
 
   <div class="status-indicator" *ngIf="inDangerZone">

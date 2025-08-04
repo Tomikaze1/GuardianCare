@@ -1,13 +1,37 @@
 {
   "SETTINGS": {
     "TITLE": "Settings",
-    "LANGUAGE": "Language Settings"
+    "LANGUAGE": "Language Settings",
+    "ACCOUNT_SECURITY": "Account & Security",
+    "LOCATION_ALERTS": "Location & Alerts",
+    "NOTIFICATIONS": "Notifications",
+    "LOCALIZATION": "Localization",
+    "LEGAL_SUPPORT": "Legal & Support",
+    "CHANGE_PASSWORD": "Change Password",
+    "UPDATE_EMAIL": "Update Email",
+    "LINKED_DEVICES": "Linked Devices",
+    "TWO_FACTOR_AUTH": "Two-Factor Authentication",
+    "GPS_ACCESS": "GPS Access",
+    "TIME_BASED_ALERTS": "Time-Based Alerts",
+    "DANGER_ZONE_ALERTS": "Danger Zone Alerts",
+    "DO_NOT_DISTURB": "Do Not Disturb Mode",
+    "SMART_VIBRATION": "Smart Vibration",
+    "ALERT_SOUNDS": "Alert Sounds",
+    "LANGUAGE_PREFERENCE": "Language Preference",
+    "PANIC_MODE_VISUALS": "Panic Mode Visuals",
+    "APP_LANGUAGE": "App Language",
+    "UNITS": "Units",
+    "TOURIST_TRANSLATION": "Tourist Translation Mode",
+    "TERMS_OF_SERVICE": "Terms of Service",
+    "PRIVACY_POLICY": "Privacy Policy",
+    "CONTACT_SUPPORT": "Contact Support"
   },
   "LANGUAGES": {
     "ENGLISH": "English",
     "SPANISH": "Spanish",
     "FRENCH": "French",
-    "JAPANESE": "Japanese"
+    "JAPANESE": "Japanese",
+    "FILIPINO": "Filipino"
   },
   "ALERTS": {
     "LANGUAGE_CHANGED": "Language changed successfully",

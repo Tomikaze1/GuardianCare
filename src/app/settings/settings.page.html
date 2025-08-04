@@ -9,7 +9,7 @@
       </div>
       <div class="logo-glow"></div>
     </div>
-    <div class="app-title">Settings</div>
+    <div class="app-title">{{ 'SETTINGS.TITLE' | translate }}</div>
     <div class="app-subtitle">Manage your preferences</div>
     <div class="title-underline"></div>
   </div>
@@ -18,7 +18,7 @@
     
     <div class="form-row">
       <div class="section-header">
-        <span>Account & Security</span>
+        <span>{{ 'SETTINGS.ACCOUNT_SECURITY' | translate }}</span>
         <div class="section-underline"></div>
       </div>
       
@@ -61,7 +61,7 @@
     
     <div class="form-row">
       <div class="section-header">
-        <span>Location & Alerts</span>
+        <span>{{ 'SETTINGS.LOCATION_ALERTS' | translate }}</span>
         <div class="section-underline"></div>
       </div>
       
@@ -106,7 +106,7 @@
     
     <div class="form-row">
       <div class="section-header">
-        <span>Notifications</span>
+        <span>{{ 'SETTINGS.NOTIFICATIONS' | translate }}</span>
         <div class="section-underline"></div>
       </div>
       
@@ -133,10 +133,10 @@
         <div class="setting-item" (click)="languagePreference()">
           <div class="setting-left">
             <ion-icon name="globe-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">Language Preference</span>
+            <span class="setting-label">{{ 'SETTINGS.LANGUAGE_PREFERENCE' | translate }}</span>
           </div>
           <div class="setting-right">
-            <span class="setting-value">{{currentLanguage | uppercase}}</span>
+            <span class="setting-value">{{getLanguageName(currentLanguage)}}</span>
             <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
           </div>
         </div>
@@ -155,7 +155,7 @@
     
     <div class="form-row">
       <div class="section-header">
-        <span>Localization</span>
+        <span>{{ 'SETTINGS.LOCALIZATION' | translate }}</span>
         <div class="section-underline"></div>
       </div>
       
@@ -163,10 +163,10 @@
         <div class="setting-item" (click)="appLanguage()">
           <div class="setting-left">
             <ion-icon name="language-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">App Language</span>
+            <span class="setting-label">{{ 'SETTINGS.APP_LANGUAGE' | translate }}</span>
           </div>
           <div class="setting-right">
-            <span class="setting-value">{{currentLanguage | uppercase}}</span>
+            <span class="setting-value">{{getLanguageName(currentLanguage)}}</span>
             <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
           </div>
         </div>
@@ -184,7 +184,7 @@
 
         <div class="setting-item">
           <div class="setting-left">
-            <ion-icon name="translate-outline" class="setting-icon"></ion-icon>
+                                    <ion-icon name="language-outline" class="setting-icon"></ion-icon>
             <span class="setting-label">Tourist Translation Mode</span>
           </div>
           <ion-toggle [(ngModel)]="touristTranslationMode" (ionChange)="toggleTouristTranslation()"></ion-toggle>
@@ -195,7 +195,7 @@
     
     <div class="form-row">
       <div class="section-header">
-        <span>Legal & Support</span>
+        <span>{{ 'SETTINGS.LEGAL_SUPPORT' | translate }}</span>
         <div class="section-underline"></div>
       </div>
       
@@ -303,6 +303,12 @@
       </div>
       
       <div class="button-row">
+        <button class="reset-btn" (click)="resetToDefaults()">
+          <span>
+            <ion-icon name="refresh-outline"></ion-icon>
+            Reset to Defaults
+          </span>
+        </button>
         <button class="logout-btn" (click)="logOut()">
           <span>
             <ion-icon name="log-out-outline"></ion-icon>

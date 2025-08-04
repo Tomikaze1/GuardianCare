@@ -24,6 +24,8 @@ export class HomePage implements OnInit, OnDestroy {
   isPanicActive = false;
   inDangerZone = false;
   currentLanguage = 'en';
+  gpsAccuracy: { accuracy: number; status: string } | null = null;
+  isRefreshingLocation = false;
   private subscriptions: any[] = [];
 
   constructor(
@@ -62,6 +64,9 @@ export class HomePage implements OnInit, OnDestroy {
       
       this.zoneEngine.updateCurrentLocation(location);
       
+      // Check GPS accuracy
+      await this.checkGPSAccuracy();
+      
       this.initializeMap();
     } catch (error) {
       console.error('Error initializing app:', error);
@@ -72,6 +77,50 @@ export class HomePage implements OnInit, OnDestroy {
       
       this.initializeMap();
     }
+  }
+
+  async checkGPSAccuracy() {
+    try {
+      this.gpsAccuracy = await this.locationService.checkGPSAccuracy();
+      console.log('GPS Accuracy:', this.gpsAccuracy);
+    } catch (error) {
+      console.error('Error checking GPS accuracy:', error);
+    }
+  }
+
+  async refreshLocation() {
+    this.isRefreshingLocation = true;
+    try {
+      const location = await this.locationService.refreshLocationWithHighAccuracy();
+      this.currentLocation = location;
+      this.zoneEngine.updateCurrentLocation(location);
+      
+      // Update map center if map exists
+      if (this.map) {
+        this.map.setCenter([location.lng, location.lat]);
+      }
+      
+      // Check GPS accuracy
+      await this.checkGPSAccuracy();
+      
+      this.notificationService.success('Location Updated', 'Your location has been refreshed with high accuracy!', 'OK', 2000);
+    } catch (error) {
+      console.error('Error refreshing location:', error);
+      this.notificationService.error('Location Error', 'Failed to refresh location. Please check your GPS settings.', 'OK', 3000);
+    } finally {
+      this.isRefreshingLocation = false;
+    }
+  }
+
+  getGPSStatusColor(): string {
+    if (!this.gpsAccuracy) return 'medium';
+    
+    const accuracy = this.gpsAccuracy.accuracy;
+    if (accuracy <= 5) return 'success';
+    if (accuracy <= 10) return 'primary';
+    if (accuracy <= 20) return 'warning';
+    if (accuracy <= 50) return 'danger';
+    return 'danger';
   }
 
   private loadUserLanguage() {

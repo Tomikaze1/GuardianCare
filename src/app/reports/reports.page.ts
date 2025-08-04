@@ -92,29 +92,39 @@ export class ReportsPage implements OnInit {
 
   async refreshLocation() {
     try {
-      this.currentLocation = await this.locationService.getCurrentLocation();
+      this.currentLocation = await this.locationService.refreshLocationWithHighAccuracy();
       this.selectedLocation = this.currentLocation;
       await this.updateLocationAddress();
-      this.notificationService.success('Location Updated', 'Current location refreshed successfully!', 'OK', 2000);
+      this.notificationService.success('Location Updated', 'Current location refreshed with high accuracy!', 'OK', 2000);
     } catch (error) {
       console.error('Error refreshing location:', error);
-      this.notificationService.error('Error', 'Failed to refresh location', 'OK', 3000);
+      this.notificationService.error('Error', 'Failed to refresh location. Please check your GPS settings.', 'OK', 3000);
     }
   }
 
   private async updateLocationAddress() {
     if (this.selectedLocation) {
       try {
+        // Using a placeholder token - replace with your actual Mapbox token
+        const mapboxToken = 'pk.eyJ1IjoiZXhhbXBsZSIsImEiOiJjbGV4YW1wbGUifQ.example';
         const response = await fetch(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${this.selectedLocation.lng},${this.selectedLocation.lat}.json?access_token=pk.eyJ1IjoiZXhhbXBsZSIsImEiOiJjbGV4YW1wbGUifQ.example`
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${this.selectedLocation.lng},${this.selectedLocation.lat}.json?access_token=${mapboxToken}`
         );
+        
+        if (!response.ok) {
+          throw new Error(`Mapbox API error: ${response.status}`);
+        }
+        
         const data = await response.json();
         if (data.features && data.features.length > 0) {
           this.locationAddress = data.features[0].place_name;
+        } else {
+          this.locationAddress = `${this.selectedLocation.lat.toFixed(6)}, ${this.selectedLocation.lng.toFixed(6)}`;
         }
       } catch (error) {
         console.error('Error fetching address:', error);
-        this.locationAddress = '';
+        // Fallback to coordinates if geocoding fails
+        this.locationAddress = `${this.selectedLocation.lat.toFixed(6)}, ${this.selectedLocation.lng.toFixed(6)}`;
       }
     }
   }
