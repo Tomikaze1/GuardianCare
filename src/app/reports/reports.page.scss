@@ -1,5 +1,5 @@
 .report-content {
-  --background: linear-gradient(135deg, #f8fafc 0%, #ecf2fa 100%);
+  --background: linear-gradient(135deg, #EFE8E5 0%, #f5f0ed 100%);
   min-height: 100vh;
   font-family: 'DM Sans', 'Plus Jakarta Sans', Arial, sans-serif;
   padding: 0;
@@ -13,22 +13,22 @@
   margin-bottom: 8px;
   .app-logo {
     font-size: 2.7rem;
-    color: #2874fa;
-    background: #f3f7ff;
+    color: #8B6B76;
+    background: #f5f0ed;
     border-radius: 50%;
     padding: 10px;
     margin-bottom: 6px;
-    box-shadow: 0 4px 16px #3577ef16;
+    box-shadow: 0 4px 16px rgba(139, 107, 118, 0.1);
     display: inline-block;
   }
   .app-title {
     font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 2rem;
     font-weight: 800;
-    color: #2874fa;
+    color: #8B6B76;
     letter-spacing: -1.1px;
     margin-bottom: 2px;
-    background: linear-gradient(90deg, #1768e8 0%, #38b6ff 100%);
+    background: linear-gradient(90deg, #8B6B76 0%, #A595A0 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -43,10 +43,10 @@
   .title-underline {
     width: 58px;
     height: 2.5px;
-    background: linear-gradient(90deg, #2874fa, #58b6fa, #2874fa);
+    background: linear-gradient(90deg, #8B6B76, #A595A0, #8B6B76);
     margin: 0.2rem auto 0.8rem auto;
     border-radius: 3px;
-    box-shadow: 0 1px 8px #3577ef10;
+    box-shadow: 0 1px 8px rgba(139, 107, 118, 0.1);
   }
 }
 
@@ -69,10 +69,10 @@
   .section-underline {
     width: 30px;
     height: 2.5px;
-    background: #2874fa;
+    background: #8B6B76;
     border-radius: 2px;
     margin: 3px 0 6px 0;
-    box-shadow: 0 1px 5px #2874fa12;
+    box-shadow: 0 1px 5px rgba(139, 107, 118, 0.1);
   }
 }
 
@@ -107,8 +107,8 @@
 
   &:focus-within,
   &.selected {
-    border: 1.5px solid #2874fa;
-    box-shadow: 0 2px 16px #2874fa18;
+    border: 1.5px solid #8B6B76;
+    box-shadow: 0 2px 16px rgba(139, 107, 118, 0.15);
   }
 
   ion-icon {
@@ -124,7 +124,7 @@
 
   &:focus-within ion-icon,
   &.selected ion-icon {
-    color: #2874fa;
+    color: #8B6B76;
   }
 
   textarea,
@@ -156,11 +156,11 @@
     border-radius: 12px;
     border: 1.5px solid #e7eef7;
     background: #fff;
-    color: #2473fa;
+    color: #8B6B76;
     font-family: 'DM Sans', sans-serif;
     font-size: 0.9rem;
     font-weight: 500;
-    box-shadow: 0 2px 8px #3b82f610;
+    box-shadow: 0 2px 8px rgba(139, 107, 118, 0.1);
     transition: all 0.2s ease;
     display: flex;
     flex-direction: column;
@@ -169,27 +169,27 @@
     min-height: 70px;
     
     ion-icon {
-      color: #2874fa;
+      color: #8B6B76;
       font-size: 1.4rem;
       transition: color 0.14s;
     }
     
     &:hover {
-      border: 1.5px solid #2874fa;
-      background: #f8faff;
-      box-shadow: 0 4px 12px #2874fa15;
+      border: 1.5px solid #8B6B76;
+      background: #f5f0ed;
+      box-shadow: 0 4px 12px rgba(139, 107, 118, 0.15);
       transform: translateY(-1px);
     }
     
     &.selected {
-      border: 1.5px solid #2874fa;
-      background: linear-gradient(135deg, #f3f8ff 0%, #e8f4ff 100%);
-      box-shadow: 0 4px 16px #2874fa20;
-      color: #2874fa;
+      border: 1.5px solid #8B6B76;
+      background: linear-gradient(135deg, #f5f0ed 0%, #EFE8E5 100%);
+      box-shadow: 0 4px 16px rgba(139, 107, 118, 0.2);
+      color: #8B6B76;
       transform: translateY(-2px);
       
       ion-icon {
-        color: #2874fa;
+        color: #8B6B76;
         transform: scale(1.1);
       }
     }
@@ -428,7 +428,7 @@
   border-radius: 0.8em;
   cursor: pointer;
   border: none;
-  background: linear-gradient(to right, #2874fa, #38b6ff);
+  background: linear-gradient(to right, #8B6B76, #A595A0);
   color: white;
   overflow: hidden;
   width: 100%;

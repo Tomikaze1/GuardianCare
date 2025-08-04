@@ -87,9 +87,7 @@ export class ZoneDangerEngineService {
   }
 
   public initializeZones() {
-    setTimeout(() => {
-      this.loadZones();
-    }, 100);
+    this.loadZones();
   }
 
   private loadZones() {

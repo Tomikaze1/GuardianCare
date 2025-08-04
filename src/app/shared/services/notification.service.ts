@@ -1,4 +1,4 @@
-import { Injectable, ComponentRef, createComponent, ApplicationRef, Injector, Type } from '@angular/core';
+import { Injectable, ComponentRef, createComponent, ApplicationRef, Injector, Type, EnvironmentInjector } from '@angular/core';
 import { NotificationBannerComponent, NotificationBanner } from '../components/notification-banner/notification-banner.component';
 
 @Injectable({
@@ -9,12 +9,13 @@ export class NotificationService {
 
   constructor(
     private appRef: ApplicationRef,
-    private injector: Injector
+    private injector: Injector,
+    private environmentInjector: EnvironmentInjector
   ) {}
 
   show(notification: NotificationBanner): void {
     const componentRef = createComponent(NotificationBannerComponent, {
-      environmentInjector: this.appRef.injector,
+      environmentInjector: this.environmentInjector,
       elementInjector: this.injector
     });
 
