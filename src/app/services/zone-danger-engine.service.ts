@@ -142,6 +142,23 @@ export class ZoneDangerEngineService {
         alertSettings: { enablePushNotifications: true, enableVibration: true, enableSound: true, soundType: 'siren', vibrationPattern: [200, 100, 200, 100, 200], alertThreshold: 6 }
       },
       {
+        id: 'colon-time-based-zone',
+        name: 'Colon Area',
+        level: 'Neutral',
+        coordinates: [[123.900, 10.300], [123.910, 10.300], [123.910, 10.310], [123.900, 10.310], [123.900, 10.300]],
+        timeSlots: [
+          { startHour: 6, endHour: 11, baseSeverity: 3, crimeMultiplier: 0.5, description: 'Morning - Neutral' },
+          { startHour: 12, endHour: 17, baseSeverity: 6, crimeMultiplier: 0.8, description: 'Afternoon - Caution' },
+          { startHour: 18, endHour: 23, baseSeverity: 8, crimeMultiplier: 1.2, description: 'Evening - Danger' },
+          { startHour: 0, endHour: 5, baseSeverity: 9, crimeMultiplier: 1.5, description: 'Night - High Danger' }
+        ],
+        incidents: [],
+        currentSeverity: 3,
+        crimeFrequency: { daily: 3, weekly: 20, monthly: 80, peakHours: [19, 20, 21, 22, 23], peakDays: [4, 5, 6] },
+        timeBasedRisk: { morning: 0.3, afternoon: 0.6, evening: 0.8, night: 0.9, weekend: 0.8, weekday: 0.6 },
+        alertSettings: { enablePushNotifications: true, enableVibration: true, enableSound: true, soundType: 'beep', vibrationPattern: [200, 200, 200], alertThreshold: 5 }
+      },
+      {
         id: 'mabolo-caution-zone',
         name: 'Mabolo Caution Zone',
         level: 'Caution',
@@ -660,9 +677,11 @@ export class ZoneDangerEngineService {
         return;
       }
       
-      const updatedZones = currentZones.map(zone => 
-        this.calculateZoneDanger(zone)
-      );
+      const updatedZones = currentZones.map(zone => {
+        const updatedZone = this.calculateZoneDanger(zone);
+        return this.updateZoneLevelBasedOnTime(updatedZone);
+      });
+      
       this.zones.next(updatedZones);
       this.syncToFirestore(updatedZones);
     } catch (error) {
@@ -685,6 +704,157 @@ export class ZoneDangerEngineService {
     zone.level = this.classifyDangerLevel(zone.currentSeverity);
     
     return zone;
+  }
+
+  private updateZoneLevelBasedOnTime(zone: DangerZone): DangerZone {
+    const currentTime = new Date();
+    const currentHour = currentTime.getHours();
+    
+    // Find the active time slot for this zone
+    const activeSlot = zone.timeSlots.find(slot => 
+      this.isTimeInSlot(currentHour, slot)
+    );
+    
+    if (activeSlot) {
+      // Update zone level based on time slot
+      const newLevel = this.getLevelFromSeverity(activeSlot.baseSeverity);
+      const oldLevel = zone.level;
+      
+      if (newLevel !== oldLevel) {
+        console.log(`🕐 Time-based zone update: ${zone.name} changed from ${oldLevel} to ${newLevel} (${activeSlot.description})`);
+        zone.level = newLevel;
+        zone.currentSeverity = activeSlot.baseSeverity;
+        
+        // Trigger time-based alert if user is in this zone
+        this.triggerTimeBasedZoneChangeAlert(zone, oldLevel, newLevel, activeSlot);
+      }
+    }
+    
+    return zone;
+  }
+
+  private getLevelFromSeverity(severity: number): 'Safe' | 'Neutral' | 'Caution' | 'Danger' {
+    if (severity <= 2) return 'Safe';
+    if (severity <= 4) return 'Neutral';
+    if (severity <= 7) return 'Caution';
+    return 'Danger';
+  }
+
+  private triggerTimeBasedZoneChangeAlert(zone: DangerZone, oldLevel: string, newLevel: string, timeSlot: TimeSlot) {
+    const currentLocation = this.currentLocation.value;
+    if (!currentLocation) return;
+    
+    // Check if user is currently in this zone
+    if (this.isPointInPolygon([currentLocation.lng, currentLocation.lat], zone.coordinates)) {
+      const alertKey = `time-change-${zone.id}-${Math.floor(Date.now() / 300000)}`; // 5-minute cooldown
+      
+      if (this.alertHistory.has(alertKey)) return;
+      
+      const alertData = {
+        type: 'time-based-change',
+        zoneId: zone.id,
+        zoneName: zone.name,
+        oldLevel: oldLevel,
+        newLevel: newLevel,
+        timeSlot: timeSlot.description,
+        currentHour: new Date().getHours(),
+        location: currentLocation,
+        recommendations: this.generateTimeBasedChangeRecommendations(zone, oldLevel, newLevel, timeSlot)
+      };
+      
+      this.triggerTimeBasedAlert(alertData);
+      this.alertHistory.add(alertKey);
+      
+      setTimeout(() => {
+        this.alertHistory.delete(alertKey);
+      }, 5 * 60 * 1000);
+    }
+  }
+
+  private triggerTimeBasedAlert(alertData: any) {
+    const title = `🕐 ZONE LEVEL CHANGE: ${alertData.zoneName}`;
+    const levelEmoji = this.getLevelEmoji(alertData.newLevel);
+    const levelColor = this.getLevelColor(alertData.newLevel);
+    
+    const vibrationPattern = alertData.newLevel === 'Danger' ? [300, 100, 300, 100, 300] : [200, 200];
+    const soundType = alertData.newLevel === 'Danger' ? 'siren' : 'beep';
+    
+    if (this.shouldTriggerVibration()) {
+      this.triggerVibrationAlert(vibrationPattern);
+    }
+    
+    if (this.shouldTriggerSound()) {
+      this.triggerSoundAlert(soundType);
+    }
+    
+    if (this.shouldTriggerNotification()) {
+      this.triggerTimeBasedNotification(title, alertData);
+    }
+    
+    console.log(`🕐 ${title}: ${alertData.oldLevel} → ${alertData.newLevel} (${alertData.timeSlot})`);
+  }
+
+  private getLevelEmoji(level: string): string {
+    switch (level) {
+      case 'Safe': return '🟢';
+      case 'Neutral': return '🟡';
+      case 'Caution': return '🟠';
+      case 'Danger': return '🔴';
+      default: return '⚪';
+    }
+  }
+
+  private getLevelColor(level: string): string {
+    switch (level) {
+      case 'Safe': return '#4CAF50';
+      case 'Neutral': return '#FFC107';
+      case 'Caution': return '#FF9800';
+      case 'Danger': return '#F44336';
+      default: return '#9E9E9E';
+    }
+  }
+
+  private triggerTimeBasedNotification(title: string, alertData: any) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const levelEmoji = this.getLevelEmoji(alertData.newLevel);
+      const body = `${levelEmoji} ${alertData.zoneName} is now ${alertData.newLevel.toUpperCase()}\n⏰ ${alertData.timeSlot}\n📍 You are currently in this area`;
+      
+      new Notification(title, {
+        body: body,
+        icon: '/assets/icon/favicon.png',
+        tag: 'time-zone-change',
+        requireInteraction: true,
+        badge: '/assets/icon/favicon.png'
+      });
+    }
+  }
+
+  private generateTimeBasedChangeRecommendations(zone: DangerZone, oldLevel: string, newLevel: string, timeSlot: TimeSlot): string[] {
+    const recommendations: string[] = [];
+    
+    recommendations.push(`🕐 Time-based change: ${timeSlot.description}`);
+    recommendations.push(`${this.getLevelEmoji(newLevel)} Zone level: ${oldLevel} → ${newLevel}`);
+    
+    if (newLevel === 'Danger') {
+      recommendations.push('🚨 HIGH RISK: Consider leaving the area immediately');
+      recommendations.push('📱 Keep your panic button accessible');
+      recommendations.push('👥 Stay in well-lit, populated areas');
+    } else if (newLevel === 'Caution') {
+      recommendations.push('⚠️ MODERATE RISK: Stay alert and be cautious');
+      recommendations.push('📱 Keep your phone accessible');
+      recommendations.push('🔍 Be aware of your surroundings');
+    } else if (newLevel === 'Neutral') {
+      recommendations.push('🟡 NEUTRAL: Normal vigilance recommended');
+      recommendations.push('📱 Stay aware of your surroundings');
+    } else {
+      recommendations.push('🟢 SAFE: Normal activities can resume');
+    }
+    
+    if (timeSlot.crimeMultiplier > 1.0) {
+      recommendations.push(`📊 Crime risk is ${(timeSlot.crimeMultiplier * 100).toFixed(0)}% higher during this time`);
+    }
+    
+    return recommendations;
   }
 
   private calculateTimeSlotSeverity(zone: DangerZone, currentTime: Date): number {

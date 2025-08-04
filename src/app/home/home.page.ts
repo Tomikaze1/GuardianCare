@@ -1208,4 +1208,158 @@ export class HomePage implements OnInit, OnDestroy {
     }
   }
 
+  // Enhanced test method for simulating red zone entry
+  async testRedZoneEntry() {
+    try {
+      // Simulate entering the Guadalupe Danger Zone
+      const dangerZoneLocation = { lat: 10.320, lng: 123.900 }; // Center of Guadalupe Danger Zone
+      
+      // Update current location to danger zone
+      this.currentLocation = dangerZoneLocation;
+      this.zoneEngine.updateCurrentLocation(dangerZoneLocation);
+      
+      // Trigger vibration
+      this.vibrateDevice();
+      
+      // Show danger zone alert with panic button suggestion
+      const alert = await this.alertController.create({
+        header: '🚨 DANGER ZONE ALERT 🚨',
+        message: `You have entered a HIGH RISK area!\n\n📍 Location: Guadalupe Danger Zone\n⚠️ Risk Level: EXTREME\n📊 Recent Incidents: Multiple assaults reported\n⏰ Time Risk: High (night time)\n\n🛡️ STAY ALERT AND BE CAUTIOUS!\n\nDo you want to use your panic button for emergency assistance?`,
+        buttons: [
+          {
+            text: 'Cancel',
+            role: 'cancel',
+            cssClass: 'cancel-button',
+            handler: () => {
+              console.log('User dismissed danger zone alert');
+            }
+          },
+          {
+            text: '🚨 USE PANIC BUTTON',
+            cssClass: 'emergency-button',
+            handler: async () => {
+              await this.triggerPanicButton();
+            }
+          }
+        ],
+        cssClass: 'danger-zone-alert',
+        backdropDismiss: false,
+        translucent: true,
+        animated: true
+      });
+
+      await alert.present();
+      
+      // Also show a toast notification
+      await this.notificationService.warning(
+        '🚨 DANGER ZONE ENTERED',
+        'You are in a high-risk area. Stay alert and consider using the panic button if needed.',
+        'OK',
+        5000
+      );
+      
+      console.log('🧪 Red zone entry test completed');
+    } catch (error) {
+      console.error('Error testing red zone entry:', error);
+    }
+  }
+
+  // Test method for time-based zone changes
+  async testTimeBasedZoneChanges() {
+    try {
+      // Simulate entering the Colon Area (time-based zone)
+      const colonLocation = { lat: 10.305, lng: 123.905 }; // Center of Colon Area
+      
+      // Update current location to Colon area
+      this.currentLocation = colonLocation;
+      this.zoneEngine.updateCurrentLocation(colonLocation);
+      
+      // Get current time and determine expected zone level
+      const currentHour = new Date().getHours();
+      let expectedLevel = 'Neutral';
+      let timeDescription = '';
+      
+      if (currentHour >= 6 && currentHour <= 11) {
+        expectedLevel = 'Neutral';
+        timeDescription = 'Morning (6 AM - 11 AM)';
+      } else if (currentHour >= 12 && currentHour <= 17) {
+        expectedLevel = 'Caution';
+        timeDescription = 'Afternoon (12 PM - 5 PM)';
+      } else if (currentHour >= 18 && currentHour <= 23) {
+        expectedLevel = 'Danger';
+        timeDescription = 'Evening (6 PM - 11 PM)';
+      } else {
+        expectedLevel = 'Danger';
+        timeDescription = 'Night (12 AM - 5 AM)';
+      }
+      
+      // Trigger vibration
+      this.vibrateDevice();
+      
+      // Show time-based zone change alert
+      const alert = await this.alertController.create({
+        header: `🕐 TIME-BASED ZONE TEST: Colon Area`,
+        message: `Testing time-based zone changes!\n\n📍 Location: Colon Area\n⏰ Current Time: ${timeDescription}\n🔄 Expected Level: ${expectedLevel}\n\nThis zone changes risk level based on time:\n• Morning (6-11 AM): 🟡 Neutral\n• Afternoon (12-5 PM): 🟠 Caution\n• Evening (6-11 PM): 🔴 Danger\n• Night (12-5 AM): 🔴 High Danger\n\nMove to this area to test real-time changes!`,
+        buttons: [
+          {
+            text: 'Cancel',
+            role: 'cancel',
+            cssClass: 'cancel-button',
+            handler: () => {
+              console.log('User dismissed time-based zone test');
+            }
+          },
+          {
+            text: '🕐 TEST ZONE CHANGES',
+            cssClass: 'test-button',
+            handler: async () => {
+              await this.simulateTimeBasedZoneChanges();
+            }
+          }
+        ],
+        cssClass: 'time-zone-test-alert',
+        backdropDismiss: false,
+        translucent: true,
+        animated: true
+      });
+
+      await alert.present();
+      
+      // Show a toast notification
+      await this.notificationService.info(
+        '🕐 TIME-BASED ZONE TEST',
+        `Colon Area is currently ${expectedLevel} level (${timeDescription}). Move to this area to test real-time changes!`,
+        'OK',
+        8000
+      );
+      
+      console.log('🧪 Time-based zone changes test initiated');
+    } catch (error) {
+      console.error('Error testing time-based zone changes:', error);
+    }
+  }
+
+  // Simulate time-based zone changes for testing
+  private async simulateTimeBasedZoneChanges() {
+    try {
+      const colonLocation = { lat: 10.305, lng: 123.905 };
+      this.currentLocation = colonLocation;
+      this.zoneEngine.updateCurrentLocation(colonLocation);
+      
+      // Force update zones to trigger time-based changes
+      this.zoneEngine['updateAllZones']();
+      
+      await this.notificationService.success(
+        '🕐 TIME-BASED ZONE SIMULATION',
+        'Time-based zone changes have been triggered!\n\nCheck the console for zone level updates and alerts.',
+        'OK',
+        5000
+      );
+      
+      console.log('🧪 Time-based zone simulation completed');
+    } catch (error) {
+      console.error('Error simulating time-based zone changes:', error);
+    }
+  }
+
 }

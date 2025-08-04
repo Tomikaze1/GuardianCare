@@ -46,6 +46,22 @@
       class="test-button">
       <ion-icon name="bug"></ion-icon>
     </ion-button>
+
+    <ion-button 
+      id="test-red-zone" 
+      (click)="testRedZoneEntry()" 
+      color="danger"
+      class="test-button">
+      <ion-icon name="warning"></ion-icon>
+    </ion-button>
+
+    <ion-button 
+      id="test-time-zones" 
+      (click)="testTimeBasedZoneChanges()" 
+      color="tertiary"
+      class="test-button">
+      <ion-icon name="time"></ion-icon>
+    </ion-button>
   </div>
 
   <div class="status-indicator" *ngIf="inDangerZone">
