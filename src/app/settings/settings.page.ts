@@ -14,6 +14,8 @@ import { UserService } from '../services/user.service';
 export class SettingsPage implements OnInit {
   currentLanguage = 'en';
   isAdmin = false;
+  userRole = 'Unknown';
+  userId = 'Unknown';
   languages = [
     { code: 'en', name: 'English' },
     { code: 'es', name: 'Español' },
@@ -37,6 +39,20 @@ export class SettingsPage implements OnInit {
   ngOnInit() {
     this.userService.isAdmin().subscribe(isAdmin => {
       this.isAdmin = isAdmin;
+      console.log('Admin status:', isAdmin);
+    });
+
+    // Get current user data for debugging
+    this.userService.getCurrentUserData().subscribe(userData => {
+      if (userData) {
+        this.userRole = userData.role || 'No role set';
+        this.userId = userData.uid || 'No UID';
+        console.log('Current user data:', userData);
+        console.log('User role:', this.userRole);
+        console.log('User ID:', this.userId);
+      } else {
+        console.log('No user data found');
+      }
     });
     
     // Ensure current language is properly set
