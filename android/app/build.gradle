@@ -3,6 +3,12 @@ apply plugin: 'com.android.application'
 android {
     namespace "com.guardiancare.app"
     compileSdk rootProject.ext.compileSdkVersion
+    
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    
     defaultConfig {
         applicationId "com.guardiancare.app"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -25,6 +31,10 @@ android {
 }
 
 repositories {
+    google()
+    mavenCentral()
+    // Note: flatDir is deprecated, but some Capacitor plugins may still require it
+    // If you encounter plugin issues, you may need to keep this temporarily
     flatDir{
         dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
     }
