@@ -9,6 +9,7 @@
     font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     height: 100vh;
     overflow: hidden;
+    scroll-behavior: smooth;
     
     // Hide any global tabs on auth pages
     ion-tab-bar {
@@ -153,7 +154,7 @@
             
                          .location-pin {
                position: absolute;
-               top: 45%;
+               top: 50%;
                left: 50%;
                transform: translate(-50%, -50%);
                font-size: 1.8rem;
@@ -842,9 +843,6 @@
     }
 
     // Additional enhancements for professional look
-    // Smooth scrolling for mobile
-    scroll-behavior: smooth;
-    
     // Better touch targets
     ion-button {
       min-height: 44px;

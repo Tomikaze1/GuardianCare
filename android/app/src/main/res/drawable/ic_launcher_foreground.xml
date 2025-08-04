@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Background circle -->
+    <path
+        android:fillColor="#C5A5B0"
+        android:pathData="M54,54m-48,0a48,48 0,1 1,96 0a48,48 0,1 1,-96 0" />
+    
+    <!-- Shield - larger and more prominent -->
+    <path
+        android:fillColor="#8B6B76"
+        android:pathData="M54,18 L72,28 L72,48 C72,66 63,76 54,82 C45,76 36,66 36,48 L36,28 Z" />
+    
+    <!-- Location Pin - centered and white -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,32 L60,38 L60,46 C60,48 57,50 54,50 C51,50 48,48 48,46 L48,38 Z" />
+    
+    <!-- Pin Circle -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,30m-2.5,0a2.5,2.5 0,1 1,5 0a2.5,2.5 0,1 1,-5 0" />
+</vector> 
