@@ -54,16 +54,12 @@ export class IncidentService {
   addIncident(incident: Omit<Incident, 'id' | 'timestamp' | 'status' | 'reporterId' | 'reporterName'>): Observable<Incident> {
     return from(this.authService.getCurrentUser()).pipe(
       switchMap(user => {
-        if (!user) {
-          throw new Error('User not authenticated');
-        }
-
         const newIncident: Omit<Incident, 'id'> = {
           ...incident,
           timestamp: new Date(),
           status: 'pending',
-          reporterId: user.uid,
-          reporterName: user.displayName || user.email || 'Anonymous'
+          reporterId: user?.uid || 'anonymous',
+          reporterName: user?.displayName || user?.email || (incident as any).reporterName || 'Anonymous'
         };
 
         return from(this.firebaseService.addDocument(this.collectionName, newIncident));
@@ -73,8 +69,8 @@ export class IncidentService {
         ...incident,
         timestamp: new Date(),
         status: 'pending',
-        reporterId: (incident as any).reporterId,
-        reporterName: (incident as any).reporterName
+        reporterId: (incident as any).reporterId || 'anonymous',
+        reporterName: (incident as any).reporterName || 'Anonymous'
       } as Incident))
     );
   }

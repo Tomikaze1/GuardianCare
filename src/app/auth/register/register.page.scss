@@ -3,7 +3,7 @@
 
   .register-content {
     // Enhanced gradient background
-    --background: linear-gradient(135deg, #fafbfc 0%, #f1f5f9 50%, #ffffff 100%);
+    --background: linear-gradient(135deg, #C5A5B0 0%, #D4C4C0 50%, #E8D8D4 100%);
     background-size: 400% 400%;
     animation: gradientShift 20s ease infinite;
     font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -32,9 +32,9 @@
         right: 0;
         bottom: 0;
         background: 
-          radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
-          radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.06) 0%, transparent 50%),
-          radial-gradient(circle at 40% 40%, rgba(139, 92, 246, 0.04) 0%, transparent 50%);
+          radial-gradient(circle at 20% 80%, rgba(197, 165, 176, 0.15) 0%, transparent 50%),
+          radial-gradient(circle at 80% 20%, rgba(155, 122, 133, 0.12) 0%, transparent 50%),
+          radial-gradient(circle at 40% 40%, rgba(139, 107, 118, 0.10) 0%, transparent 50%);
         pointer-events: none;
         animation: backgroundPulse 18s ease-in-out infinite;
       }
@@ -46,7 +46,7 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(59,130,246,0.03)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(107,79,91,0.03)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
         opacity: 0.5;
         animation: gridMove 40s linear infinite;
       }
@@ -65,7 +65,7 @@
       .shape {
         position: absolute;
         border-radius: 50%;
-        background: linear-gradient(45deg, rgba(59, 130, 246, 0.08), rgba(59, 130, 246, 0.03));
+        background: linear-gradient(45deg, rgba(107, 79, 91, 0.08), rgba(107, 79, 91, 0.03));
         backdrop-filter: blur(40px);
         
         &.shape-1 {
@@ -74,7 +74,7 @@
           top: 10%;
           left: 8%;
           animation: float 12s ease-in-out infinite;
-          background: linear-gradient(45deg, rgba(99, 102, 241, 0.1), rgba(99, 102, 241, 0.04));
+          background: linear-gradient(45deg, rgba(139, 107, 118, 0.1), rgba(139, 107, 118, 0.04));
         }
         
         &.shape-2 {
@@ -83,7 +83,7 @@
           top: 20%;
           right: 12%;
           animation: float 14s ease-in-out infinite reverse;
-          background: linear-gradient(45deg, rgba(59, 130, 246, 0.08), rgba(59, 130, 246, 0.03));
+          background: linear-gradient(45deg, rgba(107, 79, 91, 0.08), rgba(107, 79, 91, 0.03));
         }
         
         &.shape-3 {
@@ -92,7 +92,7 @@
           bottom: 15%;
           left: 5%;
           animation: float 16s ease-in-out infinite;
-          background: linear-gradient(45deg, rgba(139, 92, 246, 0.06), rgba(139, 92, 246, 0.02));
+          background: linear-gradient(45deg, rgba(155, 122, 133, 0.06), rgba(155, 122, 133, 0.02));
         }
         
         &.shape-4 {
@@ -101,7 +101,7 @@
           top: 55%;
           right: 20%;
           animation: float 10s ease-in-out infinite reverse;
-          background: linear-gradient(45deg, rgba(59, 130, 246, 0.08), rgba(59, 130, 246, 0.03));
+          background: linear-gradient(45deg, rgba(107, 79, 91, 0.08), rgba(107, 79, 91, 0.03));
         }
         
         &.shape-5 {
@@ -110,7 +110,7 @@
           bottom: 10%;
           right: 8%;
           animation: float 13s ease-in-out infinite;
-          background: linear-gradient(45deg, rgba(99, 102, 241, 0.06), rgba(99, 102, 241, 0.02));
+          background: linear-gradient(45deg, rgba(139, 107, 118, 0.06), rgba(139, 107, 118, 0.02));
         }
       }
     }
@@ -137,13 +137,29 @@
           display: inline-block;
           margin-bottom: 1.5rem;
           
-          .app-logo {
-            font-size: 4rem;
-            color: #3b82f6;
-            filter: drop-shadow(0 8px 20px rgba(59, 130, 246, 0.25));
-            animation: logoFloat 4s ease-in-out infinite;
+          .custom-logo {
             position: relative;
+            display: inline-block;
+            font-size: 4rem;
+            animation: logoFloat 4s ease-in-out infinite;
             z-index: 2;
+            
+            .shield-icon {
+              color: #6B4F5B;
+              filter: drop-shadow(0 8px 20px rgba(107, 79, 91, 0.25));
+              position: relative;
+              z-index: 1;
+            }
+            
+                         .location-pin {
+               position: absolute;
+               top: 45%;
+               left: 50%;
+               transform: translate(-50%, -50%);
+               font-size: 1.8rem;
+               color: #ffffff;
+               z-index: 2;
+             }
           }
           
           .logo-glow {
@@ -153,7 +169,7 @@
             transform: translate(-50%, -50%);
             width: 120px;
             height: 120px;
-            background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(107, 79, 91, 0.2) 0%, transparent 70%);
             border-radius: 50%;
             animation: glowPulse 3s ease-in-out infinite;
           }
@@ -163,16 +179,16 @@
           font-family: 'Plus Jakarta Sans', sans-serif;
           font-size: 2.5rem;
           font-weight: 800;
-          background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #2563eb 100%);
+          background: linear-gradient(135deg, #6B4F5B 0%, #8B6B76 50%, #6B4F5B 100%);
           background-size: 200% 200%;
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
           margin: 0 0 0.5rem 0;
-          text-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+          text-shadow: 0 4px 12px rgba(107, 79, 91, 0.3);
           letter-spacing: -1.5px;
           animation: textShimmer 4s ease infinite;
-          filter: drop-shadow(0 2px 6px rgba(59, 130, 246, 0.15));
+          filter: drop-shadow(0 2px 6px rgba(107, 79, 91, 0.15));
         }
         
         .app-subtitle {
@@ -188,11 +204,11 @@
         .title-underline {
           width: 90px;
           height: 3px;
-          background: linear-gradient(90deg, #3b82f6, #60a5fa, #3b82f6);
+          background: linear-gradient(90deg, #6B4F5B, #8B6B76, #6B4F5B);
           margin: 0 auto;
           border-radius: 2px;
           animation: expandWidth 1.2s ease-out 1s both;
-          box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+          box-shadow: 0 2px 8px rgba(107, 79, 91, 0.25);
         }
       }
     }
@@ -251,7 +267,7 @@
           left: 0;
           width: 40px;
           height: 2px;
-          background: linear-gradient(90deg, #3b82f6, #60a5fa);
+          background: linear-gradient(90deg, #6B4F5B, #8B6B76);
           border-radius: 1px;
         }
       }
@@ -295,11 +311,11 @@
           
           &:focus-within {
             background: #ffffff;
-            border-color: #3b82f6;
+            border-color: #6B4F5B;
             transform: translateY(-2px);
             box-shadow: 
-              0 0 0 4px rgba(59, 130, 246, 0.1),
-              0 8px 20px rgba(59, 130, 246, 0.15),
+              0 0 0 4px rgba(107, 79, 91, 0.1),
+              0 8px 20px rgba(107, 79, 91, 0.15),
               inset 0 1px 0 rgba(255, 255, 255, 0.9);
             
             .input-border {
@@ -311,7 +327,7 @@
             }
             
             .input-icon {
-              color: #3b82f6;
+              color: #6B4F5B;
               transform: scale(1.05);
             }
           }
@@ -322,7 +338,7 @@
             left: 0;
             right: 0;
             height: 2px;
-            background: linear-gradient(90deg, #3b82f6, #60a5fa, #3b82f6);
+            background: linear-gradient(90deg, #6B4F5B, #8B6B76, #6B4F5B);
             transform: scaleX(0);
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             border-radius: 0 0 18px 18px;
@@ -334,7 +350,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), transparent);
+            background: linear-gradient(135deg, rgba(107, 79, 91, 0.05), transparent);
             border-radius: 18px;
             opacity: 0;
             transition: opacity 0.3s ease;
@@ -380,8 +396,8 @@
             flex-shrink: 0;
             
             &:hover {
-              color: #3b82f6;
-              background: rgba(59, 130, 246, 0.1);
+              color: #6B4F5B;
+              background: rgba(107, 79, 91, 0.1);
               transform: scale(1.05);
             }
           }
@@ -421,14 +437,14 @@
         margin-bottom: 1rem;
         
         .custom-checkbox {
-          --color: #3b82f6;
-          --color-checked: #3b82f6;
+          --color: #6B4F5B;
+          --color-checked: #6B4F5B;
           --checkmark-color: #ffffff;
           --border-radius: 8px;
           --border-width: 2px;
           --border-color: #cbd5e1;
-          --border-color-checked: #3b82f6;
-          --background-checked: #3b82f6;
+          --border-color-checked: #6B4F5B;
+          --background-checked: #6B4F5B;
           transform: scale(0.95);
           margin-top: 2px;
           flex-shrink: 0;
@@ -443,13 +459,13 @@
           letter-spacing: 0.2px;
           
           .terms-link {
-            color: #3b82f6;
+            color: #6B4F5B;
             text-decoration: none;
             font-weight: 600;
             transition: all 0.3s ease;
             
             &:hover {
-              color: #2563eb;
+              color: #8B6B76;
               text-decoration: underline;
             }
           }
@@ -473,11 +489,11 @@
         position: relative;
         overflow: hidden;
         border: none;
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        background: linear-gradient(135deg, #6B4F5B 0%, #8B6B76 100%);
         background-size: 200% 200%;
         animation: buttonGradientShift 6s ease infinite;
         box-shadow: 
-          0 8px 25px rgba(59, 130, 246, 0.3),
+          0 8px 25px rgba(107, 79, 91, 0.3),
           0 4px 12px rgba(0, 0, 0, 0.1);
         letter-spacing: 0.5px;
         
@@ -507,7 +523,7 @@
         &:hover {
           transform: translateY(-2px);
           box-shadow: 
-            0 12px 35px rgba(59, 130, 246, 0.4),
+            0 12px 35px rgba(107, 79, 91, 0.4),
             0 6px 18px rgba(0, 0, 0, 0.15);
           
           .button-glow {
@@ -543,7 +559,7 @@
         line-height: 1.6;
         
         ion-button {
-          color: #3b82f6;
+          color: #6B4F5B;
           font-family: 'DM Sans', sans-serif;
           font-weight: 700;
           text-transform: none;
@@ -553,7 +569,7 @@
           letter-spacing: 0.3px;
           
           &:hover {
-            color: #2563eb;
+            color: #8B6B76;
             transform: scale(1.05);
           }
           
@@ -662,8 +678,12 @@
         margin-bottom: 2.5rem;
         
         .logo-container {
-          .logo-wrapper .app-logo {
+          .logo-wrapper .custom-logo {
             font-size: 3.5rem;
+            
+            .location-pin {
+              font-size: 1.6rem;
+            }
           }
           
           .app-title {
@@ -736,8 +756,12 @@
         margin-bottom: 2rem;
         
         .logo-container {
-          .logo-wrapper .app-logo {
+          .logo-wrapper .custom-logo {
             font-size: 3rem;
+            
+            .location-pin {
+              font-size: 1.4rem;
+            }
           }
           
           .app-title {
@@ -829,7 +853,7 @@
     
     // Improved accessibility
     .input-box:focus-within {
-      outline: 2px solid #3b82f6;
+      outline: 2px solid #6B4F5B;
       outline-offset: 2px;
     }
     
@@ -878,7 +902,7 @@
     .input-box {
       &.typing {
         .input-icon {
-          color: #3b82f6;
+          color: #6B4F5B;
           animation: pulse 2s infinite;
         }
       }
@@ -899,14 +923,14 @@
 
     // Dark mode support (optional)
     @media (prefers-color-scheme: dark) {
-      --background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      --background: linear-gradient(135deg, #2d1f2a 0%, #3d2f3a 100%);
       
       .register-container {
         &::before {
           background: 
-            radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 40% 40%, rgba(139, 92, 246, 0.08) 0%, transparent 50%);
+            radial-gradient(circle at 20% 80%, rgba(107, 79, 91, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(139, 107, 118, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 40% 40%, rgba(155, 122, 133, 0.08) 0%, transparent 50%);
         }
       }
       
@@ -922,12 +946,12 @@
       
       .form-section h3 {
         color: #f1f5f9;
-        border-bottom-color: #334155;
+        border-bottom-color: #4a3f4a;
       }
       
       .input-box {
-        background: #1e293b;
-        border-color: #334155;
+        background: #3d2f3a;
+        border-color: #4a3f4a;
         
         .custom-input-field {
           color: #f1f5f9;
@@ -942,8 +966,8 @@
         }
         
         &:hover {
-          background: #334155;
-          border-color: #475569;
+          background: #4a3f4a;
+          border-color: #5a4f5a;
         }
       }
       
