@@ -34,103 +34,103 @@ ion-tab-bar {
     margin: 0 4px;
     overflow: hidden;
 
-         &::before {
-       content: '';
-       position: absolute;
-       top: 0;
-       left: 0;
-       right: 0;
-       bottom: 0;
-       background: linear-gradient(135deg, rgba(197, 165, 176, 0.2) 0%, rgba(155, 122, 133, 0.2) 100%);
-       opacity: 0;
-       transition: opacity 0.3s ease;
-       border-radius: 16px;
-     }
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(197, 165, 176, 0.2) 0%, rgba(155, 122, 133, 0.2) 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      border-radius: 16px;
+    }
 
-                   ion-icon {
-        font-size: 1.3rem;
-        color: rgba(255, 255, 255, 0.7);
-        margin-bottom: 4px;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        transform: scale(1) translateY(0);
-        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-        position: relative;
-        z-index: 2;
+    ion-icon {
+      font-size: 1.3rem;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 4px;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      transform: scale(1) translateY(0);
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+      position: relative;
+      z-index: 2;
+    }
+
+    ion-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+      color: rgba(255, 255, 255, 0.7);
+      margin-top: 2px;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      transform: scale(1) translateY(0);
+      position: relative;
+      z-index: 2;
+    }
+
+    &.tab-selected {
+      background: linear-gradient(135deg, #9B7A85 0%, #C5A5B0 100%);
+      box-shadow: 0 6px 20px rgba(197, 165, 176, 0.3);
+      transform: translateY(-2px) scale(1.02);
+      
+      &::before {
+        opacity: 1;
       }
-
+      
+      ion-icon {
+        color: #ffffff;
+        transform: scale(1.1) translateY(-1px);
+        filter: drop-shadow(0 3px 6px rgba(255, 255, 255, 0.3));
+        animation: iconFloat 2s ease-in-out infinite;
+      }
+      
       ion-label {
-        font-size: 0.7rem;
+        color: #ffffff;
+        transform: scale(1.05) translateY(-1px);
+        font-weight: 700;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+      
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 16px;
+        height: 3px;
+        background: linear-gradient(90deg, #ffffff 0%, rgba(255, 255, 255, 0.8) 100%);
+        border-radius: 2px;
+        box-shadow: 0 2px 6px rgba(255, 255, 255, 0.4);
+        animation: indicatorGlow 2s ease-in-out infinite;
+      }
+    }
+
+    &:hover:not(.tab-selected) {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.1) 100%);
+      transform: translateY(-1px) scale(1.02);
+      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+      
+      &::before {
+        opacity: 1;
+      }
+      
+      ion-icon {
+        transform: scale(1.05) translateY(-1px);
+        color: rgba(255, 255, 255, 0.9);
+        filter: drop-shadow(0 2px 4px rgba(255, 255, 255, 0.3));
+      }
+      
+      ion-label {
+        transform: scale(1.02) translateY(-1px);
+        color: rgba(255, 255, 255, 0.9);
         font-weight: 600;
-        font-family: 'Plus Jakarta Sans', Arial, sans-serif;
-        color: rgba(255, 255, 255, 0.7);
-        margin-top: 2px;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-        transform: scale(1) translateY(0);
-        position: relative;
-        z-index: 2;
       }
-
-         &.tab-selected {
-       background: linear-gradient(135deg, #9B7A85 0%, #C5A5B0 100%);
-       box-shadow: 0 6px 20px rgba(197, 165, 176, 0.3);
-       transform: translateY(-2px) scale(1.02);
-       
-       &::before {
-         opacity: 1;
-       }
-       
-       ion-icon {
-         color: #ffffff;
-         transform: scale(1.1) translateY(-1px);
-         filter: drop-shadow(0 3px 6px rgba(255, 255, 255, 0.3));
-         animation: iconFloat 2s ease-in-out infinite;
-       }
-       
-       ion-label {
-         color: #ffffff;
-         transform: scale(1.05) translateY(-1px);
-         font-weight: 700;
-         text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-       }
-       
-       &::after {
-         content: '';
-         position: absolute;
-         bottom: -1px;
-         left: 50%;
-         transform: translateX(-50%);
-         width: 16px;
-         height: 3px;
-         background: linear-gradient(90deg, #ffffff 0%, rgba(255, 255, 255, 0.8) 100%);
-         border-radius: 2px;
-         box-shadow: 0 2px 6px rgba(255, 255, 255, 0.4);
-         animation: indicatorGlow 2s ease-in-out infinite;
-       }
-     }
-
-                   &:hover:not(.tab-selected) {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.1) 100%);
-        transform: translateY(-1px) scale(1.02);
-        box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
-        
-        &::before {
-          opacity: 1;
-        }
-        
-        ion-icon {
-          transform: scale(1.05) translateY(-1px);
-          color: rgba(255, 255, 255, 0.9);
-          filter: drop-shadow(0 2px 4px rgba(255, 255, 255, 0.3));
-        }
-        
-        ion-label {
-          transform: scale(1.02) translateY(-1px);
-          color: rgba(255, 255, 255, 0.9);
-          font-weight: 600;
-        }
-      }
+    }
 
     &:active {
       transform: translateY(0) scale(0.98);
@@ -139,6 +139,30 @@ ion-tab-bar {
   }
 }
 
+// Enhanced Tab Button Animations
+.tab-button-animated {
+  animation: tabButtonEnter 0.3s ease-out;
+  
+  &:nth-child(1) { animation-delay: 0.1s; }
+  &:nth-child(2) { animation-delay: 0.2s; }
+  &:nth-child(3) { animation-delay: 0.3s; }
+}
+
+.animated-tab-bar {
+  animation: tabBarSlideUp 0.4s ease-out;
+}
+
+// Page Transition Animations
+ion-router-outlet {
+  position: relative;
+}
+
+ion-router-outlet > * {
+  display: block;
+  animation: pageSlideIn 0.3s ease-out;
+}
+
+// Animation Keyframes
 @keyframes iconFloat {
   0%, 100% {
     transform: scale(1.1) translateY(-1px);
@@ -156,5 +180,82 @@ ion-tab-bar {
   50% {
     opacity: 0.8;
     box-shadow: 0 2px 12px rgba(255, 255, 255, 0.6);
+  }
+}
+
+@keyframes tabButtonEnter {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes tabBarSlideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pageSlideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pageSlideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+// Enhanced hover effects for tab buttons
+ion-tab-button {
+  &.tab-button-animated {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    &:hover {
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 8px 25px rgba(197, 165, 176, 0.4);
+    }
+    
+    &:active {
+      transform: translateY(0) scale(0.95);
+      transition: all 0.1s ease;
+    }
+  }
+}
+
+// Page content animations
+ion-content {
+  animation: contentFadeIn 0.4s ease-out;
+}
+
+@keyframes contentFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

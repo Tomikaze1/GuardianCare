@@ -1,94 +1,301 @@
 
 <ion-content class="settings-content">
-  <!-- Logo/Title Section -->
+  
   <div class="logo-container">
-    <div class="app-logo">⚙️</div>
+    <div class="logo-wrapper">
+      <div class="custom-logo">
+        <ion-icon name="shield" class="shield-icon"></ion-icon>
+        <ion-icon name="settings" class="settings-icon"></ion-icon>
+      </div>
+      <div class="logo-glow"></div>
+    </div>
     <div class="app-title">Settings</div>
     <div class="app-subtitle">Manage your preferences</div>
     <div class="title-underline"></div>
   </div>
 
   <div class="settings-form">
-    <!-- Language Section -->
+    
     <div class="form-row">
       <div class="section-header">
-        <span>Language</span>
+        <span>Account & Security</span>
         <div class="section-underline"></div>
       </div>
       
-      <div class="language-buttons">
-        <button 
-          class="language-btn"
-          [class.selected]="currentLanguage === 'en'"
-          (click)="changeLanguage('en')">
-          <ion-icon name="flag-outline"></ion-icon>
-          <span>English ({{currentLanguage}})</span>
-        </button>
-        <button 
-          class="language-btn"
-          [class.selected]="currentLanguage === 'es'"
-          (click)="changeLanguage('es')">
-          <ion-icon name="flag-outline"></ion-icon>
-          <span>Español ({{currentLanguage}})</span>
-        </button>
-        <button 
-          class="language-btn"
-          [class.selected]="currentLanguage === 'fr'"
-          (click)="changeLanguage('fr')">
-          <ion-icon name="flag-outline"></ion-icon>
-          <span>Français ({{currentLanguage}})</span>
-        </button>
-        <button 
-          class="language-btn"
-          [class.selected]="currentLanguage === 'ja'"
-          (click)="changeLanguage('ja')">
-          <ion-icon name="flag-outline"></ion-icon>
-          <span>日本語 ({{currentLanguage}})</span>
-        </button>
+      <div class="settings-list">
+        <div class="setting-item" (click)="changePassword()">
+          <div class="setting-left">
+            <ion-icon name="key-outline" class="setting-icon"></ion-icon>
+            <span class="setting-label">Change Password</span>
+          </div>
+          <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+        </div>
+
+        <div class="setting-item" (click)="updateEmail()">
+          <div class="setting-left">
+            <ion-icon name="mail-outline" class="setting-icon"></ion-icon>
+            <span class="setting-label">Update Email</span>
+          </div>
+          <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+        </div>
+
+        <div class="setting-item" (click)="linkedDevices()">
+          <div class="setting-left">
+            <ion-icon name="watch-outline" class="setting-icon"></ion-icon>
+            <span class="setting-label">Linked Devices</span>
+            <span class="setting-subtitle">Smartwatch pairing</span>
+          </div>
+          <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+        </div>
+
+        <div class="setting-item" (click)="twoFactorAuth()">
+          <div class="setting-left">
+            <ion-icon name="shield-checkmark-outline" class="setting-icon"></ion-icon>
+            <span class="setting-label">Two-Factor Authentication</span>
+          </div>
+          <ion-toggle [(ngModel)]="twoFactorEnabled" (ionChange)="toggleTwoFactor()"></ion-toggle>
+        </div>
       </div>
     </div>
 
-    <!-- Admin Section -->
+    
+    <div class="form-row">
+      <div class="section-header">
+        <span>Location & Alerts</span>
+        <div class="section-underline"></div>
+      </div>
+      
+      <div class="settings-list">
+        <div class="setting-item">
+          <div class="setting-left">
+            <ion-icon name="location-outline" class="setting-icon"></ion-icon>
+            <span class="setting-label">GPS Access</span>
+          </div>
+          <ion-toggle [(ngModel)]="gpsEnabled" (ionChange)="toggleGPS()"></ion-toggle>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-left">
+            <ion-icon name="time-outline" class="setting-icon"></ion-icon>
+            <span class="setting-label">Time-Based Alerts</span>
+            <span class="setting-subtitle">Smart alerts during high-risk hours</span>
+          </div>
+          <ion-toggle [(ngModel)]="timeBasedAlerts" (ionChange)="toggleTimeBasedAlerts()"></ion-toggle>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-left">
+            <ion-icon name="warning-outline" class="setting-icon"></ion-icon>
+            <span class="setting-label">Danger Zone Alerts</span>
+            <span class="setting-subtitle">Notify when approaching danger zones</span>
+          </div>
+          <ion-toggle [(ngModel)]="dangerZoneAlerts" (ionChange)="toggleDangerZoneAlerts()"></ion-toggle>
+        </div>
+
+        <div class="setting-item" (click)="doNotDisturbSettings()">
+          <div class="setting-left">
+            <ion-icon name="moon-outline" class="setting-icon"></ion-icon>
+            <span class="setting-label">Do Not Disturb Mode</span>
+            <span class="setting-subtitle">Time Schedule: 10PM - 6AM</span>
+          </div>
+          <ion-toggle [(ngModel)]="doNotDisturbEnabled" (ionChange)="toggleDoNotDisturb()"></ion-toggle>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="form-row">
+      <div class="section-header">
+        <span>Notifications</span>
+        <div class="section-underline"></div>
+      </div>
+      
+      <div class="settings-list">
+        <div class="setting-item">
+          <div class="setting-left">
+            <ion-icon name="vibrate-outline" class="setting-icon"></ion-icon>
+            <span class="setting-label">Smart Vibration</span>
+          </div>
+          <ion-toggle [(ngModel)]="smartVibration" (ionChange)="toggleSmartVibration()"></ion-toggle>
+        </div>
+
+        <div class="setting-item" (click)="alertSounds()">
+          <div class="setting-left">
+            <ion-icon name="volume-high-outline" class="setting-icon"></ion-icon>
+            <span class="setting-label">Alert Sounds</span>
+          </div>
+          <div class="setting-right">
+            <span class="setting-value">{{selectedAlertSound}}</span>
+            <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+          </div>
+        </div>
+
+        <div class="setting-item" (click)="languagePreference()">
+          <div class="setting-left">
+            <ion-icon name="globe-outline" class="setting-icon"></ion-icon>
+            <span class="setting-label">Language Preference</span>
+          </div>
+          <div class="setting-right">
+            <span class="setting-value">{{currentLanguage | uppercase}}</span>
+            <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+          </div>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-left">
+            <ion-icon name="flash-outline" class="setting-icon"></ion-icon>
+            <span class="setting-label">Panic Mode Visuals</span>
+            <span class="setting-subtitle">Flash warning</span>
+          </div>
+          <ion-toggle [(ngModel)]="panicModeVisuals" (ionChange)="togglePanicModeVisuals()"></ion-toggle>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="form-row">
+      <div class="section-header">
+        <span>Localization</span>
+        <div class="section-underline"></div>
+      </div>
+      
+      <div class="settings-list">
+        <div class="setting-item" (click)="appLanguage()">
+          <div class="setting-left">
+            <ion-icon name="language-outline" class="setting-icon"></ion-icon>
+            <span class="setting-label">App Language</span>
+          </div>
+          <div class="setting-right">
+            <span class="setting-value">{{currentLanguage | uppercase}}</span>
+            <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+          </div>
+        </div>
+
+        <div class="setting-item" (click)="units()">
+          <div class="setting-left">
+            <ion-icon name="scale-outline" class="setting-icon"></ion-icon>
+            <span class="setting-label">Units</span>
+          </div>
+          <div class="setting-right">
+            <span class="setting-value">{{selectedUnit}}</span>
+            <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+          </div>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-left">
+            <ion-icon name="translate-outline" class="setting-icon"></ion-icon>
+            <span class="setting-label">Tourist Translation Mode</span>
+          </div>
+          <ion-toggle [(ngModel)]="touristTranslationMode" (ionChange)="toggleTouristTranslation()"></ion-toggle>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="form-row">
+      <div class="section-header">
+        <span>Legal & Support</span>
+        <div class="section-underline"></div>
+      </div>
+      
+      <div class="settings-list">
+        <div class="setting-item" (click)="termsOfService()">
+          <div class="setting-left">
+            <ion-icon name="document-text-outline" class="setting-icon"></ion-icon>
+            <span class="setting-label">Terms of Service</span>
+          </div>
+          <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+        </div>
+
+        <div class="setting-item" (click)="privacyPolicy()">
+          <div class="setting-left">
+            <ion-icon name="shield-checkmark-outline" class="setting-icon"></ion-icon>
+            <span class="setting-label">Privacy Policy</span>
+          </div>
+          <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+        </div>
+
+        <div class="setting-item" (click)="contactSupport()">
+          <div class="setting-left">
+            <ion-icon name="headset-outline" class="setting-icon"></ion-icon>
+            <span class="setting-label">Contact Support</span>
+          </div>
+          <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="form-row">
+      <div class="section-header">
+        <span>About Us</span>
+        <div class="section-underline"></div>
+      </div>
+      
+      <div class="about-card">
+        <div class="about-content">
+          <ion-icon name="information-circle-outline" class="about-icon"></ion-icon>
+          <div class="about-text">
+            <h3>GuardianCare</h3>
+            <p>Your Safety Companion - Keeping communities safe through intelligent location-based alerts and emergency response.</p>
+            <span class="version">Version 1.0.0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
     <div *ngIf="isAdmin" class="form-row">
       <div class="section-header">
         <span>Admin Panel</span>
         <div class="section-underline"></div>
       </div>
       
-      <div class="admin-buttons">
-        <button class="admin-btn" (click)="navigateToAdmin('dashboard')">
-          <ion-icon name="analytics-outline"></ion-icon>
-          <span>Dashboard</span>
+      <div class="settings-list">
+        <div class="setting-item" (click)="navigateToAdmin('dashboard')">
+          <div class="setting-left">
+            <ion-icon name="analytics-outline" class="setting-icon"></ion-icon>
+            <span class="setting-label">Dashboard</span>
+          </div>
           <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
-        </button>
+        </div>
 
-        <button class="admin-btn" (click)="navigateToAdmin('zone-management')">
-          <ion-icon name="map-outline"></ion-icon>
-          <span>Zone Management</span>
+        <div class="setting-item" (click)="navigateToAdmin('zone-management')">
+          <div class="setting-left">
+            <ion-icon name="map-outline" class="setting-icon"></ion-icon>
+            <span class="setting-label">Zone Management</span>
+          </div>
           <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
-        </button>
+        </div>
 
-        <button class="admin-btn" (click)="navigateToAdmin('incident-validation')">
-          <ion-icon name="checkmark-circle-outline"></ion-icon>
-          <span>Incident Validation</span>
+        <div class="setting-item" (click)="navigateToAdmin('incident-validation')">
+          <div class="setting-left">
+            <ion-icon name="checkmark-circle-outline" class="setting-icon"></ion-icon>
+            <span class="setting-label">Incident Validation</span>
+          </div>
           <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
-        </button>
+        </div>
 
-        <button class="admin-btn" (click)="navigateToAdmin('analytics')">
-          <ion-icon name="bar-chart-outline"></ion-icon>
-          <span>Analytics</span>
+        <div class="setting-item" (click)="navigateToAdmin('analytics')">
+          <div class="setting-left">
+            <ion-icon name="bar-chart-outline" class="setting-icon"></ion-icon>
+            <span class="setting-label">Analytics</span>
+          </div>
           <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
-        </button>
+        </div>
 
-        <button class="admin-btn" (click)="navigateToAdmin('user-activity')">
-          <ion-icon name="people-outline"></ion-icon>
-          <span>User Activity</span>
+        <div class="setting-item" (click)="navigateToAdmin('user-activity')">
+          <div class="setting-left">
+            <ion-icon name="people-outline" class="setting-icon"></ion-icon>
+            <span class="setting-label">User Activity</span>
+          </div>
           <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
-        </button>
+        </div>
       </div>
     </div>
 
-    <!-- Logout Section -->
+    
     <div class="form-row">
       <div class="section-header">
         <span>Account</span>
