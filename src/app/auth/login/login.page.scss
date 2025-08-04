@@ -32,9 +32,9 @@
       right: 0;
       bottom: 0;
       background: 
-        radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.06) 0%, transparent 50%),
-        radial-gradient(circle at 40% 40%, rgba(139, 92, 246, 0.04) 0%, transparent 50%);
+        radial-gradient(circle at 20% 80%, rgba(197, 165, 176, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(155, 122, 133, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(139, 107, 118, 0.08) 0%, transparent 50%);
       pointer-events: none;
       animation: backgroundPulse 18s ease-in-out infinite;
     }
@@ -74,7 +74,7 @@
         top: 10%;
         left: 8%;
         animation: float 12s ease-in-out infinite;
-        background: linear-gradient(45deg, rgba(99, 102, 241, 0.1), rgba(99, 102, 241, 0.04));
+        background: linear-gradient(45deg, rgba(197, 165, 176, 0.15), rgba(197, 165, 176, 0.06));
       }
       
       &.shape-2 {
@@ -83,7 +83,7 @@
         top: 20%;
         right: 12%;
         animation: float 14s ease-in-out infinite reverse;
-        background: linear-gradient(45deg, rgba(59, 130, 246, 0.08), rgba(59, 130, 246, 0.03));
+        background: linear-gradient(45deg, rgba(155, 122, 133, 0.12), rgba(155, 122, 133, 0.05));
       }
       
       &.shape-3 {
@@ -92,7 +92,7 @@
         bottom: 15%;
         left: 5%;
         animation: float 16s ease-in-out infinite;
-        background: linear-gradient(45deg, rgba(139, 92, 246, 0.06), rgba(139, 92, 246, 0.02));
+        background: linear-gradient(45deg, rgba(139, 107, 118, 0.1), rgba(139, 107, 118, 0.04));
       }
       
       &.shape-4 {
@@ -162,7 +162,7 @@
         font-family: 'Plus Jakarta Sans', sans-serif;
         font-size: 3rem;
         font-weight: 800;
-        background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #2563eb 100%);
+        background: linear-gradient(135deg, #9B7A85 0%, #C5A5B0 50%, #8B6B76 100%);
         background-size: 200% 200%;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
@@ -187,11 +187,11 @@
       .title-underline {
         width: 90px;
         height: 3px;
-        background: linear-gradient(90deg, #3b82f6, #60a5fa, #3b82f6);
+        background: linear-gradient(90deg, #C5A5B0, #9B7A85, #C5A5B0);
         margin: 0 auto;
         border-radius: 2px;
         animation: expandWidth 1.2s ease-out 1s both;
-        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+        box-shadow: 0 2px 8px rgba(197, 165, 176, 0.25);
       }
     }
   }

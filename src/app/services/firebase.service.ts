@@ -1,12 +1,16 @@
 import { Injectable } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
+import { AngularFireStorage } from '@angular/fire/compat/storage';
 import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FirebaseService {
-  constructor(private firestore: AngularFirestore) {}
+  constructor(
+    private firestore: AngularFirestore,
+    private storage: AngularFireStorage
+  ) {}
 
   getFirestoreInstance(): AngularFirestore {
     return this.firestore;
@@ -46,5 +50,9 @@ export class FirebaseService {
 
   getDocumentById(collectionName: string, docId: string): Observable<any> {
     return this.firestore.collection(collectionName).doc(docId).valueChanges({ idField: 'id' });
+  }
+
+  getStorageInstance(): AngularFireStorage {
+    return this.storage;
   }
 }

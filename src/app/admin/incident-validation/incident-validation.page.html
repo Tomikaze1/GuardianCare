@@ -1,24 +1,4 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>Incident Validation</ion-title>
-  </ion-toolbar>
-  <ion-toolbar>
-    <ion-segment [(ngModel)]="filter" (ionChange)="segmentChanged($event)">
-      <ion-segment-button value="pending">
-        <ion-label>Pending</ion-label>
-      </ion-segment-button>
-      <ion-segment-button value="verified">
-        <ion-label>Verified</ion-label>
-      </ion-segment-button>
-      <ion-segment-button value="rejected">
-        <ion-label>Rejected</ion-label>
-      </ion-segment-button>
-      <ion-segment-button value="all">
-        <ion-label>All</ion-label>
-      </ion-segment-button>
-    </ion-segment>
-  </ion-toolbar>
-</ion-header>
+
 
 <ion-content>
   <div class="incident-validation-container">

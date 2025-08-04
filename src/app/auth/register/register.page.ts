@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { LoadingController, AlertController, ToastController } from '@ionic/angular';
+import { LoadingController, AlertController } from '@ionic/angular';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
+import { NotificationService } from '../../shared/services/notification.service';
 
 @Component({
   selector: 'app-register',
@@ -24,7 +25,7 @@ export class RegisterPage implements OnInit {
     private router: Router,
     private loadingController: LoadingController,
     private alertController: AlertController,
-    private toastController: ToastController
+    private notificationService: NotificationService
   ) {
     this.registerForm = this.formBuilder.group({
       firstName: ['', [Validators.required, Validators.minLength(2), Validators.pattern(/^[a-zA-Z\s]*$/)]],
@@ -102,6 +103,7 @@ export class RegisterPage implements OnInit {
         const formData = this.registerForm.value;
         const { email, password, firstName, lastName, phone, emergencyContact, emergencyContactName } = formData;
         
+        // Check if email already exists
         const methods = await this.afAuth.fetchSignInMethodsForEmail(email);
         if (methods && methods.length > 0) {
           await loading.dismiss();
@@ -110,74 +112,81 @@ export class RegisterPage implements OnInit {
           return;
         }
 
+        // Create user account
         const userCredential = await this.afAuth.createUserWithEmailAndPassword(email, password);
 
         if (userCredential.user) {
+          // Update user profile
           try {
             await userCredential.user.updateProfile({
               displayName: `${firstName} ${lastName}`,
               photoURL: null
             });
-
-            try {
-              await userCredential.user.sendEmailVerification();
-            } catch (emailError) {
-              console.warn('Email verification failed, but user account created:', emailError);
-            }
-
-            const batch = this.firestore.firestore.batch();
-            const userRef = this.firestore.collection('users').doc(userCredential.user.uid).ref;
-            const settingsRef = this.firestore.collection('userSettings').doc(userCredential.user.uid).ref;
-
-            batch.set(userRef, {
-              uid: userCredential.user.uid,
-              firstName: firstName.trim(),
-              lastName: lastName.trim(),
-              email: email.toLowerCase().trim(),
-              phone: phone.trim(),
-              emergencyContact: emergencyContact.trim(),
-              emergencyContactName: emergencyContactName.trim(),
-              role: 'user',
-              isActive: true,
-              isVerified: false,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              lastLogin: new Date()
-            });
-
-            batch.set(settingsRef, {
-              userId: userCredential.user.uid,
-              privacy: {
-                shareLocation: true,
-                showProfile: true,
-                allowDirectMessages: true
-              },
-              notifications: {
-                emergencyAlerts: true,
-                communityUpdates: true,
-                safetyTips: true,
-                emailNotifications: true,
-                pushNotifications: true
-              },
-              createdAt: new Date(),
-              updatedAt: new Date()
-            });
-
-            await batch.commit();
           } catch (profileError) {
-            console.error('Profile update or Firestore error:', profileError);
-            throw new Error('Failed to complete user profile setup');
+            console.warn('Profile update failed, but continuing with registration:', profileError);
+            // Don't throw error here, continue with registration
           }
+
+          // Send email verification (optional)
+          try {
+            await userCredential.user.sendEmailVerification();
+          } catch (emailError) {
+            console.warn('Email verification failed, but user account created:', emailError);
+          }
+
+                     // Create Firestore documents
+           try {
+             // Create user document
+             await this.firestore.collection('users').doc(userCredential.user.uid).set({
+               uid: userCredential.user.uid,
+               firstName: firstName.trim(),
+               lastName: lastName.trim(),
+               email: email.toLowerCase().trim(),
+               phone: phone.trim(),
+               emergencyContact: emergencyContact.trim(),
+               emergencyContactName: emergencyContactName.trim(),
+               role: 'user',
+               isActive: true,
+               isVerified: false,
+               createdAt: new Date(),
+               updatedAt: new Date(),
+               lastLogin: new Date()
+             });
+
+             // Create user settings document
+             await this.firestore.collection('userSettings').doc(userCredential.user.uid).set({
+               userId: userCredential.user.uid,
+               privacy: {
+                 shareLocation: true,
+                 showProfile: true,
+                 allowDirectMessages: true
+               },
+               notifications: {
+                 emergencyAlerts: true,
+                 communityUpdates: true,
+                 safetyTips: true,
+                 emailNotifications: true,
+                 pushNotifications: true
+               },
+               createdAt: new Date(),
+               updatedAt: new Date()
+             });
+           } catch (firestoreError) {
+             console.error('Firestore error:', firestoreError);
+             // Even if Firestore fails, the user account is created, so we should still show success
+             // but log the error for debugging
+           }
+
+          // Registration successful
           await loading.dismiss();
           this.isLoading = false;
           
-          const toast = await this.toastController.create({
-            message: '🎉 Account created successfully! You can now sign in with your email and password.',
-            duration: 5000,
-            color: 'success',
-            position: 'top'
-          });
-          await toast.present();
+          this.notificationService.success(
+            'Success!',
+            '🎉 Account created successfully! You can now sign in with your email and password.',
+            'Sign In',
+            5000
+          );
 
           this.router.navigate(['/auth/login']);
         }
@@ -185,7 +194,11 @@ export class RegisterPage implements OnInit {
         await loading.dismiss();
         this.isLoading = false;
         
+        console.error('Registration error:', error);
+        
         let errorMessage = 'An unexpected error occurred. Please try again.';
+        let errorHeader = 'Registration Error';
+        
         if (error.code === 'auth/email-already-in-use') {
           errorMessage = 'This email is already registered. Please use a different email or try signing in.';
           this.registerForm.get('email')?.setErrors({ emailExists: true });
@@ -195,26 +208,32 @@ export class RegisterPage implements OnInit {
         } else if (error.code === 'auth/invalid-email') {
           errorMessage = 'Please enter a valid email address.';
           this.registerForm.get('email')?.setErrors({ invalidEmail: true });
+        } else if (error.code === 'auth/network-request-failed') {
+          errorMessage = 'Network error. Please check your internet connection and try again.';
+        } else if (error.code === 'auth/too-many-requests') {
+          errorMessage = 'Too many failed attempts. Please try again later.';
+        } else if (error.message === 'Failed to complete user profile setup') {
+          errorMessage = 'Account created but profile setup failed. Please contact support.';
+          errorHeader = 'Partial Registration Success';
         }
 
         const alert = await this.alertController.create({
-          header: 'Registration Error',
+          header: errorHeader,
           message: errorMessage,
           buttons: ['OK']
         });
         await alert.present();
       }
-    } else {
-      this.markFormGroupTouched(this.registerForm);
-      this.focusOnFirstError();
-      const toast = await this.toastController.create({
-        message: 'Please fill in all required fields correctly.',
-        duration: 3000,
-        color: 'warning',
-        position: 'top'
-      });
-      await toast.present();
-    }
+         } else {
+       this.markFormGroupTouched(this.registerForm);
+       this.focusOnFirstError();
+       this.notificationService.warning(
+         'Warning!',
+         'Please fill in all required fields correctly.',
+         'OK',
+         3000
+       );
+     }
   }
 
   private async showEmailExistsAlert() {

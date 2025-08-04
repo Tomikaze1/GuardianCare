@@ -1,81 +1,160 @@
 ion-tab-bar {
   --background: transparent;
-  background: transparent;
+  background: linear-gradient(135deg, #C5A5B0 0%, #9B7A85 100%);
   position: fixed;
   left: 0; right: 0; bottom: 0;
   z-index: 99;
-  box-shadow: none;
-  border: none;
-  padding: 0;
-  margin: 0 10px 14px 10px; // Margin left/right for pill effect
+  box-shadow: 0 -4px 16px rgba(197, 165, 176, 0.2);
+  border-top: 1px solid rgba(197, 165, 176, 0.3);
+  padding: 8px 12px;
+  margin: 0;
+  height: 65px;
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
 
-  // Pill shape background
   &::before {
-    content: "";
+    content: '';
     position: absolute;
-    left: 0; right: 0; top: 0; bottom: 0;
-    background: rgba(255,255,255,0.92);
-    border-radius: 24px;
-    box-shadow: 0 7px 32px #3075ff19;
-    filter: blur(0.2px);
-    border: 1.2px solid #e5e8f5;
-    backdrop-filter: blur(9px);
-    z-index: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+      radial-gradient(circle at 20% 50%, rgba(197, 165, 176, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(155, 122, 133, 0.1) 0%, transparent 50%);
     pointer-events: none;
   }
-
-  display: flex;
-  align-items: center;
-  height: 66px;
-  border-radius: 24px; // Ensures bar itself is rounded
 
   ion-tab-button {
     background: transparent;
     position: relative;
-    z-index: 1;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 70px;
     border-radius: 16px;
-    transition: background 0.16s, box-shadow 0.14s;
-    min-width: 54px;
+    margin: 0 4px;
+    overflow: hidden;
 
-    ion-icon {
-      font-size: 1.54rem;
-      color: #575a66;
-      margin-bottom: 1px;
-      transition: color 0.16s, text-shadow 0.16s;
-    }
+         &::before {
+       content: '';
+       position: absolute;
+       top: 0;
+       left: 0;
+       right: 0;
+       bottom: 0;
+       background: linear-gradient(135deg, rgba(197, 165, 176, 0.2) 0%, rgba(155, 122, 133, 0.2) 100%);
+       opacity: 0;
+       transition: opacity 0.3s ease;
+       border-radius: 16px;
+     }
 
-    ion-label {
-      font-size: 1rem;
-      font-weight: 700;
-      font-family: 'Plus Jakarta Sans', 'DM Sans', Arial, sans-serif;
-      color: #575a66;
-      margin-top: 2px;
-      transition: color 0.16s;
-      letter-spacing: 0.01em;
-    }
-
-    &.tab-selected {
-      background: linear-gradient(90deg, #f3f8ff 40%, #e5efff 100%);
-      box-shadow: 0 4px 24px #38b6ff11;
-      ion-icon {
-        color: #2874fa;
-        text-shadow: 0 2px 8px #a4cefa25;
+                   ion-icon {
+        font-size: 1.3rem;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 4px;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        transform: scale(1) translateY(0);
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        position: relative;
+        z-index: 2;
       }
+
       ion-label {
-        color: #2874fa;
+        font-size: 0.7rem;
+        font-weight: 600;
+        font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+        color: rgba(255, 255, 255, 0.7);
+        margin-top: 2px;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        transform: scale(1) translateY(0);
+        position: relative;
+        z-index: 2;
       }
-      // Optional accent dot
-      &::after {
-        content: "";
-        position: absolute;
-        left: 50%;
-        bottom: 8px;
-        transform: translateX(-50%);
-        width: 7px; height: 7px;
-        border-radius: 50%;
-        background: linear-gradient(90deg, #2874fa 0%, #58b6fa 100%);
-        box-shadow: 0 1.5px 7px #2874fa19;
+
+         &.tab-selected {
+       background: linear-gradient(135deg, #9B7A85 0%, #C5A5B0 100%);
+       box-shadow: 0 6px 20px rgba(197, 165, 176, 0.3);
+       transform: translateY(-2px) scale(1.02);
+       
+       &::before {
+         opacity: 1;
+       }
+       
+       ion-icon {
+         color: #ffffff;
+         transform: scale(1.1) translateY(-1px);
+         filter: drop-shadow(0 3px 6px rgba(255, 255, 255, 0.3));
+         animation: iconFloat 2s ease-in-out infinite;
+       }
+       
+       ion-label {
+         color: #ffffff;
+         transform: scale(1.05) translateY(-1px);
+         font-weight: 700;
+         text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+       }
+       
+       &::after {
+         content: '';
+         position: absolute;
+         bottom: -1px;
+         left: 50%;
+         transform: translateX(-50%);
+         width: 16px;
+         height: 3px;
+         background: linear-gradient(90deg, #ffffff 0%, rgba(255, 255, 255, 0.8) 100%);
+         border-radius: 2px;
+         box-shadow: 0 2px 6px rgba(255, 255, 255, 0.4);
+         animation: indicatorGlow 2s ease-in-out infinite;
+       }
+     }
+
+                   &:hover:not(.tab-selected) {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.1) 100%);
+        transform: translateY(-1px) scale(1.02);
+        box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+        
+        &::before {
+          opacity: 1;
+        }
+        
+        ion-icon {
+          transform: scale(1.05) translateY(-1px);
+          color: rgba(255, 255, 255, 0.9);
+          filter: drop-shadow(0 2px 4px rgba(255, 255, 255, 0.3));
+        }
+        
+        ion-label {
+          transform: scale(1.02) translateY(-1px);
+          color: rgba(255, 255, 255, 0.9);
+          font-weight: 600;
+        }
       }
+
+    &:active {
+      transform: translateY(0) scale(0.98);
+      transition: all 0.1s ease;
     }
+  }
+}
+
+@keyframes iconFloat {
+  0%, 100% {
+    transform: scale(1.1) translateY(-1px);
+  }
+  50% {
+    transform: scale(1.1) translateY(-2px);
+  }
+}
+
+@keyframes indicatorGlow {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 2px 8px rgba(255, 255, 255, 0.4);
+  }
+  50% {
+    opacity: 0.8;
+    box-shadow: 0 2px 12px rgba(255, 255, 255, 0.6);
   }
 }

@@ -13,12 +13,37 @@
     </div>
 
     <div class="form-row incident-types">
-      <button *ngFor="let type of incidentTypes"
-        type="button"
+      <button type="button"
         class="input-box incident-type-btn"
-        [title]="type.label">
-        <ion-icon [name]="type.icon"></ion-icon>
-        {{ type.label }}
+        [class.selected]="selectedIncidentType === 'crime'"
+        (click)="selectIncidentType('crime')"
+        title="Crime">
+        <ion-icon name="shield-outline"></ion-icon>
+        Crime
+      </button>
+      <button type="button"
+        class="input-box incident-type-btn"
+        [class.selected]="selectedIncidentType === 'accident'"
+        (click)="selectIncidentType('accident')"
+        title="Accident">
+        <ion-icon name="car-outline"></ion-icon>
+        Accident
+      </button>
+      <button type="button"
+        class="input-box incident-type-btn"
+        [class.selected]="selectedIncidentType === 'emergency'"
+        (click)="selectIncidentType('emergency')"
+        title="Emergency">
+        <ion-icon name="warning-outline"></ion-icon>
+        Emergency
+      </button>
+      <button type="button"
+        class="input-box incident-type-btn"
+        [class.selected]="selectedIncidentType === 'suspicious'"
+        (click)="selectIncidentType('suspicious')"
+        title="Suspicious Activity">
+        <ion-icon name="eye-outline"></ion-icon>
+        Suspicious Activity
       </button>
     </div>
 
@@ -63,14 +88,44 @@
       <div class="section-underline"></div>
     </div>
 
-    <div class="form-row">
-      <div class="input-box location-box">
-        <ion-icon name="location-outline"></ion-icon>
-        <span class="address">Location selected on map</span>
-        <div id="map" class="mapbox-card"></div>
-        <div class="tip">Tap on the map to update the pin</div>
-      </div>
-    </div>
+         <div class="form-row">
+       <div class="input-box location-box">
+         <ion-icon name="location-outline"></ion-icon>
+         <span class="address">Location selected on map</span>
+         
+                   <!-- Coordinates Display Card -->
+          <div class="coordinates-card" *ngIf="selectedLocation">
+            <div class="coordinates-header">
+              <ion-icon name="location-outline" class="location-icon"></ion-icon>
+              <span class="location-title">Current Location</span>
+            </div>
+            
+            <div class="coordinates-content">
+              <div class="coordinate-item">
+                <span class="coord-label">Latitude:</span>
+                <span class="coord-value">{{ selectedLocation.lat | number:'1.8-8' }}</span>
+              </div>
+              <div class="coordinate-item">
+                <span class="coord-label">Longitude:</span>
+                <span class="coord-value">{{ selectedLocation.lng | number:'1.8-8' }}</span>
+              </div>
+            </div>
+            
+            <div class="coordinates-actions">
+              <ion-button
+                fill="clear"
+                size="small"
+                (click)="copyCoordinates()"
+                color="primary">
+                <ion-icon name="copy-outline" slot="start"></ion-icon>
+                Copy Coordinates
+              </ion-button>
+            </div>
+          </div>
+         
+                   <div class="tip">Current location coordinates</div>
+       </div>
+     </div>
 
     <div class="form-row anon-row">
       <div class="input-box anon-box">
@@ -84,9 +139,12 @@
         <ion-icon name="call" slot="start"></ion-icon>
         Emergency Call (911)
       </ion-button>
-      <button type="submit" class="submit-btn">
-        <span>Submit Report</span>
-      </button>
+             <button type="submit" class="submit-btn">
+         <span>
+           <ion-icon name="send-outline"></ion-icon>
+           Submit Report
+         </span>
+       </button>
     </div>
   </form>
 </ion-content>

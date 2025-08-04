@@ -28,27 +28,34 @@ export class SettingsPage implements OnInit {
     private router: Router,
     private userService: UserService
   ) {
-    const savedLang = localStorage.getItem('userLanguage') || 'en';
-    this.currentLanguage = savedLang;
-    this.translate.use(savedLang);
+    // Force English as default and clear any conflicting data
+    this.currentLanguage = 'en';
+    this.translate.use('en');
+    localStorage.setItem('userLanguage', 'en');
   }
 
   ngOnInit() {
     this.userService.isAdmin().subscribe(isAdmin => {
       this.isAdmin = isAdmin;
     });
+    
+    // Ensure current language is properly set
+    this.initializeLanguage();
   }
 
-  async setLanguage(lang: string) {
-    this.currentLanguage = lang;
-    this.translate.use(lang);
-    localStorage.setItem('userLanguage', lang);
+  private initializeLanguage() {
+    // Force English as the only selected language
+    this.currentLanguage = 'en';
+    this.translate.use('en');
+    localStorage.setItem('userLanguage', 'en');
     
-    const message = this.translate.instant('ALERTS.LANGUAGE_CHANGED');
-    await this.showToast(message);
+    // Debug logging
+    console.log('Current Language:', this.currentLanguage);
+    console.log('Should only be English selected');
   }
 
   async changeLanguage(lang: string) {
+    console.log('Changing language to:', lang);
     this.currentLanguage = lang;
     this.translate.use(lang);
     localStorage.setItem('userLanguage', lang);

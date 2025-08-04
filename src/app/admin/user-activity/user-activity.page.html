@@ -1,21 +1,4 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>User Activity</ion-title>
-    <ion-buttons slot="end">
-      <ion-button (click)="loadActivities()">
-        <ion-icon slot="icon-only" name="refresh"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-  </ion-toolbar>
-  <ion-toolbar>
-    <ion-searchbar
-      [(ngModel)]="searchQuery"
-      placeholder="Search activities"
-      animated
-      debounce="300">
-    </ion-searchbar>
-  </ion-toolbar>
-</ion-header>
+
 
 <ion-content>
   <div class="user-activity-container">

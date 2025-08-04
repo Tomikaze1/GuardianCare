@@ -1,76 +1,109 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>{{ 'SETTINGS.TITLE' | translate }}</ion-title>
-  </ion-toolbar>
-</ion-header>
 
-<ion-content>
-  <ion-item>
-    <ion-label>{{ 'SETTINGS.LANGUAGE' | translate }}</ion-label>
-  </ion-item>
-  
-  <div class="language-buttons">
-    <ion-button 
-      (click)="changeLanguage('en')" 
-      [class.active]="currentLanguage === 'en'"
-      fill="outline">
-      EN
-    </ion-button>
-    <ion-button 
-      (click)="changeLanguage('es')" 
-      [class.active]="currentLanguage === 'es'"
-      fill="outline">
-      ES
-    </ion-button>
-    <ion-button 
-      (click)="changeLanguage('fr')" 
-      [class.active]="currentLanguage === 'fr'"
-      fill="outline">
-      FR
-    </ion-button>
-    <ion-button 
-      (click)="changeLanguage('ja')" 
-      [class.active]="currentLanguage === 'ja'"
-      fill="outline">
-      JA
-    </ion-button>
+
+<ion-content class="settings-content">
+  <!-- Logo/Title Section -->
+  <div class="logo-container">
+    <div class="app-logo">⚙️</div>
+    <div class="app-title">Settings</div>
+    <div class="app-subtitle">Manage your preferences</div>
+    <div class="title-underline"></div>
   </div>
 
-  <div *ngIf="isAdmin" class="admin-section">
-    <ion-item-divider>
-      <ion-label>Admin Panel</ion-label>
-    </ion-item-divider>
-    
-    <ion-item button (click)="navigateToAdmin('dashboard')">
-      <ion-icon name="analytics" slot="start"></ion-icon>
-      <ion-label>Dashboard</ion-label>
-      <ion-icon name="chevron-forward" slot="end"></ion-icon>
-    </ion-item>
+  <div class="settings-form">
+    <!-- Language Section -->
+    <div class="form-row">
+      <div class="section-header">
+        <span>Language</span>
+        <div class="section-underline"></div>
+      </div>
+      
+      <div class="language-buttons">
+        <button 
+          class="language-btn"
+          [class.selected]="currentLanguage === 'en'"
+          (click)="changeLanguage('en')">
+          <ion-icon name="flag-outline"></ion-icon>
+          <span>English ({{currentLanguage}})</span>
+        </button>
+        <button 
+          class="language-btn"
+          [class.selected]="currentLanguage === 'es'"
+          (click)="changeLanguage('es')">
+          <ion-icon name="flag-outline"></ion-icon>
+          <span>Español ({{currentLanguage}})</span>
+        </button>
+        <button 
+          class="language-btn"
+          [class.selected]="currentLanguage === 'fr'"
+          (click)="changeLanguage('fr')">
+          <ion-icon name="flag-outline"></ion-icon>
+          <span>Français ({{currentLanguage}})</span>
+        </button>
+        <button 
+          class="language-btn"
+          [class.selected]="currentLanguage === 'ja'"
+          (click)="changeLanguage('ja')">
+          <ion-icon name="flag-outline"></ion-icon>
+          <span>日本語 ({{currentLanguage}})</span>
+        </button>
+      </div>
+    </div>
 
-    <ion-item button (click)="navigateToAdmin('zone-management')">
-      <ion-icon name="map" slot="start"></ion-icon>
-      <ion-label>Zone Management</ion-label>
-      <ion-icon name="chevron-forward" slot="end"></ion-icon>
-    </ion-item>
+    <!-- Admin Section -->
+    <div *ngIf="isAdmin" class="form-row">
+      <div class="section-header">
+        <span>Admin Panel</span>
+        <div class="section-underline"></div>
+      </div>
+      
+      <div class="admin-buttons">
+        <button class="admin-btn" (click)="navigateToAdmin('dashboard')">
+          <ion-icon name="analytics-outline"></ion-icon>
+          <span>Dashboard</span>
+          <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+        </button>
 
-    <ion-item button (click)="navigateToAdmin('incident-validation')">
-      <ion-icon name="checkmark-circle" slot="start"></ion-icon>
-      <ion-label>Incident Validation</ion-label>
-      <ion-icon name="chevron-forward" slot="end"></ion-icon>
-    </ion-item>
+        <button class="admin-btn" (click)="navigateToAdmin('zone-management')">
+          <ion-icon name="map-outline"></ion-icon>
+          <span>Zone Management</span>
+          <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+        </button>
 
-    <ion-item button (click)="navigateToAdmin('analytics')">
-      <ion-icon name="bar-chart" slot="start"></ion-icon>
-      <ion-label>Analytics</ion-label>
-      <ion-icon name="chevron-forward" slot="end"></ion-icon>
-    </ion-item>
+        <button class="admin-btn" (click)="navigateToAdmin('incident-validation')">
+          <ion-icon name="checkmark-circle-outline"></ion-icon>
+          <span>Incident Validation</span>
+          <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+        </button>
 
-    <ion-item button (click)="navigateToAdmin('user-activity')">
-      <ion-icon name="people" slot="start"></ion-icon>
-      <ion-label>User Activity</ion-label>
-      <ion-icon name="chevron-forward" slot="end"></ion-icon>
-    </ion-item>
+        <button class="admin-btn" (click)="navigateToAdmin('analytics')">
+          <ion-icon name="bar-chart-outline"></ion-icon>
+          <span>Analytics</span>
+          <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+        </button>
+
+        <button class="admin-btn" (click)="navigateToAdmin('user-activity')">
+          <ion-icon name="people-outline"></ion-icon>
+          <span>User Activity</span>
+          <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Logout Section -->
+    <div class="form-row">
+      <div class="section-header">
+        <span>Account</span>
+        <div class="section-underline"></div>
+      </div>
+      
+      <div class="button-row">
+        <button class="logout-btn" (click)="logOut()">
+          <span>
+            <ion-icon name="log-out-outline"></ion-icon>
+            Logout
+          </span>
+        </button>
+      </div>
+    </div>
   </div>
-
-  <ion-button expand="full" color="danger" (click)="logOut()">LOGOUT</ion-button>
 </ion-content>

@@ -54,6 +54,13 @@
     font-size: 24px;
     width: 24px;
     height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.3em;
   }
   
   &:hover {
@@ -70,6 +77,8 @@
     transform: none;
   }
 }
+
+
 
 #heatmap-toggle {
   width: 70px;
@@ -89,6 +98,13 @@
     font-size: 24px;
     width: 24px;
     height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.3em;
   }
   
   &:hover {
@@ -168,16 +184,161 @@
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
-.panic-alert {
-  --background: #ff4444;
+  .panic-alert {
+    --background: transparent !important;
+    
+    .alert-wrapper {
+      border-radius: 20px !important;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15) !important;
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+      border: 1px solid rgba(255, 71, 87, 0.1) !important;
+      -webkit-backdrop-filter: blur(20px) !important;
+      backdrop-filter: blur(20px) !important;
+      overflow: hidden !important;
+      position: relative !important;
+      max-width: 90vw !important;
+      width: 400px !important;
+      
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #C5A5B0 0%, #9B7A85 50%, #8B6B76 100%);
+        z-index: 1;
+      }
+    }
+    
+    .alert-head {
+      background: linear-gradient(135deg, #C5A5B0 0%, #9B7A85 100%) !important;
+      color: white !important;
+      font-weight: 700 !important;
+      font-size: 1.3rem !important;
+      padding: 20px 24px 16px !important;
+      text-align: center !important;
+      position: relative !important;
+      border-radius: 20px 20px 0 0 !important;
+      
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
+      }
+    }
+    
+    .alert-message {
+      color: #2c3e50 !important;
+      font-size: 1.05rem !important;
+      line-height: 1.6 !important;
+      padding: 24px !important;
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+      position: relative !important;
+      margin: 0 !important;
+      
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: 
+          radial-gradient(circle at 20% 50%, rgba(197, 165, 176, 0.03) 0%, transparent 50%),
+          radial-gradient(circle at 80% 20%, rgba(155, 122, 133, 0.03) 0%, transparent 50%);
+        pointer-events: none;
+      }
+    }
+    
+    .alert-button-group {
+      padding: 0 24px 24px !important;
+      display: flex !important;
+      gap: 12px !important;
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+      border-radius: 0 0 20px 20px !important;
+      margin: 0 !important;
+    }
+    
+    .cancel-button {
+      --color: #7f8c8d !important;
+      --background: linear-gradient(135deg, #ecf0f1 0%, #e2e8f0 100%) !important;
+      --border-radius: 12px !important;
+      font-weight: 600 !important;
+      font-size: 1rem !important;
+      padding: 12px 20px !important;
+      margin: 0 !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+      transition: all 0.3s ease !important;
+      flex: 1 !important;
+      
+      &:hover {
+        --background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%) !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+      }
+    }
+    
+    .emergency-button {
+      --color: white !important;
+      --background: linear-gradient(135deg, #C5A5B0 0%, #9B7A85 100%) !important;
+      --border-radius: 12px !important;
+      font-weight: 700 !important;
+      font-size: 1.1rem !important;
+      padding: 12px 20px !important;
+      margin: 0 !important;
+      box-shadow: 0 4px 16px rgba(197, 165, 176, 0.3) !important;
+      transition: all 0.3s ease !important;
+      position: relative !important;
+      overflow: hidden !important;
+      flex: 1 !important;
+      
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+      }
+      
+      &:hover {
+        --background: linear-gradient(135deg, #9B7A85 0%, #C5A5B0 100%) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 20px rgba(197, 165, 176, 0.4) !important;
+        
+        &::before {
+          left: 100%;
+        }
+      }
+      
+      &:active {
+        transform: translateY(0) !important;
+        box-shadow: 0 2px 8px rgba(197, 165, 176, 0.3) !important;
+      }
+    }
+  }
+
+.emergency-loading {
+  --background: linear-gradient(135deg, #C5A5B0 0%, #9B7A85 100%);
   --color: white;
   
-  .alert-wrapper {
-    background: linear-gradient(135deg, #ff4444, #cc0000);
+  .loading-wrapper {
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(197, 165, 176, 0.3);
   }
   
-  .alert-head {
-    background: rgba(255, 255, 255, 0.1);
+  .loading-content {
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+    line-height: 1.6;
   }
 }
 
@@ -187,4 +348,41 @@
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
+}
+
+#test-incidents {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  --padding-start: 0;
+  --padding-end: 0;
+  
+  ion-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.3em;
+  }
+  
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
 }

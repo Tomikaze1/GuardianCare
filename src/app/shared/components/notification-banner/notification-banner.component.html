@@ -1,0 +1,26 @@
+<div class="notification-banner" [ngClass]="getColorClass()">
+  <div class="notification-content">
+    <div class="notification-icon">
+      <ion-icon [name]="getIcon()"></ion-icon>
+    </div>
+    <div class="notification-text">
+      <h4 class="notification-title">{{ notification.title }}</h4>
+      <p class="notification-message">{{ notification.message }}</p>
+    </div>
+    <div class="notification-actions">
+      <button 
+        *ngIf="notification.actionText"
+        class="action-button"
+        (click)="onAction()">
+        {{ notification.actionText }}
+      </button>
+      <button 
+        *ngIf="notification.dismissible !== false"
+        class="dismiss-button"
+        (click)="onDismiss()"
+        aria-label="Dismiss notification">
+        <ion-icon name="close"></ion-icon>
+      </button>
+    </div>
+  </div>
+</div> 
