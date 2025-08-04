@@ -359,8 +359,31 @@ export class ZoneDangerEngineService {
         oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
         break;
       case 'siren':
-        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-        oscillator.frequency.setValueAtTime(400, audioContext.currentTime + 0.2);
+        
+        const startTime = audioContext.currentTime;
+        const duration = 2.0; 
+        const pulseDuration = 0.5; 
+        
+        
+        for (let i = 0; i < duration / pulseDuration; i++) {
+          const pulseStart = startTime + (i * pulseDuration);
+          
+          
+          oscillator.frequency.setValueAtTime(800, pulseStart);
+          oscillator.frequency.setValueAtTime(600, pulseStart + 0.1);
+          oscillator.frequency.setValueAtTime(800, pulseStart + 0.2);
+          oscillator.frequency.setValueAtTime(600, pulseStart + 0.3);
+          oscillator.frequency.setValueAtTime(800, pulseStart + 0.4);
+          
+          
+          gainNode.gain.setValueAtTime(0, pulseStart);
+          gainNode.gain.linearRampToValueAtTime(0.4, pulseStart + 0.05);
+          gainNode.gain.linearRampToValueAtTime(0, pulseStart + 0.45);
+        }
+        
+        oscillator.start(startTime);
+        oscillator.stop(startTime + duration);
+        return; 
         break;
       case 'chime':
         oscillator.frequency.setValueAtTime(523, audioContext.currentTime);
@@ -368,6 +391,7 @@ export class ZoneDangerEngineService {
         oscillator.frequency.setValueAtTime(784, audioContext.currentTime + 0.2);
         break;
     }
+    
     
     gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
@@ -710,13 +734,13 @@ export class ZoneDangerEngineService {
     const currentTime = new Date();
     const currentHour = currentTime.getHours();
     
-    // Find the active time slot for this zone
+    
     const activeSlot = zone.timeSlots.find(slot => 
       this.isTimeInSlot(currentHour, slot)
     );
     
     if (activeSlot) {
-      // Update zone level based on time slot
+      
       const newLevel = this.getLevelFromSeverity(activeSlot.baseSeverity);
       const oldLevel = zone.level;
       
@@ -725,7 +749,7 @@ export class ZoneDangerEngineService {
         zone.level = newLevel;
         zone.currentSeverity = activeSlot.baseSeverity;
         
-        // Trigger time-based alert if user is in this zone
+        
         this.triggerTimeBasedZoneChangeAlert(zone, oldLevel, newLevel, activeSlot);
       }
     }
@@ -744,9 +768,9 @@ export class ZoneDangerEngineService {
     const currentLocation = this.currentLocation.value;
     if (!currentLocation) return;
     
-    // Check if user is currently in this zone
+    
     if (this.isPointInPolygon([currentLocation.lng, currentLocation.lat], zone.coordinates)) {
-      const alertKey = `time-change-${zone.id}-${Math.floor(Date.now() / 300000)}`; // 5-minute cooldown
+      const alertKey = `time-change-${zone.id}-${Math.floor(Date.now() / 300000)}`; 
       
       if (this.alertHistory.has(alertKey)) return;
       

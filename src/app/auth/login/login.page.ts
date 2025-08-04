@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AlertController, LoadingController, ToastController } from '@ionic/angular';
+import { LoadingController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
+import { NotificationService } from '../../shared/services/notification.service';
 
 @Component({
   selector: 'app-login',
@@ -18,10 +19,9 @@ export class LoginPage implements OnInit {
   constructor(
     private formBuilder: FormBuilder,
     private router: Router,
-    private alertController: AlertController,
     private loadingController: LoadingController,
-    private toastController: ToastController,
-    private authService: AuthService
+    private authService: AuthService,
+    private notificationService: NotificationService
   ) {
     this.loginForm = this.formBuilder.group({
       email: ['', [Validators.required, Validators.email]],
@@ -69,16 +69,16 @@ export class LoginPage implements OnInit {
 
         if (userCredential.success) {
           await loading.dismiss();
-          await this.showToast('Login successful!', 'success');
+          this.notificationService.success('Success!', 'Login successful!', 'OK', 3000);
           const isAuthenticated = await this.authService.isAuthenticated();
           if (isAuthenticated) {
             this.router.navigate(['/tabs/home']);
           } else {
-            await this.showAlert('Login Error', 'Authentication failed. Please try again.');
+            this.notificationService.error('Login Error', 'Authentication failed. Please try again.', 'OK', 5000);
           }
         } else {
           await loading.dismiss();
-          await this.showAlert('Login Failed', userCredential.error || 'Invalid credentials');
+          this.notificationService.error('Login Failed', userCredential.error || 'Invalid credentials', 'OK', 5000);
         }
       } catch (error: any) {
         await loading.dismiss();
@@ -93,17 +93,10 @@ export class LoginPage implements OnInit {
           errorMessage = error.message;
         }
 
-        const alert = await this.alertController.create({
-          header: 'Login Failed',
-          message: errorMessage,
-          buttons: ['OK']
-        });
-        await alert.present();
-      } finally {
-        this.isLoading = false;
+        this.notificationService.error('Login Failed', errorMessage, 'OK', 5000);
       }
     } else {
-      await this.showToast('Please fill in all required fields correctly', 'warning');
+      this.notificationService.warning('Invalid Form', 'Please check your input and try again.', 'OK', 3000);
     }
   }
 
@@ -119,24 +112,23 @@ export class LoginPage implements OnInit {
 
     try {
       const result = await this.authService.loginWithGoogle();
+      await loading.dismiss();
 
       if (result.success) {
-        await loading.dismiss();
-        await this.showToast('Google login successful!', 'success');
+        this.notificationService.success('Success!', 'Google login successful!', 'OK', 3000);
         const isAuthenticated = await this.authService.isAuthenticated();
         if (isAuthenticated) {
           this.router.navigate(['/tabs/home']);
         } else {
-          await this.showAlert('Login Error', 'Authentication failed. Please try again.');
+          this.notificationService.error('Login Error', 'Authentication failed. Please try again.', 'OK', 5000);
         }
       } else {
-        await loading.dismiss();
-        await this.showAlert('Google Login Failed', result.error || 'Unable to login with Google');
+        this.notificationService.error('Google Login Failed', result.error || 'Unable to login with Google', 'OK', 5000);
       }
     } catch (error) {
       await loading.dismiss();
       console.error('Google login error:', error);
-      await this.showAlert('Error', 'Google login failed. Please try again.');
+      this.notificationService.error('Error', 'Google login failed. Please try again.', 'OK', 5000);
     } finally {
       this.isLoading = false;
     }
@@ -154,96 +146,50 @@ export class LoginPage implements OnInit {
 
     try {
       const result = await this.authService.loginWithFacebook();
+      await loading.dismiss();
 
       if (result.success) {
-        await loading.dismiss();
-        await this.showToast('Facebook login successful!', 'success');
+        this.notificationService.success('Success!', 'Facebook login successful!', 'OK', 3000);
         const isAuthenticated = await this.authService.isAuthenticated();
         if (isAuthenticated) {
           this.router.navigate(['/tabs/home']);
         } else {
-          await this.showAlert('Login Error', 'Authentication failed. Please try again.');
+          this.notificationService.error('Login Error', 'Authentication failed. Please try again.', 'OK', 5000);
         }
       } else {
-        await loading.dismiss();
-        await this.showAlert('Facebook Login Failed', result.error || 'Unable to login with Facebook');
+        this.notificationService.error('Facebook Login Failed', result.error || 'Unable to login with Facebook', 'OK', 5000);
       }
     } catch (error) {
       await loading.dismiss();
       console.error('Facebook login error:', error);
-      await this.showAlert('Error', 'Facebook login failed. Please try again.');
+      this.notificationService.error('Error', 'Facebook login failed. Please try again.', 'OK', 5000);
     } finally {
       this.isLoading = false;
     }
   }
 
   async forgotPassword(): Promise<void> {
-    const alert = await this.alertController.create({
-      header: 'Reset Password',
-      message: 'Enter your email address to receive a password reset link.',
-      inputs: [
-        {
-          name: 'email',
-          type: 'email',
-          placeholder: 'Email address'
+    const email = prompt('Enter your email address to receive a password reset link:');
+    
+    if (email) {
+      try {
+        const result = await this.authService.resetPassword(email);
+        if (result.success) {
+          this.notificationService.success('Success!', 'Password reset email sent!', 'OK', 3000);
+        } else {
+          this.notificationService.error('Error', result.error || 'Failed to send reset email', 'OK', 5000);
         }
-      ],
-      buttons: [
-        {
-          text: 'Cancel',
-          role: 'cancel'
-        },
-        {
-          text: 'Send Reset Link',
-          handler: async (data) => {
-            if (data.email) {
-              try {
-                const result = await this.authService.resetPassword(data.email);
-                if (result.success) {
-                  await this.showToast('Password reset email sent!', 'success');
-                  return true;
-                } else {
-                  await this.showAlert('Error', result.error || 'Failed to send reset email');
-                  return false;
-                }
-              } catch (error) {
-                console.error('Password reset error:', error);
-                await this.showAlert('Error', 'Failed to send reset email. Please try again.');
-                return false;
-              }
-            } else {
-              await this.showToast('Please enter a valid email address', 'warning');
-              return false;
-            }
-          }
-        }
-      ]
-    });
-
-    await alert.present();
+      } catch (error) {
+        console.error('Password reset error:', error);
+        this.notificationService.error('Error', 'Failed to send reset email. Please try again.', 'OK', 5000);
+      }
+    } else if (email !== null) {
+      this.notificationService.warning('Invalid Email', 'Please enter a valid email address', 'OK', 3000);
+    }
   }
 
   goToRegister(): void {
     this.router.navigate(['/auth/register']);
-  }
-
-  private async showAlert(header: string, message: string): Promise<void> {
-    const alert = await this.alertController.create({
-      header,
-      message,
-      buttons: ['OK']
-    });
-    await alert.present();
-  }
-
-  private async showToast(message: string, color: 'success' | 'warning' | 'danger' = 'success'): Promise<void> {
-    const toast = await this.toastController.create({
-      message,
-      duration: 3000,
-      color,
-      position: 'top'
-    });
-    await toast.present();
   }
 
   private getErrorMessage(errorCode: string): string {

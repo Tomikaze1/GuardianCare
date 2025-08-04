@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AlertController, LoadingController } from '@ionic/angular';
+import { Camera, CameraResultType, CameraSource, Photo } from '@capacitor/camera';
 import { LocationService } from '../services/location.service';
 import { IncidentService } from '../services/incident.service';
 import { NotificationService } from '../shared/services/notification.service';
@@ -15,6 +16,7 @@ export class ReportsPage implements OnInit {
   reportForm: FormGroup;
   currentLocation: { lat: number; lng: number } | null = null;
   selectedLocation: { lat: number; lng: number } | null = null;
+  locationAddress: string = '';
   isAnonymous = false;
   selectedIncidentType: string = '';
 
@@ -44,12 +46,43 @@ export class ReportsPage implements OnInit {
 
   ngOnInit() {
     this.initializeLocation();
+    this.checkCameraPermissions();
+  }
+
+  private async checkCameraPermissions() {
+    try {
+      
+      const permissions = await Camera.checkPermissions();
+      console.log('Camera permissions:', permissions);
+      
+      if (permissions.camera === 'denied') {
+        this.notificationService.warning(
+          'Camera Permission Required',
+          'Please enable camera permissions to take photos for incident reports.',
+          'OK',
+          5000
+        );
+      }
+    } catch (error) {
+      console.error('Error checking camera permissions:', error);
+    }
+  }
+
+  private async requestCameraPermissions() {
+    try {
+      const permissions = await Camera.requestPermissions();
+      return permissions.camera === 'granted';
+    } catch (error) {
+      console.error('Error requesting camera permissions:', error);
+      return false;
+    }
   }
 
   private async initializeLocation() {
     try {
       this.currentLocation = await this.locationService.getCurrentLocation();
       this.selectedLocation = this.currentLocation;
+      await this.updateLocationAddress();
     } catch (error) {
       console.error('Error getting location:', error);
       this.currentLocation = { lat: 10.3111, lng: 123.8931 };
@@ -57,7 +90,123 @@ export class ReportsPage implements OnInit {
     }
   }
 
+  async refreshLocation() {
+    try {
+      this.currentLocation = await this.locationService.getCurrentLocation();
+      this.selectedLocation = this.currentLocation;
+      await this.updateLocationAddress();
+      this.notificationService.success('Location Updated', 'Current location refreshed successfully!', 'OK', 2000);
+    } catch (error) {
+      console.error('Error refreshing location:', error);
+      this.notificationService.error('Error', 'Failed to refresh location', 'OK', 3000);
+    }
+  }
 
+  private async updateLocationAddress() {
+    if (this.selectedLocation) {
+      try {
+        const response = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${this.selectedLocation.lng},${this.selectedLocation.lat}.json?access_token=pk.eyJ1IjoiZXhhbXBsZSIsImEiOiJjbGV4YW1wbGUifQ.example`
+        );
+        const data = await response.json();
+        if (data.features && data.features.length > 0) {
+          this.locationAddress = data.features[0].place_name;
+        }
+      } catch (error) {
+        console.error('Error fetching address:', error);
+        this.locationAddress = '';
+      }
+    }
+  }
+
+  async openInMaps() {
+    if (this.selectedLocation) {
+      const url = `https://www.google.com/maps?q=${this.selectedLocation.lat},${this.selectedLocation.lng}`;
+      window.open(url, '_blank');
+    }
+  }
+
+  async takePhoto() {
+    try {
+      
+      const hasPermission = await this.requestCameraPermissions();
+      if (!hasPermission) {
+        this.notificationService.error(
+          'Permission Denied',
+          'Camera permission is required to take photos. Please enable it in your device settings.',
+          'OK',
+          5000
+        );
+        return;
+      }
+
+      const image = await Camera.getPhoto({
+        quality: 90,
+        allowEditing: false,
+        resultType: CameraResultType.Uri,
+        source: CameraSource.Camera
+      });
+
+      if (image.webPath) {
+        const currentMedia = this.reportForm.get('media')?.value || [];
+        const photoData = {
+          webPath: image.webPath,
+          dataUrl: image.dataUrl,
+          name: `Photo_${new Date().getTime()}.jpg`,
+          format: image.format,
+          timestamp: new Date()
+        };
+        
+        this.reportForm.patchValue({
+          media: [...currentMedia, photoData]
+        });
+        
+        this.notificationService.success('Success!', 'Photo captured successfully!', 'OK', 2000);
+      }
+    } catch (error) {
+      console.error('Error taking photo:', error);
+      if (error === 'User cancelled photos app') {
+        this.notificationService.info('Cancelled', 'Photo capture was cancelled', 'OK', 2000);
+      } else {
+        this.notificationService.error('Error!', 'Failed to take photo. Please check camera permissions.', 'OK', 3000);
+      }
+    }
+  }
+
+  async selectFromGallery() {
+    try {
+      const image = await Camera.getPhoto({
+        quality: 90,
+        allowEditing: false,
+        resultType: CameraResultType.Uri,
+        source: CameraSource.Photos
+      });
+
+      if (image.webPath) {
+        const currentMedia = this.reportForm.get('media')?.value || [];
+        const photoData = {
+          webPath: image.webPath,
+          dataUrl: image.dataUrl,
+          name: `Gallery_${new Date().getTime()}.jpg`,
+          format: image.format,
+          timestamp: new Date()
+        };
+        
+        this.reportForm.patchValue({
+          media: [...currentMedia, photoData]
+        });
+        
+        this.notificationService.success('Success!', 'Photo selected from gallery!', 'OK', 2000);
+      }
+    } catch (error) {
+      console.error('Error selecting from gallery:', error);
+      if (error === 'User cancelled photos app') {
+        this.notificationService.info('Cancelled', 'Gallery selection was cancelled', 'OK', 2000);
+      } else {
+        this.notificationService.error('Error!', 'Failed to select from gallery. Please check permissions.', 'OK', 3000);
+      }
+    }
+  }
 
   async onSubmit() {
     if (!this.selectedIncidentType) {
@@ -136,16 +285,36 @@ export class ReportsPage implements OnInit {
     const files = event.target.files;
     if (files) {
       const currentMedia = this.reportForm.get('media')?.value || [];
+      const fileArray = Array.from(files).map((file: any) => ({
+        file: file,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        timestamp: new Date()
+      }));
+      
       this.reportForm.patchValue({
-        media: [...currentMedia, ...Array.from(files)]
+        media: [...currentMedia, ...fileArray]
       });
+      
+      this.notificationService.success('Success!', `${files.length} file(s) selected!`, 'OK', 2000);
     }
   }
 
   removeFile(index: number) {
     const currentMedia = this.reportForm.get('media')?.value || [];
+    const removedItem = currentMedia[index];
+    
+    
+    if (removedItem && removedItem.webPath) {
+      
+      console.log('Removing camera photo:', removedItem.webPath);
+    }
+    
     currentMedia.splice(index, 1);
     this.reportForm.patchValue({ media: currentMedia });
+    
+    this.notificationService.info('Removed', 'Media item removed from report', 'OK', 2000);
   }
 
   async copyCoordinates() {

@@ -1,6 +1,12 @@
 <ion-content class="report-content" fullscreen>
   <div class="logo-container">
-    <ion-icon name="shield-checkmark" class="app-logo"></ion-icon>
+    <div class="logo-wrapper">
+      <div class="custom-logo">
+        <ion-icon name="shield" class="shield-icon"></ion-icon>
+        <ion-icon name="location" class="location-pin"></ion-icon>
+      </div>
+      <div class="logo-glow"></div>
+    </div>
     <div class="app-title">Incident Report</div>
     <div class="app-subtitle">Help keep your community safe</div>
     <div class="title-underline"></div>
@@ -70,13 +76,25 @@
 
     <div class="form-row">
       <div class="input-box media-box">
+        <div class="media-buttons">
+          <button type="button" (click)="takePhoto()" title="Take Photo" class="media-btn camera-btn">
+            <ion-icon name="camera-outline"></ion-icon>
+            <span>Take Photo</span>
+          </button>
+          <button type="button" (click)="selectFromGallery()" title="Select from Gallery" class="media-btn gallery-btn">
+            <ion-icon name="images-outline"></ion-icon>
+            <span>Gallery</span>
+          </button>
+        </div>
+        
         <input type="file" multiple accept="image/*" (change)="onFileSelected($event)" style="display: none;" #fileInput>
-        <button type="button" (click)="fileInput.click()" title="Select Files">
-          <ion-icon name="image-outline"></ion-icon>
-        </button>
+        
         <div class="media-list" *ngIf="reportForm.get('media')?.value?.length > 0">
           <div class="media-chip" *ngFor="let media of reportForm.get('media')?.value; let i = index">
-            <span>{{ media.name }}</span>
+            <div class="media-preview" *ngIf="media.webPath || media.dataUrl">
+              <img [src]="media.webPath || media.dataUrl" alt="Media preview" class="preview-image">
+            </div>
+            <span class="media-name">{{ media.name || 'Photo ' + (i + 1) }}</span>
             <ion-icon name="close" class="remove" (click)="removeFile(i)" title="Remove"></ion-icon>
           </div>
         </div>
@@ -88,44 +106,68 @@
       <div class="section-underline"></div>
     </div>
 
-         <div class="form-row">
-       <div class="input-box location-box">
-         <ion-icon name="location-outline"></ion-icon>
-         <span class="address">Location selected on map</span>
-         
-                   <!-- Coordinates Display Card -->
-          <div class="coordinates-card" *ngIf="selectedLocation">
-            <div class="coordinates-header">
-              <ion-icon name="location-outline" class="location-icon"></ion-icon>
-              <span class="location-title">Current Location</span>
-            </div>
-            
-            <div class="coordinates-content">
+    <div class="form-row">
+      <div class="input-box location-box">
+        <div class="location-header">
+          <ion-icon name="location-outline" class="location-icon"></ion-icon>
+          <span class="location-title">Current Location</span>
+          <button type="button" class="refresh-location-btn" (click)="refreshLocation()" title="Refresh Location">
+            <ion-icon name="refresh-outline"></ion-icon>
+          </button>
+        </div>
+        
+        <!-- Enhanced Coordinates Display Card -->
+        <div class="coordinates-card" *ngIf="selectedLocation">
+          <div class="coordinates-content">
+            <div class="coordinate-row">
               <div class="coordinate-item">
-                <span class="coord-label">Latitude:</span>
-                <span class="coord-value">{{ selectedLocation.lat | number:'1.8-8' }}</span>
+                <ion-icon name="navigate-outline" class="coord-icon"></ion-icon>
+                <div class="coord-info">
+                  <span class="coord-label">Latitude</span>
+                  <span class="coord-value">{{ selectedLocation.lat | number:'1.8-8' }}</span>
+                </div>
               </div>
               <div class="coordinate-item">
-                <span class="coord-label">Longitude:</span>
-                <span class="coord-value">{{ selectedLocation.lng | number:'1.8-8' }}</span>
+                <ion-icon name="navigate-outline" class="coord-icon"></ion-icon>
+                <div class="coord-info">
+                  <span class="coord-label">Longitude</span>
+                  <span class="coord-value">{{ selectedLocation.lng | number:'1.8-8' }}</span>
+                </div>
               </div>
             </div>
             
-            <div class="coordinates-actions">
+            <div class="address-display" *ngIf="locationAddress">
+              <ion-icon name="map-outline" class="address-icon"></ion-icon>
+              <span class="address-text">{{ locationAddress }}</span>
+            </div>
+            
+            <div class="location-actions">
               <ion-button
                 fill="clear"
                 size="small"
                 (click)="copyCoordinates()"
-                color="primary">
+                class="action-btn copy-btn">
                 <ion-icon name="copy-outline" slot="start"></ion-icon>
                 Copy Coordinates
               </ion-button>
+              <ion-button
+                fill="clear"
+                size="small"
+                (click)="openInMaps()"
+                class="action-btn map-btn">
+                <ion-icon name="map-outline" slot="start"></ion-icon>
+                Open in Maps
+              </ion-button>
             </div>
           </div>
-         
-                   <div class="tip">Current location coordinates</div>
-       </div>
-     </div>
+        </div>
+        
+        <div class="location-status" *ngIf="!selectedLocation">
+          <ion-icon name="location-off-outline" class="status-icon"></ion-icon>
+          <span class="status-text">Location not available</span>
+        </div>
+      </div>
+    </div>
 
     <div class="form-row anon-row">
       <div class="input-box anon-box">

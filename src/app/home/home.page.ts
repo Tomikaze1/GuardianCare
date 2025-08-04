@@ -136,8 +136,8 @@ export class HomePage implements OnInit, OnDestroy {
       }, 500);
       
       this.loadZones();
-      // Don't call updateHeatmap here since heatmap is off by default
-      // Zones will only be shown when heatmap is toggled ON
+      
+      
     });
   }
 
@@ -146,7 +146,7 @@ export class HomePage implements OnInit, OnDestroy {
     
     console.log('Removing all zones, current layers:', this.zoneLayers);
     
-    // Remove all zone layers
+    
     this.zoneLayers.forEach(layerId => {
       if (this.map!.getLayer(layerId)) {
         this.map!.removeLayer(layerId);
@@ -154,7 +154,7 @@ export class HomePage implements OnInit, OnDestroy {
       }
     });
     
-    // Remove all zone sources
+    
     this.zones.forEach(zone => {
       const sourceId = `zone-${zone.id}`;
       if (this.map!.getSource(sourceId)) {
@@ -163,7 +163,7 @@ export class HomePage implements OnInit, OnDestroy {
       }
     });
     
-    // Also remove base layer if it exists
+    
     const baseLayerId = 'philippines-safe-layer';
     const baseSourceId = 'philippines-base-safe';
     
@@ -325,19 +325,19 @@ export class HomePage implements OnInit, OnDestroy {
     
     const bounds = new mapboxgl.LngLatBounds();
     
-    // Add current location
+    
     if (this.currentLocation) {
       bounds.extend([this.currentLocation.lng, this.currentLocation.lat]);
     }
     
-    // Add all route coordinates
+    
     coordinates.forEach(coord => {
       if (coord.length >= 2) {
         bounds.extend([coord[0], coord[1]]);
       }
     });
     
-    // Fit map with padding
+    
     this.map.fitBounds(bounds, {
       padding: 50,
       duration: 2000
@@ -358,7 +358,7 @@ export class HomePage implements OnInit, OnDestroy {
         }
         
         console.log('Final zones array:', this.zones);
-        // Don't call updateHeatmap here - zones will only be shown when heatmap is toggled ON
+        
       },
       error: (error) => {
         console.error('Error loading zones:', error);
@@ -372,11 +372,11 @@ export class HomePage implements OnInit, OnDestroy {
         id: 'guadalupe-danger-zone',
         name: 'Guadalupe Danger Zone',
         coordinates: [
-          [123.895, 10.315], // Southwest - Danger zone, on land
-          [123.905, 10.315], // Southeast - Danger zone, on land
-          [123.905, 10.325], // Northeast - Danger zone, on land
-          [123.895, 10.325], // Northwest - Danger zone, on land
-          [123.895, 10.315]  // Back to start
+          [123.895, 10.315], 
+          [123.905, 10.315], 
+          [123.905, 10.325], 
+          [123.895, 10.325], 
+          [123.895, 10.315]  
         ],
         level: 'Danger',
         currentSeverity: 0.9,
@@ -402,7 +402,7 @@ export class HomePage implements OnInit, OnDestroy {
           weekly: 45,
           monthly: 180,
           peakHours: [22, 23, 0, 1, 2],
-          peakDays: [5, 6] // Friday, Saturday
+          peakDays: [5, 6] 
         },
         timeBasedRisk: {
           morning: 0.6,
@@ -425,11 +425,11 @@ export class HomePage implements OnInit, OnDestroy {
         id: 'mabolo-caution-zone',
         name: 'Mabolo Caution Zone',
         coordinates: [
-          [123.910, 10.320], // Southwest - Caution zone, on land
-          [123.920, 10.320], // Southeast - Caution zone, on land
-          [123.920, 10.330], // Northeast - Caution zone, on land
-          [123.910, 10.330], // Northwest - Caution zone, on land
-          [123.910, 10.320]  // Back to start
+          [123.910, 10.320], 
+          [123.920, 10.320], 
+          [123.920, 10.330], 
+          [123.910, 10.330], 
+          [123.910, 10.320]  
         ],
         level: 'Caution',
         currentSeverity: 0.7,
@@ -455,7 +455,7 @@ export class HomePage implements OnInit, OnDestroy {
           weekly: 25,
           monthly: 100,
           peakHours: [18, 19, 20, 21],
-          peakDays: [4, 5] // Thursday, Friday
+          peakDays: [4, 5] 
         },
         timeBasedRisk: {
           morning: 0.4,
@@ -478,11 +478,11 @@ export class HomePage implements OnInit, OnDestroy {
         id: 'lahug-neutral-zone',
         name: 'Lahug Neutral Zone',
         coordinates: [
-          [123.880, 10.325], // Southwest - Neutral zone, on land
-          [123.890, 10.325], // Southeast - Neutral zone, on land
-          [123.890, 10.335], // Northeast - Neutral zone, on land
-          [123.880, 10.335], // Northwest - Neutral zone, on land
-          [123.880, 10.325]  // Back to start
+          [123.880, 10.325], 
+          [123.890, 10.325], 
+          [123.890, 10.335], 
+          [123.880, 10.335], 
+          [123.880, 10.325]  
         ],
         level: 'Neutral',
         currentSeverity: 0.4,
@@ -508,7 +508,7 @@ export class HomePage implements OnInit, OnDestroy {
           weekly: 12,
           monthly: 50,
           peakHours: [20, 21, 22],
-          peakDays: [5, 6] // Friday, Saturday
+          peakDays: [5, 6] 
         },
         timeBasedRisk: {
           morning: 0.2,
@@ -531,11 +531,11 @@ export class HomePage implements OnInit, OnDestroy {
         id: 'ayala-safe-zone',
         name: 'Ayala Center Cebu Safe Zone',
         coordinates: [
-          [123.925, 10.305], // Southwest - Safe zone, on land
-          [123.935, 10.305], // Southeast - Safe zone, on land
-          [123.935, 10.315], // Northeast - Safe zone, on land
-          [123.925, 10.315], // Northwest - Safe zone, on land
-          [123.925, 10.305]  // Back to start
+          [123.925, 10.305], 
+          [123.935, 10.305], 
+          [123.935, 10.315], 
+          [123.925, 10.315], 
+          [123.925, 10.305]  
         ],
         level: 'Safe',
         currentSeverity: 0.1,
@@ -584,11 +584,11 @@ export class HomePage implements OnInit, OnDestroy {
         id: 'sm-city-safe-zone',
         name: 'SM City Cebu Safe Zone',
         coordinates: [
-          [123.870, 10.300], // Southwest - Safe zone, on land
-          [123.880, 10.300], // Southeast - Safe zone, on land
-          [123.880, 10.310], // Northeast - Safe zone, on land
-          [123.870, 10.310], // Northwest - Safe zone, on land
-          [123.870, 10.300]  // Back to start
+          [123.870, 10.300], 
+          [123.880, 10.300], 
+          [123.880, 10.310], 
+          [123.870, 10.310], 
+          [123.870, 10.300]  
         ],
         level: 'Safe',
         currentSeverity: 0.1,
@@ -637,11 +637,11 @@ export class HomePage implements OnInit, OnDestroy {
         id: 'talamban-safe-zone',
         name: 'Talamban Safe Zone',
         coordinates: [
-          [123.840, 10.340], // Southwest - Safe zone, on land
-          [123.850, 10.340], // Southeast - Safe zone, on land
-          [123.850, 10.350], // Northeast - Safe zone, on land
-          [123.840, 10.350], // Northwest - Safe zone, on land
-          [123.840, 10.340]  // Back to start
+          [123.840, 10.340], 
+          [123.850, 10.340], 
+          [123.850, 10.350], 
+          [123.840, 10.350], 
+          [123.840, 10.340]  
         ],
         level: 'Safe',
         currentSeverity: 0.1,
@@ -697,7 +697,7 @@ export class HomePage implements OnInit, OnDestroy {
 
     console.log('Updating heatmap with zones:', this.zones?.length || 0);
 
-    // Only show zones and base layer if heatmap is visible
+    
     if (this.isHeatmapVisible) {
       this.addBaseSafeLayer();
       
@@ -714,7 +714,7 @@ export class HomePage implements OnInit, OnDestroy {
         });
       }
     } else {
-      // Remove all zones when heatmap is off
+      
       this.removeDangerZones();
     }
 
@@ -1123,10 +1123,10 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   private async notifyAuthorities(alertData: any) {
-    // Simulate sending to authorities
+    
     console.log('Notifying authorities:', alertData);
     
-    // In a real app, this would send to police/fire/ambulance APIs
+    
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
 
@@ -1191,7 +1191,7 @@ export class HomePage implements OnInit, OnDestroy {
     );
   }
 
-  // Test method for simulating incident alerts
+  
   async testIncidentAlerts() {
     try {
       this.zoneEngine.simulateRecentIncidents();
@@ -1208,20 +1208,20 @@ export class HomePage implements OnInit, OnDestroy {
     }
   }
 
-  // Enhanced test method for simulating red zone entry
+  
   async testRedZoneEntry() {
     try {
-      // Simulate entering the Guadalupe Danger Zone
-      const dangerZoneLocation = { lat: 10.320, lng: 123.900 }; // Center of Guadalupe Danger Zone
       
-      // Update current location to danger zone
+      const dangerZoneLocation = { lat: 10.320, lng: 123.900 }; 
+      
+      
       this.currentLocation = dangerZoneLocation;
       this.zoneEngine.updateCurrentLocation(dangerZoneLocation);
       
-      // Trigger vibration
+      
       this.vibrateDevice();
       
-      // Show danger zone alert with panic button suggestion
+      
       const alert = await this.alertController.create({
         header: '🚨 DANGER ZONE ALERT 🚨',
         message: `You have entered a HIGH RISK area!\n\n📍 Location: Guadalupe Danger Zone\n⚠️ Risk Level: EXTREME\n📊 Recent Incidents: Multiple assaults reported\n⏰ Time Risk: High (night time)\n\n🛡️ STAY ALERT AND BE CAUTIOUS!\n\nDo you want to use your panic button for emergency assistance?`,
@@ -1250,7 +1250,7 @@ export class HomePage implements OnInit, OnDestroy {
 
       await alert.present();
       
-      // Also show a toast notification
+      
       await this.notificationService.warning(
         '🚨 DANGER ZONE ENTERED',
         'You are in a high-risk area. Stay alert and consider using the panic button if needed.',
@@ -1264,17 +1264,17 @@ export class HomePage implements OnInit, OnDestroy {
     }
   }
 
-  // Test method for time-based zone changes
+  
   async testTimeBasedZoneChanges() {
     try {
-      // Simulate entering the Colon Area (time-based zone)
-      const colonLocation = { lat: 10.305, lng: 123.905 }; // Center of Colon Area
       
-      // Update current location to Colon area
+      const colonLocation = { lat: 10.305, lng: 123.905 }; 
+      
+      
       this.currentLocation = colonLocation;
       this.zoneEngine.updateCurrentLocation(colonLocation);
       
-      // Get current time and determine expected zone level
+      
       const currentHour = new Date().getHours();
       let expectedLevel = 'Neutral';
       let timeDescription = '';
@@ -1293,10 +1293,10 @@ export class HomePage implements OnInit, OnDestroy {
         timeDescription = 'Night (12 AM - 5 AM)';
       }
       
-      // Trigger vibration
+      
       this.vibrateDevice();
       
-      // Show time-based zone change alert
+      
       const alert = await this.alertController.create({
         header: `🕐 TIME-BASED ZONE TEST: Colon Area`,
         message: `Testing time-based zone changes!\n\n📍 Location: Colon Area\n⏰ Current Time: ${timeDescription}\n🔄 Expected Level: ${expectedLevel}\n\nThis zone changes risk level based on time:\n• Morning (6-11 AM): 🟡 Neutral\n• Afternoon (12-5 PM): 🟠 Caution\n• Evening (6-11 PM): 🔴 Danger\n• Night (12-5 AM): 🔴 High Danger\n\nMove to this area to test real-time changes!`,
@@ -1325,7 +1325,7 @@ export class HomePage implements OnInit, OnDestroy {
 
       await alert.present();
       
-      // Show a toast notification
+      
       await this.notificationService.info(
         '🕐 TIME-BASED ZONE TEST',
         `Colon Area is currently ${expectedLevel} level (${timeDescription}). Move to this area to test real-time changes!`,
@@ -1339,14 +1339,14 @@ export class HomePage implements OnInit, OnDestroy {
     }
   }
 
-  // Simulate time-based zone changes for testing
+  
   private async simulateTimeBasedZoneChanges() {
     try {
       const colonLocation = { lat: 10.305, lng: 123.905 };
       this.currentLocation = colonLocation;
       this.zoneEngine.updateCurrentLocation(colonLocation);
       
-      // Force update zones to trigger time-based changes
+      
       this.zoneEngine['updateAllZones']();
       
       await this.notificationService.success(
