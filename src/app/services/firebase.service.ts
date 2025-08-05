@@ -27,7 +27,16 @@ export class FirebaseService {
   }
 
   getDocuments(collectionName: string): Observable<any[]> {
-    return this.firestore.collection(collectionName).valueChanges({ idField: 'id' });
+    try {
+      if (!this.firestore) {
+        console.error('FirebaseService: Firestore instance is not available');
+        throw new Error('Firestore instance not available');
+      }
+      return this.firestore.collection(collectionName).valueChanges({ idField: 'id' });
+    } catch (error) {
+      console.error('FirebaseService: Error in getDocuments:', error);
+      throw error;
+    }
   }
 
   async deleteDocument(collectionName: string, docId: string): Promise<void> {

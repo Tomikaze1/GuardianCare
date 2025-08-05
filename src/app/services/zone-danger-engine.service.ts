@@ -87,7 +87,27 @@ export class ZoneDangerEngineService {
   }
 
   public initializeZones() {
-    this.loadZones();
+    // Add a small delay to ensure Angular's injection context is ready
+    setTimeout(() => {
+      this.loadZonesWithRetry();
+      this.startPeriodicUpdates();
+    }, 100);
+  }
+
+  private loadZonesWithRetry(retryCount = 0, maxRetries = 3) {
+    try {
+      this.loadZones();
+    } catch (error: any) {
+      if (retryCount < maxRetries && error.message && error.message.includes('NG0203')) {
+        console.warn(`ZoneDangerEngineService: Retry ${retryCount + 1}/${maxRetries} due to injection error`);
+        setTimeout(() => {
+          this.loadZonesWithRetry(retryCount + 1, maxRetries);
+        }, Math.pow(2, retryCount) * 100); // Exponential backoff
+      } else {
+        console.error('ZoneDangerEngineService: Max retries reached, using fallback zones');
+        this.loadFallbackZones();
+      }
+    }
   }
 
   private loadZones() {
@@ -105,24 +125,39 @@ export class ZoneDangerEngineService {
         return;
       }
 
-      this.firebaseService.getDocuments('dangerZones').subscribe({
-        next: (zones) => {
-          console.log('ZoneDangerEngineService: Zones loaded from Firestore:', zones);
-          if (zones && zones.length > 0) {
-            this.zones.next(zones as DangerZone[]);
-          } else {
-            console.log('ZoneDangerEngineService: No zones found in Firestore, using fallback zones');
+      // Use a more robust approach to handle Firebase operations
+      this.safeFirebaseOperation(() => {
+        this.firebaseService.getDocuments('dangerZones').subscribe({
+          next: (zones) => {
+            console.log('ZoneDangerEngineService: Zones loaded from Firestore:', zones);
+            if (zones && zones.length > 0) {
+              this.zones.next(zones as DangerZone[]);
+            } else {
+              console.log('ZoneDangerEngineService: No zones found in Firestore, using fallback zones');
+              this.loadFallbackZones();
+            }
+            this.updateAllZones();
+          },
+          error: (error) => {
+            console.error('ZoneDangerEngineService: Error loading zones from Firestore:', error);
             this.loadFallbackZones();
           }
-          this.updateAllZones();
-        },
-        error: (error) => {
-          console.error('ZoneDangerEngineService: Error loading zones:', error);
-          this.loadFallbackZones();
-        }
+        });
       });
     } catch (error) {
       console.error('ZoneDangerEngineService: Error in loadZones:', error);
+      this.loadFallbackZones();
+    }
+  }
+
+  private safeFirebaseOperation(operation: () => void) {
+    try {
+      operation();
+    } catch (injectionError: any) {
+      console.error('ZoneDangerEngineService: Injection error in Firebase operation:', injectionError);
+      if (injectionError.message && injectionError.message.includes('NG0203')) {
+        console.warn('ZoneDangerEngineService: Angular injection context error detected, using fallback');
+      }
       this.loadFallbackZones();
     }
   }
