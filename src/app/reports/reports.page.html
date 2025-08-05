@@ -136,9 +136,13 @@
               </div>
             </div>
             
+            <!-- Enhanced Address Display -->
             <div class="address-display" *ngIf="locationAddress">
-              <ion-icon name="map-outline" class="address-icon"></ion-icon>
-              <span class="address-text">{{ locationAddress }}</span>
+              <ion-icon name="location-outline" class="address-icon"></ion-icon>
+              <div class="address-content">
+                <span class="address-label">Location Address</span>
+                <span class="address-text">{{ locationAddress }}</span>
+              </div>
             </div>
             
             <div class="location-actions">

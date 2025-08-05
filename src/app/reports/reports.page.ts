@@ -105,19 +105,18 @@ export class ReportsPage implements OnInit {
   private async updateLocationAddress() {
     if (this.selectedLocation) {
       try {
-        // Using a placeholder token - replace with your actual Mapbox token
-        const mapboxToken = 'pk.eyJ1IjoiZXhhbXBsZSIsImEiOiJjbGV4YW1wbGUifQ.example';
-        const response = await fetch(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${this.selectedLocation.lng},${this.selectedLocation.lat}.json?access_token=${mapboxToken}`
-        );
+        // Use Nominatim (OpenStreetMap) for reverse geocoding - FREE and no API key required
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${this.selectedLocation.lat}&lon=${this.selectedLocation.lng}&addressdetails=1&zoom=18`;
         
+        const response = await fetch(url);
         if (!response.ok) {
-          throw new Error(`Mapbox API error: ${response.status}`);
+          throw new Error(`Geocoding failed: ${response.status}`);
         }
         
         const data = await response.json();
-        if (data.features && data.features.length > 0) {
-          this.locationAddress = data.features[0].place_name;
+        
+        if (data.display_name) {
+          this.locationAddress = data.display_name;
         } else {
           this.locationAddress = `${this.selectedLocation.lat.toFixed(6)}, ${this.selectedLocation.lng.toFixed(6)}`;
         }

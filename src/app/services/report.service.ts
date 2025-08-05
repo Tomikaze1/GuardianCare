@@ -1,0 +1,725 @@
+import { Injectable } from '@angular/core';
+import { AngularFirestore } from '@angular/fire/compat/firestore';
+import { AuthService } from './auth.service';
+import { LocationService } from './location.service';
+import { NotificationService } from '../shared/services/notification.service';
+import { Observable, from, of, throwError, BehaviorSubject } from 'rxjs';
+import { map, switchMap, catchError, tap } from 'rxjs/operators';
+import { Haptics } from '@capacitor/haptics';
+
+export interface ReportFormData {
+  type: string;
+  description: string;
+  location: {
+    lat: number;
+    lng: number;
+  };
+  anonymous: boolean;
+  media?: File[];
+  isSilent?: boolean;
+}
+
+export interface Report {
+  id?: string;
+  type: string;
+  description: string;
+  location: {
+    lat: number;
+    lng: number;
+  };
+  locationAddress: string;
+  anonymous: boolean;
+  userId: string;
+  media: string[];
+  riskLevel: number;
+  isSilent: boolean;
+  status: 'Pending' | 'In Progress' | 'Resolved' | 'Closed';
+  createdAt?: any;
+  updatedAt?: any;
+}
+
+export interface QueuedReport {
+  id: string;
+  data: ReportFormData;
+  timestamp: number;
+  retryCount: number;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ReportService {
+  private readonly collectionName = 'reports';
+  private readonly queueKey = 'guardian_care_report_queue';
+  private readonly maxRetries = 3;
+  
+  private isOnline = true;
+  private queueProcessing = false;
+  private queueSubject = new BehaviorSubject<QueuedReport[]>([]);
+
+  // Cloudinary configuration
+  private readonly cloudinaryConfig = {
+    cloudName: 'dbxtrosvd',
+    apiKey: '455876314373661',
+    uploadPreset: 'guardian_care_reports' // Custom upload preset for our app
+  };
+
+  constructor(
+    private firestore: AngularFirestore,
+    private authService: AuthService,
+    private locationService: LocationService,
+    private notificationService: NotificationService
+  ) {
+    this.initializeNetworkMonitoring();
+    this.loadQueuedReports();
+  }
+
+  /**
+   * Test Cloudinary connection using browser-compatible method
+   */
+  async testStorageConnection(): Promise<boolean> {
+    try {
+      console.log('Testing Cloudinary connection...');
+      
+      // Create a simple test request to Cloudinary
+      const response = await fetch(`https://res.cloudinary.com/${this.cloudinaryConfig.cloudName}/image/upload/v1/sample.jpg`);
+      
+      if (response.ok) {
+        console.log('✅ Cloudinary connection successful');
+        return true;
+      } else {
+        console.log('❌ Cloudinary connection failed');
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ Cloudinary connection error:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Convert file to base64 string (for Cloudinary upload)
+   */
+  private async fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  }
+
+  /**
+   * 📸 Upload Media to Cloudinary (FREE - 25GB Storage!)
+   * Uploads images/audio files to Cloudinary using browser-compatible API
+   * FREE tier: 25GB storage, 25GB bandwidth/month
+   * Works on both web and mobile browsers
+   */
+  async uploadMedia(files: File[]): Promise<string[]> {
+    try {
+      console.log('🚀 Uploading media files to Cloudinary (FREE tier)...');
+      
+      const uploadPromises = files.map(async (file, index) => {
+        console.log(`📤 Uploading file ${index + 1}/${files.length}: ${file.name}`);
+        
+        try {
+          // Create FormData for Cloudinary upload
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('upload_preset', this.cloudinaryConfig.uploadPreset);
+          formData.append('folder', 'guardian-care/reports');
+          formData.append('public_id', `report_${Date.now()}_${index}`);
+          
+          // Upload to Cloudinary using fetch API
+          const response = await fetch(
+            `https://api.cloudinary.com/v1_1/${this.cloudinaryConfig.cloudName}/auto/upload`,
+            {
+              method: 'POST',
+              body: formData
+            }
+          );
+          
+          if (!response.ok) {
+            throw new Error(`Cloudinary upload failed: ${response.status} ${response.statusText}`);
+          }
+          
+          const result = await response.json();
+          console.log(`✅ File uploaded successfully: ${result.secure_url}`);
+          return result.secure_url;
+        } catch (uploadError) {
+          console.error(`❌ Failed to upload ${file.name} to Cloudinary:`, uploadError);
+          // Fallback to base64 for this specific file
+          console.log(`🔄 Converting ${file.name} to base64 as fallback...`);
+          return await this.fileToBase64(file);
+        }
+      });
+      
+      const urls = await Promise.all(uploadPromises);
+      console.log('🎉 All media files processed successfully!');
+      console.log('💰 Cost: $0 (FREE tier: 25GB storage, 25GB bandwidth/month)');
+      
+      return urls;
+    } catch (error) {
+      console.error('❌ Error uploading media to Cloudinary:', error);
+      console.log('🔄 Falling back to base64 storage for all files...');
+      
+      // Fallback to base64 if Cloudinary fails
+      try {
+        const base64Promises = files.map(async (file, index) => {
+          console.log(`📤 Converting file ${index + 1}/${files.length} to base64: ${file.name}`);
+          return await this.fileToBase64(file);
+        });
+        
+        const base64Strings = await Promise.all(base64Promises);
+        console.log('✅ All media files converted to base64 as fallback!');
+        console.log('💰 Cost: $0 (FREE - No storage fees!)');
+        
+        return base64Strings;
+      } catch (base64Error) {
+        console.error('❌ Base64 fallback also failed:', base64Error);
+        throw error;
+      }
+    }
+  }
+
+  /**
+   * 📍 Reverse Geocoding Support
+   * Converts GPS coordinates to readable address using Nominatim
+   */
+  async getReadableAddress(lat: number, lng: number): Promise<string> {
+    try {
+      const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&zoom=18`;
+      
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Geocoding failed: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.display_name) {
+        return data.display_name;
+      } else {
+        return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      }
+    } catch (error) {
+      console.error('Error getting address:', error);
+      return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    }
+  }
+
+  /**
+   * 🚦 Auto Risk Level Assignment
+   * Based on incident type, assigns risk level 1-5
+   */
+  getRiskLevel(type: string): number {
+    const riskLevels: { [key: string]: number } = {
+      // Public incident types (shown to users)
+      'lost-item': 1,
+      'suspicious-activity': 2,
+      'crime-theft': 3,
+      'emergency': 4,
+      'life-threatening': 5,
+      
+      // 🔒 HIDDEN ADMIN-ONLY INCIDENT TYPES (Level 1-5)
+      // Level 1 - Low Risk (Minor incidents)
+      'vandalism': 1,
+      'noise-complaint': 1,
+      'parking-violation': 1,
+      'littering': 1,
+      'trespassing-minor': 1,
+      
+      // Level 2 - Moderate Risk (Suspicious/Concerning)
+      'suspicious-person': 2,
+      'suspicious-vehicle': 2,
+      'harassment-verbal': 2,
+      'loitering': 2,
+      'drug-activity-suspected': 2,
+      'gang-activity-suspected': 2,
+      
+      // Level 3 - High Risk (Criminal activity)
+      'assault-minor': 3,
+      'theft-property': 3,
+      'burglary': 3,
+      'vehicle-theft': 3,
+      'drug-dealing': 3,
+      'weapon-possession': 3,
+      'domestic-dispute': 3,
+      
+      // Level 4 - Critical Risk (Emergency situations)
+      'assault-severe': 4,
+      'armed-robbery': 4,
+      'fire-outbreak': 4,
+      'medical-emergency': 4,
+      'suicide-attempt': 4,
+      'hostage-situation': 4,
+      'bomb-threat': 4,
+      'active-shooter': 4,
+      'terrorism-suspected': 4,
+      
+      // Level 5 - Extreme Risk (Life-threatening emergencies)
+      'mass-casualty': 5,
+      'terrorism-confirmed': 5,
+      'biological-threat': 5,
+      'chemical-attack': 5,
+      'nuclear-threat': 5,
+      'cyber-terrorism': 5,
+      'infrastructure-attack': 5,
+      'pandemic-outbreak': 5,
+      'natural-disaster-severe': 5
+    };
+
+    return riskLevels[type.toLowerCase()] || 2;
+  }
+
+  /**
+   * 🔕 Silent Panic Mode Submission
+   * Handles silent submissions with haptic feedback
+   */
+  private async handleSilentSubmission(): Promise<void> {
+    try {
+      await Haptics.vibrate({ duration: 1000 });
+      await Haptics.vibrate({ duration: 500 });
+      await Haptics.vibrate({ duration: 1000 });
+    } catch (error) {
+      console.error('Error with haptic feedback:', error);
+    }
+  }
+
+  /**
+   * 🔁 Offline Queueing
+   * Queues reports when offline and processes when online
+   */
+  private async queueReport(data: ReportFormData): Promise<void> {
+    const queuedReport: QueuedReport = {
+      id: this.generateId(),
+      data,
+      timestamp: Date.now(),
+      retryCount: 0
+    };
+
+    const queue = this.getQueuedReports();
+    queue.push(queuedReport);
+    this.saveQueuedReports(queue);
+    this.queueSubject.next(queue);
+
+    console.log('Report queued for offline processing:', queuedReport.id);
+  }
+
+  private getQueuedReports(): QueuedReport[] {
+    try {
+      const stored = localStorage.getItem(this.queueKey);
+      return stored ? JSON.parse(stored) : [];
+    } catch (error) {
+      console.error('Error reading queued reports:', error);
+      return [];
+    }
+  }
+
+  private saveQueuedReports(queue: QueuedReport[]): void {
+    try {
+      localStorage.setItem(this.queueKey, JSON.stringify(queue));
+    } catch (error) {
+      console.error('Error saving queued reports:', error);
+    }
+  }
+
+  private generateId(): string {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  }
+
+  /**
+   * Check if device is online
+   */
+  private checkOnlineStatus(): boolean {
+    return navigator.onLine;
+  }
+
+  /**
+   * 🎯 Main Report Submission Method
+   * Handles the complete report submission process
+   */
+  async submitReport(data: ReportFormData): Promise<void> {
+    try {
+      console.log('🚀 Starting report submission process...');
+      
+      // Check network connectivity
+      this.isOnline = this.checkOnlineStatus();
+      console.log('📡 Network status:', this.isOnline ? 'Online' : 'Offline');
+
+      if (!this.isOnline) {
+        console.log('📱 Device is offline, queuing report...');
+        await this.queueReport(data);
+        if (!data.isSilent) {
+          this.notificationService.warning(
+            'Offline Mode',
+            'Report queued for submission when connection is restored.',
+            'OK',
+            3000
+          );
+        }
+        return;
+      }
+
+      // Get current user
+      console.log('👤 Getting current user...');
+      const user = await this.authService.getCurrentUser();
+      console.log('👤 Current user:', user ? `UID: ${user.uid}` : 'No user found');
+      
+      if (!user) {
+        console.error('❌ User not authenticated');
+        throw new Error('User not authenticated. Please log in and try again.');
+      }
+
+      // Handle silent mode
+      if (data.isSilent) {
+        console.log('🔇 Silent mode enabled, triggering haptic feedback...');
+        await this.handleSilentSubmission();
+      }
+
+      // Upload media files
+      let mediaUrls: string[] = [];
+      if (data.media && data.media.length > 0) {
+        console.log(`📸 Uploading ${data.media.length} media files...`);
+        mediaUrls = await this.uploadMedia(data.media);
+        console.log(`✅ Media upload complete: ${mediaUrls.length} files`);
+      } else {
+        console.log('📸 No media files to upload');
+      }
+
+      // Get readable address
+      console.log('📍 Getting readable address...');
+      const locationAddress = await this.getReadableAddress(
+        data.location.lat,
+        data.location.lng
+      );
+      console.log('📍 Address:', locationAddress);
+
+      // Determine risk level
+      const riskLevel = this.getRiskLevel(data.type);
+      console.log(`⚠️ Risk level for ${data.type}: ${riskLevel}`);
+
+      // Create report object
+      console.log('📝 Creating report object...');
+      const report: Omit<Report, 'id'> = {
+        type: data.type,
+        description: data.description,
+        location: data.location,
+        locationAddress,
+        anonymous: data.anonymous,
+        userId: user.uid,
+        media: mediaUrls,
+        riskLevel,
+        isSilent: data.isSilent || false,
+        status: 'Pending'
+        // createdAt and updatedAt will be added by FirebaseService
+      };
+
+      console.log('📝 Report object created:', {
+        type: report.type,
+        description: report.description.substring(0, 50) + '...',
+        location: report.location,
+        userId: report.userId,
+        mediaCount: report.media.length,
+        riskLevel: report.riskLevel
+      });
+
+      // Save to Firestore
+      console.log('🔥 Saving to Firestore...');
+      const docRef = await this.firestore.collection(this.collectionName).add(report);
+      
+      console.log('✅ Report submitted successfully! Document ID:', docRef.id);
+
+      // Show success notification (unless silent)
+      if (!data.isSilent) {
+        this.notificationService.success(
+          'Report Submitted',
+          `Your ${data.type} report has been submitted successfully.`,
+          'OK',
+          3000
+        );
+      }
+
+      // Process any queued reports
+      console.log('🔄 Processing queued reports...');
+      await this.processQueuedReports();
+
+    } catch (error) {
+      console.error('❌ Error submitting report:', error);
+      
+      // Provide more specific error messages
+      let errorMessage = 'There was an error submitting your report. Please try again.';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('User not authenticated')) {
+          errorMessage = 'Please log in to submit a report.';
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+          errorMessage = 'Network error. Please check your connection and try again.';
+        } else if (error.message.includes('permission')) {
+          errorMessage = 'Permission denied. Please check your account settings.';
+        }
+      }
+      
+      if (!data.isSilent) {
+        this.notificationService.error(
+          'Submission Failed',
+          errorMessage,
+          'OK',
+          5000
+        );
+      }
+      
+      throw error;
+    }
+  }
+
+  /**
+   * Process queued reports when back online
+   */
+  private async processQueuedReports(): Promise<void> {
+    if (this.queueProcessing) return;
+    
+    this.queueProcessing = true;
+    const queue = this.getQueuedReports();
+    
+    if (queue.length === 0) {
+      this.queueProcessing = false;
+      return;
+    }
+
+    console.log(`Processing ${queue.length} queued reports...`);
+
+    for (const queuedReport of queue) {
+      try {
+        if (queuedReport.retryCount >= this.maxRetries) {
+          console.warn(`Skipping report ${queuedReport.id} - max retries exceeded`);
+          continue;
+        }
+
+        await this.submitReport(queuedReport.data);
+        
+        // Remove from queue on success
+        const updatedQueue = queue.filter(r => r.id !== queuedReport.id);
+        this.saveQueuedReports(updatedQueue);
+        this.queueSubject.next(updatedQueue);
+        
+      } catch (error) {
+        console.error(`Error processing queued report ${queuedReport.id}:`, error);
+        
+        // Increment retry count
+        queuedReport.retryCount++;
+        this.saveQueuedReports(queue);
+        this.queueSubject.next(queue);
+      }
+    }
+
+    this.queueProcessing = false;
+  }
+
+  /**
+   * Initialize network monitoring
+   */
+  private async initializeNetworkMonitoring(): Promise<void> {
+    try {
+      this.isOnline = this.checkOnlineStatus();
+
+      // Listen for online/offline events
+      window.addEventListener('online', () => {
+        this.isOnline = true;
+        console.log('Network connection restored');
+        this.processQueuedReports();
+      });
+
+      window.addEventListener('offline', () => {
+        this.isOnline = false;
+        console.log('Network connection lost');
+      });
+    } catch (error) {
+      console.error('Error initializing network monitoring:', error);
+    }
+  }
+
+  /**
+   * Load queued reports on service initialization
+   */
+  private loadQueuedReports(): void {
+    const queue = this.getQueuedReports();
+    this.queueSubject.next(queue);
+  }
+
+  /**
+   * Get queued reports observable
+   */
+  getQueuedReports$(): Observable<QueuedReport[]> {
+    return this.queueSubject.asObservable();
+  }
+
+  /**
+   * Get all reports for current user
+   */
+  getUserReports(): Observable<Report[]> {
+    return from(this.authService.getCurrentUser()).pipe(
+      switchMap(user => {
+        if (!user) {
+          return of([]);
+        }
+        
+        return this.firestore.collection<Report>(this.collectionName, ref => 
+          ref.where('userId', '==', user.uid)
+             .orderBy('createdAt', 'desc')
+        ).valueChanges();
+      })
+    );
+  }
+
+  /**
+   * Get report by ID
+   */
+  getReportById(id: string): Observable<Report | null> {
+    return this.firestore.collection(this.collectionName).doc<Report>(id).valueChanges().pipe(
+      map(report => report || null)
+    );
+  }
+
+  /**
+   * Update report status
+   */
+  async updateReportStatus(id: string, status: Report['status']): Promise<void> {
+    try {
+      await this.firestore.collection(this.collectionName).doc(id).update({
+        status
+        // updatedAt will be added by FirebaseService
+      });
+    } catch (error) {
+      console.error('Error updating report status:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete report
+   */
+  async deleteReport(id: string): Promise<void> {
+    try {
+      await this.firestore.collection(this.collectionName).doc(id).delete();
+    } catch (error) {
+      console.error('Error deleting report:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get incident types with risk levels (user-facing only)
+   * Hides admin-only incident types from regular users
+   */
+  getIncidentTypes(): Array<{ value: string; label: string; riskLevel: number; icon: string }> {
+    return [
+      { value: 'lost-item', label: 'Lost Item', riskLevel: 1, icon: 'search-outline' },
+      { value: 'suspicious-activity', label: 'Suspicious Activity', riskLevel: 2, icon: 'eye-outline' },
+      { value: 'crime-theft', label: 'Crime / Theft', riskLevel: 3, icon: 'shield-outline' },
+      { value: 'emergency', label: 'Emergency', riskLevel: 4, icon: 'medical-outline' },
+      { value: 'life-threatening', label: 'Life-threatening', riskLevel: 5, icon: 'warning-outline' }
+    ];
+  }
+
+  /**
+   * 🔒 ADMIN-ONLY: Get ALL incident types including hidden ones
+   * This method should only be accessible to admin users
+   */
+  getAdminIncidentTypes(): Array<{ value: string; label: string; riskLevel: number; icon: string; category: string }> {
+    return [
+      // Level 1 - Low Risk
+      { value: 'lost-item', label: 'Lost Item', riskLevel: 1, icon: 'search-outline', category: 'Minor' },
+      { value: 'vandalism', label: 'Vandalism', riskLevel: 1, icon: 'color-palette-outline', category: 'Minor' },
+      { value: 'noise-complaint', label: 'Noise Complaint', riskLevel: 1, icon: 'volume-high-outline', category: 'Minor' },
+      { value: 'parking-violation', label: 'Parking Violation', riskLevel: 1, icon: 'car-outline', category: 'Minor' },
+      { value: 'littering', label: 'Littering', riskLevel: 1, icon: 'trash-outline', category: 'Minor' },
+      { value: 'trespassing-minor', label: 'Minor Trespassing', riskLevel: 1, icon: 'walk-outline', category: 'Minor' },
+      
+      // Level 2 - Moderate Risk
+      { value: 'suspicious-activity', label: 'Suspicious Activity', riskLevel: 2, icon: 'eye-outline', category: 'Suspicious' },
+      { value: 'suspicious-person', label: 'Suspicious Person', riskLevel: 2, icon: 'person-outline', category: 'Suspicious' },
+      { value: 'suspicious-vehicle', label: 'Suspicious Vehicle', riskLevel: 2, icon: 'car-sport-outline', category: 'Suspicious' },
+      { value: 'harassment-verbal', label: 'Verbal Harassment', riskLevel: 2, icon: 'chatbubble-outline', category: 'Suspicious' },
+      { value: 'loitering', label: 'Loitering', riskLevel: 2, icon: 'time-outline', category: 'Suspicious' },
+      { value: 'drug-activity-suspected', label: 'Suspected Drug Activity', riskLevel: 2, icon: 'medical-outline', category: 'Suspicious' },
+      { value: 'gang-activity-suspected', label: 'Suspected Gang Activity', riskLevel: 2, icon: 'people-outline', category: 'Suspicious' },
+      
+      // Level 3 - High Risk
+      { value: 'crime-theft', label: 'Crime / Theft', riskLevel: 3, icon: 'shield-outline', category: 'Criminal' },
+      { value: 'assault-minor', label: 'Minor Assault', riskLevel: 3, icon: 'hand-left-outline', category: 'Criminal' },
+      { value: 'theft-property', label: 'Property Theft', riskLevel: 3, icon: 'bag-outline', category: 'Criminal' },
+      { value: 'burglary', label: 'Burglary', riskLevel: 3, icon: 'home-outline', category: 'Criminal' },
+      { value: 'vehicle-theft', label: 'Vehicle Theft', riskLevel: 3, icon: 'car-outline', category: 'Criminal' },
+      { value: 'drug-dealing', label: 'Drug Dealing', riskLevel: 3, icon: 'medical-outline', category: 'Criminal' },
+      { value: 'weapon-possession', label: 'Weapon Possession', riskLevel: 3, icon: 'flash-outline', category: 'Criminal' },
+      { value: 'domestic-dispute', label: 'Domestic Dispute', riskLevel: 3, icon: 'home-outline', category: 'Criminal' },
+      
+      // Level 4 - Critical Risk
+      { value: 'emergency', label: 'Emergency', riskLevel: 4, icon: 'medical-outline', category: 'Critical' },
+      { value: 'assault-severe', label: 'Severe Assault', riskLevel: 4, icon: 'hand-left-outline', category: 'Critical' },
+      { value: 'armed-robbery', label: 'Armed Robbery', riskLevel: 4, icon: 'shield-outline', category: 'Critical' },
+      { value: 'fire-outbreak', label: 'Fire Outbreak', riskLevel: 4, icon: 'flame-outline', category: 'Critical' },
+      { value: 'medical-emergency', label: 'Medical Emergency', riskLevel: 4, icon: 'medical-outline', category: 'Critical' },
+      { value: 'suicide-attempt', label: 'Suicide Attempt', riskLevel: 4, icon: 'heart-outline', category: 'Critical' },
+      { value: 'hostage-situation', label: 'Hostage Situation', riskLevel: 4, icon: 'people-outline', category: 'Critical' },
+      { value: 'bomb-threat', label: 'Bomb Threat', riskLevel: 4, icon: 'warning-outline', category: 'Critical' },
+      { value: 'active-shooter', label: 'Active Shooter', riskLevel: 4, icon: 'flash-outline', category: 'Critical' },
+      { value: 'terrorism-suspected', label: 'Suspected Terrorism', riskLevel: 4, icon: 'warning-outline', category: 'Critical' },
+      
+      // Level 5 - Extreme Risk (Life-threatening)
+      { value: 'life-threatening', label: 'Life-threatening', riskLevel: 5, icon: 'warning-outline', category: 'Extreme' },
+      { value: 'mass-casualty', label: 'Mass Casualty Event', riskLevel: 5, icon: 'people-outline', category: 'Extreme' },
+      { value: 'terrorism-confirmed', label: 'Confirmed Terrorism', riskLevel: 5, icon: 'warning-outline', category: 'Extreme' },
+      { value: 'biological-threat', label: 'Biological Threat', riskLevel: 5, icon: 'medical-outline', category: 'Extreme' },
+      { value: 'chemical-attack', label: 'Chemical Attack', riskLevel: 5, icon: 'flask-outline', category: 'Extreme' },
+      { value: 'nuclear-threat', label: 'Nuclear Threat', riskLevel: 5, icon: 'radioactive-outline', category: 'Extreme' },
+      { value: 'cyber-terrorism', label: 'Cyber Terrorism', riskLevel: 5, icon: 'laptop-outline', category: 'Extreme' },
+      { value: 'infrastructure-attack', label: 'Infrastructure Attack', riskLevel: 5, icon: 'build-outline', category: 'Extreme' },
+      { value: 'pandemic-outbreak', label: 'Pandemic Outbreak', riskLevel: 5, icon: 'medical-outline', category: 'Extreme' },
+      { value: 'natural-disaster-severe', label: 'Severe Natural Disaster', riskLevel: 5, icon: 'thunderstorm-outline', category: 'Extreme' }
+    ];
+  }
+
+  /**
+   * Get risk level description
+   */
+  getRiskLevelDescription(level: number): string {
+    const descriptions = {
+      1: 'Low Risk - Minor incident',
+      2: 'Moderate Risk - Suspicious activity',
+      3: 'High Risk - Criminal activity',
+      4: 'Critical Risk - Emergency situation',
+      5: 'Extreme Risk - Life-threatening emergency'
+    };
+    return descriptions[level as keyof typeof descriptions] || 'Unknown Risk Level';
+  }
+
+  /**
+   * 🔒 ADMIN-ONLY: Get detailed risk level description
+   */
+  getAdminRiskLevelDescription(level: number): string {
+    const adminDescriptions = {
+      1: '🟢 Level 1 - Low Risk: Minor incidents requiring minimal response. Examples: lost items, vandalism, noise complaints, parking violations. Response time: 24-48 hours.',
+      2: '🟡 Level 2 - Moderate Risk: Suspicious or concerning activities requiring investigation. Examples: suspicious persons, harassment, loitering, suspected drug activity. Response time: 2-4 hours.',
+      3: '🟠 Level 3 - High Risk: Criminal activities requiring immediate law enforcement response. Examples: theft, assault, burglary, weapon possession. Response time: 15-30 minutes.',
+      4: '🔴 Level 4 - Critical Risk: Emergency situations requiring immediate emergency services. Examples: severe assault, armed robbery, fire, medical emergency, active shooter. Response time: 5-10 minutes.',
+      5: '🟣 Level 5 - Extreme Risk: Life-threatening emergencies requiring immediate military/terrorism response. Examples: mass casualty, confirmed terrorism, biological/chemical attacks, nuclear threats. Response time: IMMEDIATE (0-2 minutes).'
+    };
+    return adminDescriptions[level as keyof typeof adminDescriptions] || 'Unknown Risk Level';
+  }
+
+  /**
+   * Get risk level color
+   */
+  getRiskLevelColor(level: number): string {
+    const colors = {
+      1: '#28a745', // Green
+      2: '#ffc107', // Yellow
+      3: '#fd7e14', // Orange
+      4: '#dc3545', // Red
+      5: '#6f42c1'  // Purple
+    };
+    return colors[level as keyof typeof colors] || '#6c757d';
+  }
+} 

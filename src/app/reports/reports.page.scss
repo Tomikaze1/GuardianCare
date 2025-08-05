@@ -545,7 +545,7 @@
   
   .address-display {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
     margin-top: 16px;
     padding: 16px;
@@ -564,14 +564,32 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      margin-top: 2px;
     }
     
-    .address-text {
-      color: #374151;
-      font-size: 0.9rem;
-      font-weight: 600;
-      line-height: 1.5;
-      font-family: 'DM Sans', sans-serif;
+    .address-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      
+      .address-label {
+        color: #6B7280;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+      }
+      
+      .address-text {
+        color: #374151;
+        font-size: 0.9rem;
+        font-weight: 600;
+        line-height: 1.5;
+        font-family: 'DM Sans', sans-serif;
+        word-wrap: break-word;
+      }
     }
   }
   
