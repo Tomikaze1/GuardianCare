@@ -4,6 +4,7 @@ import { map, switchMap } from 'rxjs/operators';
 import { FirebaseService } from './firebase.service';
 import { AuthService } from './auth.service';
 import { LocationService } from './location.service';
+import { User } from 'firebase/auth';
 
 export interface Incident {
   id?: string;
@@ -53,7 +54,7 @@ export class IncidentService {
 
   addIncident(incident: Omit<Incident, 'id' | 'timestamp' | 'status' | 'reporterId' | 'reporterName'>): Observable<Incident> {
     return from(this.authService.getCurrentUser()).pipe(
-      switchMap(user => {
+      switchMap((user: User | null) => {
         const newIncident: Omit<Incident, 'id'> = {
           ...incident,
           timestamp: new Date(),

@@ -1,11 +1,16 @@
 import { Injectable } from '@angular/core';
-import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { AuthService } from './auth.service';
 import { LocationService } from './location.service';
 import { NotificationService } from '../shared/services/notification.service';
 import { Observable, from, of, throwError, BehaviorSubject } from 'rxjs';
 import { map, switchMap, catchError, tap } from 'rxjs/operators';
 import { Haptics } from '@capacitor/haptics';
+
+// Native Firebase imports
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, serverTimestamp } from 'firebase/firestore';
+import { User } from 'firebase/auth';
+import { environment } from '../../environments/environment';
 
 export interface ReportFormData {
   type: string;
@@ -61,15 +66,24 @@ export class ReportService {
   private readonly cloudinaryConfig = {
     cloudName: 'dbxtrosvd',
     apiKey: '455876314373661',
-    uploadPreset: 'guardian_care_reports' // Custom upload preset for our app
+    uploadPreset: 'guardian_care_reports' // Custom upload preset for better organization
   };
 
   constructor(
-    private firestore: AngularFirestore,
     private authService: AuthService,
     private locationService: LocationService,
     private notificationService: NotificationService
   ) {
+    console.log('🔧 ReportService initialized with native Firebase SDK');
+    
+    // Initialize Firebase if not already initialized
+    try {
+      initializeApp(environment.firebaseConfig);
+      console.log('✅ Firebase initialized successfully');
+    } catch (error) {
+      console.log('ℹ️ Firebase already initialized');
+    }
+    
     this.initializeNetworkMonitoring();
     this.loadQueuedReports();
   }
@@ -118,17 +132,19 @@ export class ReportService {
   async uploadMedia(files: File[]): Promise<string[]> {
     try {
       console.log('🚀 Uploading media files to Cloudinary (FREE tier)...');
+      console.log('📋 Cloudinary Config:', {
+        cloudName: this.cloudinaryConfig.cloudName,
+        uploadPreset: this.cloudinaryConfig.uploadPreset
+      });
       
       const uploadPromises = files.map(async (file, index) => {
-        console.log(`📤 Uploading file ${index + 1}/${files.length}: ${file.name}`);
+        console.log(`📤 Uploading file ${index + 1}/${files.length}: ${file.name} (${file.size} bytes)`);
         
         try {
           // Create FormData for Cloudinary upload
           const formData = new FormData();
           formData.append('file', file);
           formData.append('upload_preset', this.cloudinaryConfig.uploadPreset);
-          formData.append('folder', 'guardian-care/reports');
-          formData.append('public_id', `report_${Date.now()}_${index}`);
           
           // Upload to Cloudinary using fetch API
           const response = await fetch(
@@ -140,7 +156,10 @@ export class ReportService {
           );
           
           if (!response.ok) {
-            throw new Error(`Cloudinary upload failed: ${response.status} ${response.statusText}`);
+            const errorText = await response.text();
+            console.error(`❌ Cloudinary error response: ${errorText}`);
+            console.error(`❌ Response status: ${response.status} ${response.statusText}`);
+            throw new Error(`Cloudinary upload failed: ${response.status} ${response.statusText} - ${errorText}`);
           }
           
           const result = await response.json();
@@ -411,8 +430,9 @@ export class ReportService {
         media: mediaUrls,
         riskLevel,
         isSilent: data.isSilent || false,
-        status: 'Pending'
-        // createdAt and updatedAt will be added by FirebaseService
+        status: 'Pending',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       };
 
       console.log('📝 Report object created:', {
@@ -426,9 +446,13 @@ export class ReportService {
 
       // Save to Firestore
       console.log('🔥 Saving to Firestore...');
-      const docRef = await this.firestore.collection(this.collectionName).add(report);
-      
-      console.log('✅ Report submitted successfully! Document ID:', docRef.id);
+      try {
+        const docRef = await addDoc(collection(getFirestore(), this.collectionName), report);
+        console.log('✅ Report submitted successfully! Document ID:', docRef.id);
+      } catch (firestoreError) {
+        console.error('❌ Firestore save error:', firestoreError);
+        throw new Error(`Failed to save report to database: ${firestoreError}`);
+      }
 
       // Show success notification (unless silent)
       if (!data.isSilent) {
@@ -564,10 +588,29 @@ export class ReportService {
           return of([]);
         }
         
-        return this.firestore.collection<Report>(this.collectionName, ref => 
-          ref.where('userId', '==', user.uid)
-             .orderBy('createdAt', 'desc')
-        ).valueChanges();
+        return new Observable<Report[]>(observer => {
+          const q = query(
+            collection(getFirestore(), this.collectionName), 
+            where('userId', '==', user.uid), 
+            orderBy('createdAt', 'desc')
+          );
+          
+          const unsubscribe = onSnapshot(q, 
+            snapshot => {
+              const reports = snapshot.docs.map(doc => ({ 
+                id: doc.id, 
+                ...doc.data() 
+              } as Report));
+              observer.next(reports);
+            },
+            error => {
+              console.error('Error fetching user reports:', error);
+              observer.next([]);
+            }
+          );
+          
+          return unsubscribe;
+        });
       })
     );
   }
@@ -576,9 +619,25 @@ export class ReportService {
    * Get report by ID
    */
   getReportById(id: string): Observable<Report | null> {
-    return this.firestore.collection(this.collectionName).doc<Report>(id).valueChanges().pipe(
-      map(report => report || null)
-    );
+    return new Observable<Report | null>(observer => {
+      const docRef = doc(getFirestore(), this.collectionName, id);
+      
+      const unsubscribe = onSnapshot(docRef, 
+        snapshot => {
+          if (snapshot.exists()) {
+            observer.next({ id: snapshot.id, ...snapshot.data() } as Report);
+          } else {
+            observer.next(null);
+          }
+        },
+        error => {
+          console.error('Error fetching report by ID:', error);
+          observer.next(null);
+        }
+      );
+      
+      return unsubscribe;
+    });
   }
 
   /**
@@ -586,9 +645,9 @@ export class ReportService {
    */
   async updateReportStatus(id: string, status: Report['status']): Promise<void> {
     try {
-      await this.firestore.collection(this.collectionName).doc(id).update({
-        status
-        // updatedAt will be added by FirebaseService
+      await updateDoc(doc(getFirestore(), this.collectionName, id), {
+        status,
+        updatedAt: serverTimestamp()
       });
     } catch (error) {
       console.error('Error updating report status:', error);
@@ -601,7 +660,7 @@ export class ReportService {
    */
   async deleteReport(id: string): Promise<void> {
     try {
-      await this.firestore.collection(this.collectionName).doc(id).delete();
+      await deleteDoc(doc(getFirestore(), this.collectionName, id));
     } catch (error) {
       console.error('Error deleting report:', error);
       throw error;

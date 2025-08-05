@@ -21,11 +21,11 @@
     <div class="form-row incident-types">
       <button type="button"
         class="input-box incident-type-btn"
-        [class.selected]="selectedIncidentType === 'crime'"
-        (click)="selectIncidentType('crime')"
-        title="Crime">
+        [class.selected]="selectedIncidentType === 'crime-theft'"
+        (click)="selectIncidentType('crime-theft')"
+        title="Crime / Theft">
         <ion-icon name="shield-outline"></ion-icon>
-        Crime
+        Crime / Theft
       </button>
       <button type="button"
         class="input-box incident-type-btn"
@@ -45,11 +45,19 @@
       </button>
       <button type="button"
         class="input-box incident-type-btn"
-        [class.selected]="selectedIncidentType === 'suspicious'"
-        (click)="selectIncidentType('suspicious')"
+        [class.selected]="selectedIncidentType === 'suspicious-activity'"
+        (click)="selectIncidentType('suspicious-activity')"
         title="Suspicious Activity">
         <ion-icon name="eye-outline"></ion-icon>
         Suspicious Activity
+      </button>
+      <button type="button"
+        class="input-box incident-type-btn"
+        [class.selected]="selectedIncidentType === 'lost-item'"
+        (click)="selectIncidentType('lost-item')"
+        title="Lost Item">
+        <ion-icon name="search-outline"></ion-icon>
+        Lost Item
       </button>
     </div>
 
@@ -185,12 +193,25 @@
         <ion-icon name="call" slot="start"></ion-icon>
         Emergency Call (911)
       </ion-button>
-             <button type="submit" class="submit-btn">
-         <span>
-           <ion-icon name="send-outline"></ion-icon>
-           Submit Report
-         </span>
-       </button>
+      
+      <!-- Test button for admin levels (remove in production) -->
+      <ion-button expand="block" color="warning" fill="outline" (click)="testAdminLevels()" style="margin: 10px 0;">
+        <ion-icon name="shield-outline" slot="start"></ion-icon>
+        Test Admin Levels (Console)
+      </ion-button>
+      
+      <!-- Test button for data flow (remove in production) -->
+      <ion-button expand="block" color="info" fill="outline" (click)="testDataFlow()" style="margin: 10px 0;">
+        <ion-icon name="information-circle-outline" slot="start"></ion-icon>
+        Test Data Flow (Console)
+      </ion-button>
+      
+      <button type="submit" class="submit-btn">
+        <span>
+          <ion-icon name="send-outline"></ion-icon>
+          Submit Report
+        </span>
+      </button>
     </div>
   </form>
 </ion-content>

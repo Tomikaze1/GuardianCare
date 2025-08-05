@@ -2,9 +2,23 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LoadingController, AlertController } from '@ionic/angular';
-import { AngularFireAuth } from '@angular/fire/compat/auth';
-import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { NotificationService } from '../../shared/services/notification.service';
+
+// Native Firebase imports
+import { initializeApp } from 'firebase/app';
+import { 
+  getAuth, 
+  createUserWithEmailAndPassword, 
+  updateProfile, 
+  sendEmailVerification,
+  fetchSignInMethodsForEmail 
+} from 'firebase/auth';
+import { 
+  getFirestore, 
+  doc, 
+  setDoc 
+} from 'firebase/firestore';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-register',
@@ -17,16 +31,27 @@ export class RegisterPage implements OnInit {
   showPassword = false;
   showConfirmPassword = false;
   isLoading = false;
+  private auth: any;
+  private firestore: any;
 
   constructor(
     private formBuilder: FormBuilder,
-    private afAuth: AngularFireAuth,
-    private firestore: AngularFirestore,
     private router: Router,
     private loadingController: LoadingController,
     private alertController: AlertController,
     private notificationService: NotificationService
   ) {
+    // Initialize Firebase if not already initialized
+    try {
+      initializeApp(environment.firebaseConfig);
+      console.log('✅ Firebase initialized in RegisterPage');
+    } catch (error) {
+      console.log('ℹ️ Firebase already initialized in RegisterPage');
+    }
+    
+    this.auth = getAuth();
+    this.firestore = getFirestore();
+    
     this.registerForm = this.formBuilder.group({
       firstName: ['', [Validators.required, Validators.minLength(2), Validators.pattern(/^[a-zA-Z\s]*$/)]],
       lastName: ['', [Validators.required, Validators.minLength(2), Validators.pattern(/^[a-zA-Z\s]*$/)]],
@@ -104,7 +129,7 @@ export class RegisterPage implements OnInit {
         const { email, password, firstName, lastName, phone, emergencyContact, emergencyContactName } = formData;
         
         // Check if email already exists
-        const methods = await this.afAuth.fetchSignInMethodsForEmail(email);
+        const methods = await fetchSignInMethodsForEmail(this.auth, email);
         if (methods && methods.length > 0) {
           await loading.dismiss();
           this.isLoading = false;
@@ -113,12 +138,12 @@ export class RegisterPage implements OnInit {
         }
 
         // Create user account
-        const userCredential = await this.afAuth.createUserWithEmailAndPassword(email, password);
+        const userCredential = await createUserWithEmailAndPassword(this.auth, email, password);
 
         if (userCredential.user) {
           // Update user profile
           try {
-            await userCredential.user.updateProfile({
+            await updateProfile(userCredential.user, {
               displayName: `${firstName} ${lastName}`,
               photoURL: null
             });
@@ -129,7 +154,7 @@ export class RegisterPage implements OnInit {
 
           // Send email verification (optional)
           try {
-            await userCredential.user.sendEmailVerification();
+            await sendEmailVerification(userCredential.user);
           } catch (emailError) {
             console.warn('Email verification failed, but user account created:', emailError);
           }
@@ -137,7 +162,7 @@ export class RegisterPage implements OnInit {
                      // Create Firestore documents
            try {
              // Create user document
-             await this.firestore.collection('users').doc(userCredential.user.uid).set({
+             await setDoc(doc(this.firestore, 'users', userCredential.user.uid), {
                uid: userCredential.user.uid,
                firstName: firstName.trim(),
                lastName: lastName.trim(),
@@ -154,7 +179,7 @@ export class RegisterPage implements OnInit {
              });
 
              // Create user settings document
-             await this.firestore.collection('userSettings').doc(userCredential.user.uid).set({
+             await setDoc(doc(this.firestore, 'userSettings', userCredential.user.uid), {
                userId: userCredential.user.uid,
                privacy: {
                  shareLocation: true,

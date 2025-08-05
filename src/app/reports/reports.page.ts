@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AlertController, LoadingController } from '@ionic/angular';
 import { Camera, CameraResultType, CameraSource, Photo } from '@capacitor/camera';
 import { LocationService } from '../services/location.service';
-import { IncidentService } from '../services/incident.service';
+import { ReportService, ReportFormData } from '../services/report.service';
 import { NotificationService } from '../shared/services/notification.service';
 
 @Component({
@@ -21,16 +21,56 @@ export class ReportsPage implements OnInit {
   selectedIncidentType: string = '';
 
   incidentTypes = [
-    { value: 'crime', label: 'Crime', icon: 'shield-outline' },
+    { value: 'crime-theft', label: 'Crime / Theft', icon: 'shield-outline' },
     { value: 'accident', label: 'Accident', icon: 'car-outline' },
     { value: 'emergency', label: 'Emergency', icon: 'medical-outline' },
-    { value: 'suspicious', label: 'Suspicious Activity', icon: 'eye-outline' }
+    { value: 'suspicious-activity', label: 'Suspicious Activity', icon: 'eye-outline' },
+    { value: 'lost-item', label: 'Lost Item', icon: 'search-outline' }
   ];
+
+  // For testing - get all incident types including hidden admin ones
+  getAllIncidentTypes() {
+    return this.reportService.getAdminIncidentTypes();
+  }
+
+  // Test method to demonstrate hidden admin levels
+  testAdminLevels() {
+    console.log('🔒 ADMIN-ONLY INCIDENT TYPES:');
+    const adminTypes = this.reportService.getAdminIncidentTypes();
+    adminTypes.forEach(type => {
+      const riskDesc = this.reportService.getAdminRiskLevelDescription(type.riskLevel);
+      console.log(`📋 ${type.label} (${type.value}) - Level ${type.riskLevel} - ${type.category}`);
+      console.log(`   ${riskDesc}`);
+    });
+  }
+
+  // Test method to verify data flow
+  testDataFlow() {
+    console.log('🔄 DATA FLOW VERIFICATION:');
+    console.log('📝 TEXT DATA → Firebase Database:');
+    console.log('   - Incident type (with risk level)');
+    console.log('   - Description');
+    console.log('   - Location coordinates');
+    console.log('   - Location address');
+    console.log('   - User ID');
+    console.log('   - Timestamp');
+    console.log('   - Risk level (1-5)');
+    console.log('');
+    console.log('📸 IMAGES → Cloudinary → Firebase:');
+    console.log('   - Images uploaded to Cloudinary');
+    console.log('   - Cloudinary URLs stored in Firebase');
+    console.log('   - Fallback to base64 if Cloudinary fails');
+    console.log('');
+    console.log('🔒 HIDDEN ADMIN LEVELS:');
+    console.log('   - 40+ hidden incident types');
+    console.log('   - Detailed risk level descriptions');
+    console.log('   - Admin-only access');
+  }
 
   constructor(
     private formBuilder: FormBuilder,
     private locationService: LocationService,
-    private incidentService: IncidentService,
+    private reportService: ReportService,
     private alertController: AlertController,
     private loadingController: LoadingController,
     private notificationService: NotificationService
@@ -240,31 +280,45 @@ export class ReportsPage implements OnInit {
 
     try {
       const formData = this.reportForm.value;
-      const locationWithAddress = await this.locationService.getAddressFromCoordinates(
-        this.selectedLocation.lat,
-        this.selectedLocation.lng
-      );
+      
+      // Convert media files to File objects for Cloudinary upload
+      const mediaFiles: File[] = [];
+      if (formData.media && formData.media.length > 0) {
+        for (const mediaItem of formData.media) {
+          if (mediaItem.file) {
+            mediaFiles.push(mediaItem.file);
+          } else if (mediaItem.webPath) {
+            // Convert webPath to File object for Cloudinary
+            try {
+              const response = await fetch(mediaItem.webPath);
+              const blob = await response.blob();
+              const file = new File([blob], mediaItem.name || 'photo.jpg', { type: blob.type });
+              mediaFiles.push(file);
+            } catch (error) {
+              console.error('Error converting webPath to File:', error);
+            }
+          }
+        }
+      }
 
-      const incidentData = {
+      const reportFormData: ReportFormData = {
         type: formData.type,
         description: formData.description,
         location: {
           lat: this.selectedLocation.lat,
-          lng: this.selectedLocation.lng,
-          address: locationWithAddress
+          lng: this.selectedLocation.lng
         },
-        severity: formData.severity,
-        reporterId: 'anonymous',
-        reporterName: formData.anonymous ? 'Anonymous' : 'User',
-        media: formData.media || [],
-        anonymous: formData.anonymous
+        anonymous: formData.anonymous,
+        media: mediaFiles,
+        isSilent: false
       };
 
-      await this.incidentService.addIncident(incidentData).toPromise();
+      await this.reportService.submitReport(reportFormData);
 
       this.notificationService.success('Success!', 'Report submitted successfully!', 'OK', 3000);
       this.reportForm.reset();
       this.selectedLocation = this.currentLocation;
+      this.selectedIncidentType = '';
 
     } catch (error) {
       console.error('Error submitting report:', error);

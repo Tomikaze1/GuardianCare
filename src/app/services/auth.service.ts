@@ -1,10 +1,33 @@
 import { Injectable } from '@angular/core';
-import { AngularFireAuth } from '@angular/fire/compat/auth';
-import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { FacebookLogin } from '@capacitor-community/facebook-login';
-import firebase from 'firebase/compat/app';
 import { Subscription, Observable, BehaviorSubject } from 'rxjs';
 import { map, take } from 'rxjs/operators';
+
+// Native Firebase imports
+import { initializeApp } from 'firebase/app';
+import { 
+  getAuth, 
+  signInWithEmailAndPassword, 
+  signInWithPopup, 
+  GoogleAuthProvider, 
+  FacebookAuthProvider, 
+  signInWithCredential, 
+  signOut, 
+  onAuthStateChanged, 
+  sendPasswordResetEmail, 
+  User, 
+  createUserWithEmailAndPassword, 
+  updateProfile, 
+  sendEmailVerification 
+} from 'firebase/auth';
+import { 
+  getFirestore, 
+  doc, 
+  setDoc, 
+  getDoc, 
+  serverTimestamp 
+} from 'firebase/firestore';
+import { environment } from '../../environments/environment';
 
 export interface AuthResult {
   success: boolean;
@@ -16,38 +39,45 @@ export interface AuthResult {
   providedIn: 'root'
 })
 export class AuthService {
+  private auth: any;
+  private firestore: any;
   private authStateSubscription?: Subscription;
-  private authStateSubject = new BehaviorSubject<firebase.User | null>(null);
+  private authStateSubject = new BehaviorSubject<User | null>(null);
 
-  constructor(
-    private afAuth: AngularFireAuth,
-    private firestore: AngularFirestore
-  ) {
+  constructor() {
+    // Initialize Firebase if not already initialized
+    try {
+      initializeApp(environment.firebaseConfig);
+      console.log('✅ Firebase initialized in AuthService');
+    } catch (error) {
+      console.log('ℹ️ Firebase already initialized in AuthService');
+    }
+    
+    this.auth = getAuth();
+    this.firestore = getFirestore();
+    
     // Initialize auth state monitoring
     this.initializeAuthState();
   }
 
   private initializeAuthState(): void {
     console.log('AuthService: Initializing auth state monitoring');
-    this.authStateSubscription = this.afAuth.authState.subscribe(
-      user => {
-        console.log('AuthService: Auth state changed:', user ? 'User authenticated' : 'No user');
-        if (user) {
-          console.log('AuthService: User details - UID:', user.uid, 'Email:', user.email);
-        }
-        this.authStateSubject.next(user);
-      },
-      error => {
-        console.error('AuthService: Auth state error:', error);
-        this.authStateSubject.next(null);
+    onAuthStateChanged(this.auth, (user) => {
+      console.log('AuthService: Auth state changed:', user ? 'User authenticated' : 'No user');
+      if (user) {
+        console.log('AuthService: User details - UID:', user.uid, 'Email:', user.email);
       }
-    );
+      this.authStateSubject.next(user);
+    }, (error) => {
+      console.error('AuthService: Auth state error:', error);
+      this.authStateSubject.next(null);
+    });
   }
 
   async login(email: string, password: string): Promise<AuthResult> {
     try {
       console.log('AuthService: Attempting login for:', email);
-      const result = await this.afAuth.signInWithEmailAndPassword(email, password);
+      const result = await signInWithEmailAndPassword(this.auth, email, password);
       console.log('AuthService: Login successful for:', email);
       console.log('AuthService: User UID after login:', result.user?.uid);
       return { success: true, user: result.user };
@@ -60,8 +90,8 @@ export class AuthService {
   async loginWithGoogle(): Promise<AuthResult> {
     try {
       console.log('AuthService: Attempting Google login');
-      const provider = new firebase.auth.GoogleAuthProvider();
-      const result = await this.afAuth.signInWithPopup(provider);
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(this.auth, provider);
       await this.createUserInFirestore(result.user);
       console.log('AuthService: Google login successful');
       console.log('AuthService: User UID after Google login:', result.user?.uid);
@@ -78,8 +108,8 @@ export class AuthService {
       const result = await FacebookLogin.login({ permissions: ['email', 'public_profile'] });
 
       if (result.accessToken) {
-        const credential = firebase.auth.FacebookAuthProvider.credential(result.accessToken.token);
-        const authResult = await this.afAuth.signInWithCredential(credential);
+        const credential = FacebookAuthProvider.credential(result.accessToken.token);
+        const authResult = await signInWithCredential(this.auth, credential);
         await this.createUserInFirestore(authResult.user);
         console.log('AuthService: Facebook login successful');
         console.log('AuthService: User UID after Facebook login:', authResult.user?.uid);
@@ -93,23 +123,23 @@ export class AuthService {
     }
   }
 
-  private async createUserInFirestore(user: firebase.User | null) {
+  private async createUserInFirestore(user: User | null) {
     if (user) {
       try {
-        const userRef = this.firestore.collection('users').doc(user.uid);
-        const userDoc = await userRef.get().toPromise();
+        const userRef = doc(this.firestore, 'users', user.uid);
+        const userDoc = await getDoc(userRef);
 
-        if (userDoc && userDoc.exists) {
+        if (userDoc && userDoc.exists()) {
           console.log('AuthService: User already exists in Firestore');
           return;
         }
 
-        await userRef.set({
+        await setDoc(userRef, {
           uid: user.uid,
           email: user.email,
           displayName: user.displayName,
           photoURL: user.photoURL,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          createdAt: serverTimestamp(),
         });
         console.log('AuthService: User created in Firestore');
       } catch (error) {
@@ -120,7 +150,7 @@ export class AuthService {
 
   async resetPassword(email: string): Promise<AuthResult> {
     try {
-      await this.afAuth.sendPasswordResetEmail(email);
+      await sendPasswordResetEmail(this.auth, email);
       return { success: true };
     } catch (error: any) {
       return { success: false, error: this.getErrorMessage(error.code) };
@@ -129,7 +159,7 @@ export class AuthService {
 
   async isAuthenticated(): Promise<boolean> {
     try {
-      const user = await this.afAuth.currentUser;
+      const user = this.auth.currentUser;
       console.log('AuthService: Current user check:', user ? 'User authenticated' : 'No user');
       if (user) {
         console.log('AuthService: Current user UID:', user.uid);
@@ -156,14 +186,14 @@ export class AuthService {
     );
   }
 
-  getCurrentUser() {
-    return this.afAuth.currentUser;
+  getCurrentUser(): Promise<User | null> {
+    return Promise.resolve(this.auth.currentUser);
   }
 
   async logout(): Promise<void> {
     try {
       console.log('AuthService: Attempting logout');
-      await this.afAuth.signOut();
+      await signOut(this.auth);
       console.log('AuthService: Logout successful');
     } catch (error) {
       console.error('AuthService: Logout error:', error);
@@ -173,9 +203,7 @@ export class AuthService {
 
   // Cleanup method to prevent memory leaks
   ngOnDestroy(): void {
-    if (this.authStateSubscription) {
-      this.authStateSubscription.unsubscribe();
-    }
+    // No explicit unsubscribe needed for onAuthStateChanged as it's a global listener
   }
 
   private getErrorMessage(errorCode: string): string {
