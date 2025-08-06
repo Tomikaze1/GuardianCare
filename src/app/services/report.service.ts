@@ -239,8 +239,6 @@ export class ReportService {
       'crime-theft': 3,
       'emergency': 4,
       'life-threatening': 5,
-      
-      // 🔒 HIDDEN ADMIN-ONLY INCIDENT TYPES (Level 1-5)
       // Level 1 - Low Risk (Minor incidents)
       'vandalism': 1,
       'noise-complaint': 1,
@@ -668,8 +666,7 @@ export class ReportService {
   }
 
   /**
-   * Get incident types with risk levels (user-facing only)
-   * Hides admin-only incident types from regular users
+   * Get incident types with risk levels
    */
   getIncidentTypes(): Array<{ value: string; label: string; riskLevel: number; icon: string }> {
     return [
@@ -681,64 +678,7 @@ export class ReportService {
     ];
   }
 
-  /**
-   * 🔒 ADMIN-ONLY: Get ALL incident types including hidden ones
-   * This method should only be accessible to admin users
-   */
-  getAdminIncidentTypes(): Array<{ value: string; label: string; riskLevel: number; icon: string; category: string }> {
-    return [
-      // Level 1 - Low Risk
-      { value: 'lost-item', label: 'Lost Item', riskLevel: 1, icon: 'search-outline', category: 'Minor' },
-      { value: 'vandalism', label: 'Vandalism', riskLevel: 1, icon: 'color-palette-outline', category: 'Minor' },
-      { value: 'noise-complaint', label: 'Noise Complaint', riskLevel: 1, icon: 'volume-high-outline', category: 'Minor' },
-      { value: 'parking-violation', label: 'Parking Violation', riskLevel: 1, icon: 'car-outline', category: 'Minor' },
-      { value: 'littering', label: 'Littering', riskLevel: 1, icon: 'trash-outline', category: 'Minor' },
-      { value: 'trespassing-minor', label: 'Minor Trespassing', riskLevel: 1, icon: 'walk-outline', category: 'Minor' },
-      
-      // Level 2 - Moderate Risk
-      { value: 'suspicious-activity', label: 'Suspicious Activity', riskLevel: 2, icon: 'eye-outline', category: 'Suspicious' },
-      { value: 'suspicious-person', label: 'Suspicious Person', riskLevel: 2, icon: 'person-outline', category: 'Suspicious' },
-      { value: 'suspicious-vehicle', label: 'Suspicious Vehicle', riskLevel: 2, icon: 'car-sport-outline', category: 'Suspicious' },
-      { value: 'harassment-verbal', label: 'Verbal Harassment', riskLevel: 2, icon: 'chatbubble-outline', category: 'Suspicious' },
-      { value: 'loitering', label: 'Loitering', riskLevel: 2, icon: 'time-outline', category: 'Suspicious' },
-      { value: 'drug-activity-suspected', label: 'Suspected Drug Activity', riskLevel: 2, icon: 'medical-outline', category: 'Suspicious' },
-      { value: 'gang-activity-suspected', label: 'Suspected Gang Activity', riskLevel: 2, icon: 'people-outline', category: 'Suspicious' },
-      
-      // Level 3 - High Risk
-      { value: 'crime-theft', label: 'Crime / Theft', riskLevel: 3, icon: 'shield-outline', category: 'Criminal' },
-      { value: 'assault-minor', label: 'Minor Assault', riskLevel: 3, icon: 'hand-left-outline', category: 'Criminal' },
-      { value: 'theft-property', label: 'Property Theft', riskLevel: 3, icon: 'bag-outline', category: 'Criminal' },
-      { value: 'burglary', label: 'Burglary', riskLevel: 3, icon: 'home-outline', category: 'Criminal' },
-      { value: 'vehicle-theft', label: 'Vehicle Theft', riskLevel: 3, icon: 'car-outline', category: 'Criminal' },
-      { value: 'drug-dealing', label: 'Drug Dealing', riskLevel: 3, icon: 'medical-outline', category: 'Criminal' },
-      { value: 'weapon-possession', label: 'Weapon Possession', riskLevel: 3, icon: 'flash-outline', category: 'Criminal' },
-      { value: 'domestic-dispute', label: 'Domestic Dispute', riskLevel: 3, icon: 'home-outline', category: 'Criminal' },
-      
-      // Level 4 - Critical Risk
-      { value: 'emergency', label: 'Emergency', riskLevel: 4, icon: 'medical-outline', category: 'Critical' },
-      { value: 'assault-severe', label: 'Severe Assault', riskLevel: 4, icon: 'hand-left-outline', category: 'Critical' },
-      { value: 'armed-robbery', label: 'Armed Robbery', riskLevel: 4, icon: 'shield-outline', category: 'Critical' },
-      { value: 'fire-outbreak', label: 'Fire Outbreak', riskLevel: 4, icon: 'flame-outline', category: 'Critical' },
-      { value: 'medical-emergency', label: 'Medical Emergency', riskLevel: 4, icon: 'medical-outline', category: 'Critical' },
-      { value: 'suicide-attempt', label: 'Suicide Attempt', riskLevel: 4, icon: 'heart-outline', category: 'Critical' },
-      { value: 'hostage-situation', label: 'Hostage Situation', riskLevel: 4, icon: 'people-outline', category: 'Critical' },
-      { value: 'bomb-threat', label: 'Bomb Threat', riskLevel: 4, icon: 'warning-outline', category: 'Critical' },
-      { value: 'active-shooter', label: 'Active Shooter', riskLevel: 4, icon: 'flash-outline', category: 'Critical' },
-      { value: 'terrorism-suspected', label: 'Suspected Terrorism', riskLevel: 4, icon: 'warning-outline', category: 'Critical' },
-      
-      // Level 5 - Extreme Risk (Life-threatening)
-      { value: 'life-threatening', label: 'Life-threatening', riskLevel: 5, icon: 'warning-outline', category: 'Extreme' },
-      { value: 'mass-casualty', label: 'Mass Casualty Event', riskLevel: 5, icon: 'people-outline', category: 'Extreme' },
-      { value: 'terrorism-confirmed', label: 'Confirmed Terrorism', riskLevel: 5, icon: 'warning-outline', category: 'Extreme' },
-      { value: 'biological-threat', label: 'Biological Threat', riskLevel: 5, icon: 'medical-outline', category: 'Extreme' },
-      { value: 'chemical-attack', label: 'Chemical Attack', riskLevel: 5, icon: 'flask-outline', category: 'Extreme' },
-      { value: 'nuclear-threat', label: 'Nuclear Threat', riskLevel: 5, icon: 'radioactive-outline', category: 'Extreme' },
-      { value: 'cyber-terrorism', label: 'Cyber Terrorism', riskLevel: 5, icon: 'laptop-outline', category: 'Extreme' },
-      { value: 'infrastructure-attack', label: 'Infrastructure Attack', riskLevel: 5, icon: 'build-outline', category: 'Extreme' },
-      { value: 'pandemic-outbreak', label: 'Pandemic Outbreak', riskLevel: 5, icon: 'medical-outline', category: 'Extreme' },
-      { value: 'natural-disaster-severe', label: 'Severe Natural Disaster', riskLevel: 5, icon: 'thunderstorm-outline', category: 'Extreme' }
-    ];
-  }
+
 
   /**
    * Get risk level description
@@ -754,19 +694,7 @@ export class ReportService {
     return descriptions[level as keyof typeof descriptions] || 'Unknown Risk Level';
   }
 
-  /**
-   * 🔒 ADMIN-ONLY: Get detailed risk level description
-   */
-  getAdminRiskLevelDescription(level: number): string {
-    const adminDescriptions = {
-      1: '🟢 Level 1 - Low Risk: Minor incidents requiring minimal response. Examples: lost items, vandalism, noise complaints, parking violations. Response time: 24-48 hours.',
-      2: '🟡 Level 2 - Moderate Risk: Suspicious or concerning activities requiring investigation. Examples: suspicious persons, harassment, loitering, suspected drug activity. Response time: 2-4 hours.',
-      3: '🟠 Level 3 - High Risk: Criminal activities requiring immediate law enforcement response. Examples: theft, assault, burglary, weapon possession. Response time: 15-30 minutes.',
-      4: '🔴 Level 4 - Critical Risk: Emergency situations requiring immediate emergency services. Examples: severe assault, armed robbery, fire, medical emergency, active shooter. Response time: 5-10 minutes.',
-      5: '🟣 Level 5 - Extreme Risk: Life-threatening emergencies requiring immediate military/terrorism response. Examples: mass casualty, confirmed terrorism, biological/chemical attacks, nuclear threats. Response time: IMMEDIATE (0-2 minutes).'
-    };
-    return adminDescriptions[level as keyof typeof adminDescriptions] || 'Unknown Risk Level';
-  }
+
 
   /**
    * Get risk level color

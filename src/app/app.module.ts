@@ -18,7 +18,6 @@ import { AngularFireStorageModule } from '@angular/fire/compat/storage';
 import { environment } from '../environments/environment';
 import { TruncatePipe } from './pipes/truncate.pipe';  
 import { AuthGuard } from './auth/auth.guard';  
-import { AdminGuard } from './auth/admin.guard';  
 
 export function createTranslateLoader(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/lang/', '.json');
@@ -49,8 +48,7 @@ export function createTranslateLoader(http: HttpClient) {
   ],
   providers: [
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
-    AuthGuard,   
-    AdminGuard  
+    AuthGuard
   ],
   bootstrap: [AppComponent]
 })

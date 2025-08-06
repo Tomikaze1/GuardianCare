@@ -14,7 +14,6 @@ import { NotificationService } from '../shared/services/notification.service';
 })
 export class SettingsPage implements OnInit {
   currentLanguage = 'en';
-  isAdmin = false;
   userRole = 'Unknown';
   userId = 'Unknown';
   
@@ -69,11 +68,6 @@ export class SettingsPage implements OnInit {
   }
 
   ngOnInit() {
-    this.userService.isAdmin().subscribe(isAdmin => {
-      this.isAdmin = isAdmin;
-      console.log('Admin status:', isAdmin);
-    });
-
     this.userService.getCurrentUserData().subscribe(userData => {
       if (userData) {
         this.userRole = userData.role || 'No role set';
@@ -688,7 +682,5 @@ export class SettingsPage implements OnInit {
     }
   }
 
-  navigateToAdmin(route: string) {
-    this.router.navigate([`/admin/${route}`]);
-  }
+
 }

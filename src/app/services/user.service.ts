@@ -20,19 +20,6 @@ export class UserService {
     return this.firestore.doc(`users/${uid}`).valueChanges();
   }
 
-  isAdmin(): Observable<boolean> {
-    return this.afAuth.authState.pipe(
-      switchMap(user => {
-        if (!user) {
-          return [false];
-        }
-        return this.firestore.doc(`users/${user.uid}`).valueChanges().pipe(
-          map((userData: any) => userData?.role === 'admin')
-        );
-      })
-    );
-  }
-
   getCurrentUserData(): Observable<any> {
     return this.afAuth.authState.pipe(
       switchMap(user => {

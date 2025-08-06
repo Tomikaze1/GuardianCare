@@ -28,44 +28,7 @@ export class ReportsPage implements OnInit {
     { value: 'lost-item', label: 'Lost Item', icon: 'search-outline' }
   ];
 
-  // For testing - get all incident types including hidden admin ones
-  getAllIncidentTypes() {
-    return this.reportService.getAdminIncidentTypes();
-  }
 
-  // Test method to demonstrate hidden admin levels
-  testAdminLevels() {
-    console.log('🔒 ADMIN-ONLY INCIDENT TYPES:');
-    const adminTypes = this.reportService.getAdminIncidentTypes();
-    adminTypes.forEach(type => {
-      const riskDesc = this.reportService.getAdminRiskLevelDescription(type.riskLevel);
-      console.log(`📋 ${type.label} (${type.value}) - Level ${type.riskLevel} - ${type.category}`);
-      console.log(`   ${riskDesc}`);
-    });
-  }
-
-  // Test method to verify data flow
-  testDataFlow() {
-    console.log('🔄 DATA FLOW VERIFICATION:');
-    console.log('📝 TEXT DATA → Firebase Database:');
-    console.log('   - Incident type (with risk level)');
-    console.log('   - Description');
-    console.log('   - Location coordinates');
-    console.log('   - Location address');
-    console.log('   - User ID');
-    console.log('   - Timestamp');
-    console.log('   - Risk level (1-5)');
-    console.log('');
-    console.log('📸 IMAGES → Cloudinary → Firebase:');
-    console.log('   - Images uploaded to Cloudinary');
-    console.log('   - Cloudinary URLs stored in Firebase');
-    console.log('   - Fallback to base64 if Cloudinary fails');
-    console.log('');
-    console.log('🔒 HIDDEN ADMIN LEVELS:');
-    console.log('   - 40+ hidden incident types');
-    console.log('   - Detailed risk level descriptions');
-    console.log('   - Admin-only access');
-  }
 
   constructor(
     private formBuilder: FormBuilder,
