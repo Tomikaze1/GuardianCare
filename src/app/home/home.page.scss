@@ -207,19 +207,19 @@
   flex-shrink: 0;
   
   &.safe {
-    background: linear-gradient(135deg, #00ff00, #00cc00);
+    background: linear-gradient(135deg, var(--status-success), var(--accent-emerald));
   }
   
   &.neutral {
-    background: linear-gradient(135deg, #ffff00, #cccc00);
+    background: linear-gradient(135deg, var(--status-warning), var(--accent-amber));
   }
   
   &.caution {
-    background: linear-gradient(135deg, #ffaa00, #cc8800);
+    background: linear-gradient(135deg, var(--status-warning), var(--accent-amber));
   }
   
   &.danger {
-    background: linear-gradient(135deg, #ff0000, #cc0000);
+    background: linear-gradient(135deg, var(--status-error), var(--accent-red));
   }
 }
 
@@ -252,13 +252,13 @@
         left: 0;
         right: 0;
         height: 4px;
-        background: linear-gradient(90deg, #C5A5B0 0%, #9B7A85 50%, #8B6B76 100%);
+        background: linear-gradient(90deg, var(--primary-purple) 0%, var(--primary-blue) 50%, var(--accent-purple) 100%);
         z-index: 1;
       }
     }
     
     .alert-head {
-      background: linear-gradient(135deg, #C5A5B0 0%, #9B7A85 100%) !important;
+      background: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-blue) 100%) !important;
       color: white !important;
       font-weight: 700 !important;
       font-size: 1.3rem !important;
@@ -295,8 +295,8 @@
         right: 0;
         bottom: 0;
         background-image: 
-          radial-gradient(circle at 20% 50%, rgba(197, 165, 176, 0.03) 0%, transparent 50%),
-          radial-gradient(circle at 80% 20%, rgba(155, 122, 133, 0.03) 0%, transparent 50%);
+          radial-gradient(circle at 20% 50%, rgba(124, 58, 237, 0.03) 0%, transparent 50%),
+          radial-gradient(circle at 80% 20%, rgba(76, 29, 149, 0.03) 0%, transparent 50%);
         pointer-events: none;
       }
     }
@@ -331,13 +331,13 @@
     
     .emergency-button {
       --color: white !important;
-      --background: linear-gradient(135deg, #C5A5B0 0%, #9B7A85 100%) !important;
+      --background: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-blue) 100%) !important;
       --border-radius: 12px !important;
       font-weight: 700 !important;
       font-size: 1.1rem !important;
       padding: 12px 20px !important;
       margin: 0 !important;
-      box-shadow: 0 4px 16px rgba(197, 165, 176, 0.3) !important;
+      box-shadow: 0 4px 16px rgba(124, 58, 237, 0.3) !important;
       transition: all 0.3s ease !important;
       position: relative !important;
       overflow: hidden !important;
@@ -355,7 +355,7 @@
       }
       
       &:hover {
-        --background: linear-gradient(135deg, #9B7A85 0%, #C5A5B0 100%) !important;
+        --background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-purple) 100%) !important;
         transform: translateY(-2px) !important;
         box-shadow: 0 6px 20px rgba(197, 165, 176, 0.4) !important;
         
@@ -372,7 +372,7 @@
   }
 
 .emergency-loading {
-  --background: linear-gradient(135deg, #C5A5B0 0%, #9B7A85 100%);
+        --background: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-blue) 100%);
   --color: white;
   
   .loading-wrapper {

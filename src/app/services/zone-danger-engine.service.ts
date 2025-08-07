@@ -865,10 +865,10 @@ export class ZoneDangerEngineService {
 
   private getLevelColor(level: string): string {
     switch (level) {
-      case 'Safe': return '#4CAF50';
-      case 'Neutral': return '#FFC107';
-      case 'Caution': return '#FF9800';
-      case 'Danger': return '#F44336';
+      case 'Safe': return '#10B981'; // Emerald-500
+      case 'Neutral': return '#F59E0B'; // Amber-500
+      case 'Caution': return '#F59E0B'; // Amber-500
+      case 'Danger': return '#EF4444'; // Red-500
       default: return '#9E9E9E';
     }
   }

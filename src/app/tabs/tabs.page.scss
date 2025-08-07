@@ -1,6 +1,6 @@
 ion-tab-bar {
   --background: transparent;
-  background: linear-gradient(135deg, #C5A5B0 0%, #9B7A85 100%);
+  background: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-blue) 100%);
   position: fixed;
   left: 0; right: 0; bottom: 0;
   z-index: 99;
@@ -73,7 +73,7 @@ ion-tab-bar {
     }
 
     &.tab-selected {
-      background: linear-gradient(135deg, #9B7A85 0%, #C5A5B0 100%);
+      background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-purple) 100%);
       box-shadow: 0 6px 20px rgba(197, 165, 176, 0.3);
       transform: translateY(-2px) scale(1.02);
       
