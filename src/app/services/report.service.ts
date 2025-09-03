@@ -54,7 +54,7 @@ export interface QueuedReport {
   providedIn: 'root'
 })
 export class ReportService {
-  private readonly collectionName = 'reports';
+  private readonly collectionName = 'incidents';
   private readonly queueKey = 'guardian_care_report_queue';
   private readonly maxRetries = 3;
   
@@ -66,7 +66,7 @@ export class ReportService {
   private readonly cloudinaryConfig = {
     cloudName: 'dbxtrosvd',
     apiKey: '455876314373661',
-    uploadPreset: 'guardian_care_reports' // Custom upload preset for better organization
+    uploadPreset: 'guardian_care_reports' 
   };
 
   constructor(

@@ -228,11 +228,11 @@
       border: 1.5px solid var(--primary-purple);
       background: linear-gradient(135deg, var(--primary-indigo) 0%, var(--primary-purple) 100%);
       box-shadow: 0 4px 16px rgba(124, 58, 237, 0.2);
-      color: var(--primary-purple);
+      color: #ffffff;
       transform: translateY(-2px);
       
       ion-icon {
-        color: var(--primary-purple);
+        color: #ffffff;
         transform: scale(1.1);
       }
     }
