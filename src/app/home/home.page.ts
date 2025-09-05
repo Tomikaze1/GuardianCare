@@ -43,10 +43,20 @@ export class HomePage implements OnInit, OnDestroy {
   ngOnInit() {
     this.initializeApp();
     this.loadUserLanguage();
+    this.setupResizeListener();
   }
 
   ionViewWillEnter() {
     this.zoneEngine.initializeZones();
+  }
+
+  ionViewDidEnter() {
+    // Resize map when returning to this tab
+    setTimeout(() => {
+      if (this.map) {
+        this.map.resize();
+      }
+    }, 100);
   }
 
   ngOnDestroy() {
@@ -54,7 +64,33 @@ export class HomePage implements OnInit, OnDestroy {
     if (this.map) {
       this.map.remove();
     }
+    // Remove resize listener
+    window.removeEventListener('resize', this.handleResize);
   }
+
+  private setupResizeListener() {
+    this.handleResize = () => {
+      if (this.map) {
+        setTimeout(() => {
+          this.map!.resize();
+        }, 100);
+      }
+    };
+    window.addEventListener('resize', this.handleResize);
+    
+    // Handle orientation changes on mobile
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => {
+        if (this.map) {
+          this.map.resize();
+        }
+      }, 300);
+    });
+  }
+
+  private handleResize = () => {
+    // This will be bound to the instance
+  };
 
   private async initializeApp() {
     try {

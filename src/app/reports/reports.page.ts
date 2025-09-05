@@ -40,7 +40,7 @@ export class ReportsPage implements OnInit {
   ) {
     this.reportForm = this.formBuilder.group({
       type: ['', Validators.required],
-      description: ['', [Validators.required, Validators.minLength(10)]],
+      description: ['', [Validators.required, Validators.minLength(5)]],
       severity: ['medium', Validators.required],
       media: [[]],
       anonymous: [false]
