@@ -188,16 +188,27 @@
       </div>
     </div>
 
+    <!-- Rate Limit Status -->
+    <div class="rate-limit-status" *ngIf="rateLimitStatus.remainingReports < 5">
+      <ion-chip [color]="rateLimitStatus.isBlocked ? 'danger' : 'warning'">
+        <ion-icon name="time-outline"></ion-icon>
+        <ion-label>
+          {{ rateLimitStatus.remainingReports }} reports remaining this hour
+          <span *ngIf="rateLimitStatus.timeUntilReset">(resets in {{ rateLimitStatus.timeUntilReset }})</span>
+        </ion-label>
+      </ion-chip>
+    </div>
+
     <div class="button-row">
       <ion-button expand="block" color="danger" fill="solid" class="call-btn" (click)="callEmergency()">
         <ion-icon name="call" slot="start"></ion-icon>
         Emergency Call (911)
       </ion-button>
       
-      <button type="submit" class="submit-btn">
+      <button type="submit" class="submit-btn" [disabled]="rateLimitStatus.isBlocked">
         <span>
           <ion-icon name="send-outline"></ion-icon>
-          Submit Report
+          {{ rateLimitStatus.isBlocked ? 'Rate Limit Exceeded' : 'Submit Report' }}
         </span>
       </button>
     </div>

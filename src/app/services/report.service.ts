@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { AuthService } from './auth.service';
 import { LocationService } from './location.service';
 import { NotificationService } from '../shared/services/notification.service';
+import { RateLimitingService } from './rate-limiting.service';
 import { Observable, from, of, throwError, BehaviorSubject } from 'rxjs';
 import { map, switchMap, catchError, tap } from 'rxjs/operators';
 import { Haptics } from '@capacitor/haptics';
@@ -72,7 +73,8 @@ export class ReportService {
   constructor(
     private authService: AuthService,
     private locationService: LocationService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private rateLimitingService: RateLimitingService
   ) {
     console.log('🔧 ReportService initialized with native Firebase SDK');
     
@@ -360,6 +362,34 @@ export class ReportService {
     try {
       console.log('🚀 Starting report submission process...');
       
+      // Check rate limiting first
+      const clientIP = this.rateLimitingService.getClientIPAddress();
+      console.log('🔒 Checking rate limit for IP:', clientIP);
+      
+      const rateLimitInfo = await this.rateLimitingService.checkRateLimit(clientIP).pipe(
+        map(info => info)
+      ).toPromise();
+      
+      if (rateLimitInfo?.isBlocked) {
+        const timeUntilReset = this.rateLimitingService.getTimeUntilResetString(clientIP);
+        const errorMessage = `Rate limit exceeded. You can submit maximum 5 reports per hour. Try again in ${timeUntilReset}.`;
+        
+        console.log('🚫 Rate limit exceeded:', rateLimitInfo);
+        
+        if (!data.isSilent) {
+          this.notificationService.error(
+            'Rate Limit Exceeded',
+            errorMessage,
+            'OK',
+            5000
+          );
+        }
+        
+        throw new Error(errorMessage);
+      }
+      
+      console.log('✅ Rate limit check passed. Remaining reports:', rateLimitInfo?.remainingReports);
+      
       // Check network connectivity
       this.isOnline = this.checkOnlineStatus();
       console.log('📡 Network status:', this.isOnline ? 'Online' : 'Offline');
@@ -447,6 +477,13 @@ export class ReportService {
       try {
         const docRef = await addDoc(collection(getFirestore(), this.collectionName), report);
         console.log('✅ Report submitted successfully! Document ID:', docRef.id);
+        
+        // Record the successful submission for rate limiting
+        await this.rateLimitingService.recordReportSubmission(clientIP).pipe(
+          map(result => result)
+        ).toPromise();
+        console.log('📊 Rate limit updated for IP:', clientIP);
+        
       } catch (firestoreError) {
         console.error('❌ Firestore save error:', firestoreError);
         throw new Error(`Failed to save report to database: ${firestoreError}`);
@@ -708,5 +745,22 @@ export class ReportService {
       5: '#6f42c1'  // Purple
     };
     return colors[level as keyof typeof colors] || '#6c757d';
+  }
+
+  /**
+   * Get current rate limit status for the client
+   */
+  async getRateLimitStatus(): Promise<{ remainingReports: number; timeUntilReset: string; isBlocked: boolean }> {
+    const clientIP = this.rateLimitingService.getClientIPAddress();
+    const rateLimitInfo = await this.rateLimitingService.checkRateLimit(clientIP).pipe(
+      map(info => info)
+    ).toPromise();
+    const timeUntilReset = this.rateLimitingService.getTimeUntilResetString(clientIP);
+    
+    return {
+      remainingReports: rateLimitInfo?.remainingReports || 5,
+      timeUntilReset,
+      isBlocked: rateLimitInfo?.isBlocked || false
+    };
   }
 } 

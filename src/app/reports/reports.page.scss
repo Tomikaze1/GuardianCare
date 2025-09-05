@@ -688,6 +688,35 @@
 }
 
 
+.rate-limit-status {
+  margin: 16px 0;
+  display: flex;
+  justify-content: center;
+  
+  ion-chip {
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    
+    ion-icon {
+      margin-right: 8px;
+      font-size: 1rem;
+    }
+    
+    ion-label {
+      font-size: 0.9rem;
+      line-height: 1.2;
+      
+      span {
+        font-size: 0.8rem;
+        opacity: 0.8;
+      }
+    }
+  }
+}
+
 .button-row {
   display: flex;
   flex-direction: column;

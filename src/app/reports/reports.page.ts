@@ -19,6 +19,11 @@ export class ReportsPage implements OnInit {
   locationAddress: string = '';
   isAnonymous = false;
   selectedIncidentType: string = '';
+  rateLimitStatus = {
+    remainingReports: 5,
+    timeUntilReset: '',
+    isBlocked: false
+  };
 
   incidentTypes = [
     { value: 'crime-theft', label: 'Crime / Theft', icon: 'shield-outline' },
@@ -50,6 +55,7 @@ export class ReportsPage implements OnInit {
   ngOnInit() {
     this.initializeLocation();
     this.checkCameraPermissions();
+    this.loadRateLimitStatus();
   }
 
   private async checkCameraPermissions() {
@@ -102,6 +108,15 @@ export class ReportsPage implements OnInit {
     } catch (error) {
       console.error('Error refreshing location:', error);
       this.notificationService.error('Error', 'Failed to refresh location. Please check your GPS settings.', 'OK', 3000);
+    }
+  }
+
+  async loadRateLimitStatus() {
+    try {
+      this.rateLimitStatus = await this.reportService.getRateLimitStatus();
+      console.log('Rate limit status loaded:', this.rateLimitStatus);
+    } catch (error) {
+      console.error('Error loading rate limit status:', error);
     }
   }
 
@@ -288,6 +303,8 @@ export class ReportsPage implements OnInit {
       await this.showAlert('Error', 'Failed to submit report. Please try again.');
     } finally {
       await loading.dismiss();
+      // Refresh rate limit status after submission attempt
+      await this.loadRateLimitStatus();
     }
   }
 
