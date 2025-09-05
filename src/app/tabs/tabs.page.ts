@@ -33,6 +33,42 @@ export class TabsPage implements OnInit {
   constructor() { }
 
   ngOnInit() {
+    // Clear any stuck hover states on mobile
+    this.clearStuckHoverStates();
+  }
+
+  private clearStuckHoverStates() {
+    // Force clear any stuck hover states by removing focus and hover classes
+    setTimeout(() => {
+      const tabButtons = document.querySelectorAll('ion-tab-button');
+      tabButtons.forEach(button => {
+        // Remove any stuck hover states
+        button.classList.remove('hover', 'active', 'pressed', 'ion-activatable', 'ion-focused');
+        
+        // Force reflow to clear any CSS transitions
+        button.style.transform = '';
+        button.style.boxShadow = '';
+        button.style.background = '';
+        
+        // Force remove any Ionic-specific classes
+        const element = button as HTMLElement;
+        element.removeAttribute('aria-pressed');
+        element.removeAttribute('aria-selected');
+        
+        // Reset after a brief moment
+        setTimeout(() => {
+          button.style.transform = '';
+          button.style.boxShadow = '';
+          button.style.background = '';
+        }, 100);
+      });
+      
+      // Also try to reset the tab bar itself
+      const tabBar = document.querySelector('ion-tab-bar');
+      if (tabBar) {
+        tabBar.classList.remove('ion-activatable');
+      }
+    }, 100);
   }
 
 }

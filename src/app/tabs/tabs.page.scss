@@ -132,6 +132,29 @@ ion-tab-bar {
       }
     }
 
+    // Fix for stuck hover states on mobile
+    &:not(.tab-selected):not(:hover) {
+      background: transparent;
+      transform: translateY(0) scale(1);
+      box-shadow: none;
+      
+      &::before {
+        opacity: 0;
+      }
+      
+      ion-icon {
+        transform: scale(1) translateY(0);
+        color: rgba(255, 255, 255, 0.7);
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+      }
+      
+      ion-label {
+        transform: scale(1) translateY(0);
+        color: rgba(255, 255, 255, 0.7);
+        font-weight: 600;
+      }
+    }
+
     &:active {
       transform: translateY(0) scale(0.98);
       transition: all 0.1s ease;
@@ -227,20 +250,30 @@ ion-router-outlet > * {
   }
 }
 
-// Enhanced hover effects for tab buttons
-ion-tab-button {
-  &.tab-button-animated {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    
-    &:hover {
-      transform: translateY(-2px) scale(1.05);
-      box-shadow: 0 8px 25px rgba(197, 165, 176, 0.4);
-    }
-    
-    &:active {
-      transform: translateY(0) scale(0.95);
-      transition: all 0.1s ease;
-    }
+// Force reset for stuck states - Emergency fix
+ion-tab-button[tab="settings"]:not(.tab-selected) {
+  background: transparent !important;
+  transform: translateY(0) scale(1) !important;
+  box-shadow: none !important;
+  
+  &::before {
+    opacity: 0 !important;
+  }
+  
+  ion-icon {
+    transform: scale(1) translateY(0) !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1)) !important;
+  }
+  
+  ion-label {
+    transform: scale(1) translateY(0) !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+    font-weight: 600 !important;
+  }
+  
+  &::after {
+    display: none !important;
   }
 }
 
