@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
 import { AlertController, LoadingController, ToastController } from '@ionic/angular';
 import { TranslateService } from '@ngx-translate/core';
 import { LocationService } from '../services/location.service';
@@ -27,6 +27,9 @@ export class HomePage implements OnInit, OnDestroy {
   gpsAccuracy: { accuracy: number; status: string } | null = null;
   isRefreshingLocation = false;
   private subscriptions: any[] = [];
+  @ViewChild('edgeHandle', { static: false }) edgeHandleRef?: ElementRef<HTMLDivElement>;
+  private dragData: { dragging: boolean; startY: number; offsetY: number } = { dragging: false, startY: 0, offsetY: 200 };
+  uiMode: 'sidebar' | 'buttons' = 'buttons';
 
   constructor(
     private locationService: LocationService,
@@ -44,20 +47,14 @@ export class HomePage implements OnInit, OnDestroy {
     this.initializeApp();
     this.loadUserLanguage();
     this.setupResizeListener();
+    this.loadUiModePreference();
   }
 
   ionViewWillEnter() {
     this.zoneEngine.initializeZones();
+    this.loadUiModePreference();
   }
 
-  ionViewDidEnter() {
-    // Resize map when returning to this tab
-    setTimeout(() => {
-      if (this.map) {
-        this.map.resize();
-      }
-    }, 100);
-  }
 
   ngOnDestroy() {
     this.subscriptions.forEach(sub => sub.unsubscribe());
@@ -113,6 +110,73 @@ export class HomePage implements OnInit, OnDestroy {
       
       this.initializeMap();
     }
+  }
+
+  ionViewDidEnter() {
+    // Resize map when returning to this tab
+    setTimeout(() => {
+      if (this.map) {
+        this.map.resize();
+      }
+    }, 100);
+
+    this.setupEdgeHandleDrag();
+  }
+
+  openActionsMenu() {
+    const menu = document.querySelector('ion-menu[menuId="home-actions"]') as HTMLIonMenuElement | null;
+    if (menu) {
+      menu.open();
+    }
+  }
+
+  private setupEdgeHandleDrag() {
+    const handle = this.edgeHandleRef?.nativeElement;
+    if (!handle) return;
+
+    const setY = (y: number) => {
+      const viewportHeight = window.innerHeight;
+      const min = 80;
+      const max = viewportHeight - 160;
+      const clamped = Math.max(min, Math.min(max, y));
+      handle.style.top = clamped + 'px';
+      this.dragData.offsetY = clamped;
+    };
+
+    setY(this.dragData.offsetY);
+
+    const onPointerDown = (e: PointerEvent) => {
+      this.dragData.dragging = true;
+      this.dragData.startY = e.clientY - this.dragData.offsetY;
+      handle.setPointerCapture(e.pointerId);
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (!this.dragData.dragging) return;
+      const y = e.clientY - this.dragData.startY;
+      setY(y);
+    };
+
+    const onPointerUp = (e: PointerEvent) => {
+      this.dragData.dragging = false;
+      handle.releasePointerCapture(e.pointerId);
+    };
+
+    handle.addEventListener('pointerdown', onPointerDown);
+    handle.addEventListener('pointermove', onPointerMove);
+    handle.addEventListener('pointerup', onPointerUp);
+
+    // Clean up when leaving
+    this.subscriptions.push({ unsubscribe: () => {
+      handle.removeEventListener('pointerdown', onPointerDown);
+      handle.removeEventListener('pointermove', onPointerMove);
+      handle.removeEventListener('pointerup', onPointerUp);
+    }});
+  }
+
+  private loadUiModePreference() {
+    const saved = localStorage.getItem('homeUIMode');
+    this.uiMode = (saved === 'buttons' || saved === 'sidebar') ? (saved as any) : 'buttons';
   }
 
   async checkGPSAccuracy() {

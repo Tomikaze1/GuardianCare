@@ -10,7 +10,7 @@
       <div class="logo-glow"></div>
     </div>
     <div class="app-title">{{ 'SETTINGS.TITLE' | translate }}</div>
-    <div class="app-subtitle">Manage your preferences</div>
+    <div class="app-subtitle">{{ 'SETTINGS.SUBTITLE' | translate }}</div>
     <div class="title-underline"></div>
   </div>
 
@@ -26,7 +26,7 @@
         <div class="setting-item" (click)="changePassword()">
           <div class="setting-left">
             <ion-icon name="key-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">Change Password</span>
+            <span class="setting-label">{{ 'SETTINGS.CHANGE_PASSWORD' | translate }}</span>
           </div>
           <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
         </div>
@@ -34,7 +34,7 @@
         <div class="setting-item" (click)="updateEmail()">
           <div class="setting-left">
             <ion-icon name="mail-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">Update Email</span>
+            <span class="setting-label">{{ 'SETTINGS.UPDATE_EMAIL' | translate }}</span>
           </div>
           <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
         </div>
@@ -42,8 +42,8 @@
         <div class="setting-item" (click)="linkedDevices()">
           <div class="setting-left">
             <ion-icon name="watch-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">Linked Devices</span>
-            <span class="setting-subtitle">Smartwatch pairing</span>
+            <span class="setting-label">{{ 'SETTINGS.LINKED_DEVICES' | translate }}</span>
+            <span class="setting-subtitle">{{ 'SETTINGS.LINKED_DEVICES_HINT' | translate }}</span>
           </div>
           <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
         </div>
@@ -51,7 +51,7 @@
         <div class="setting-item" (click)="twoFactorAuth()">
           <div class="setting-left">
             <ion-icon name="shield-checkmark-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">Two-Factor Authentication</span>
+            <span class="setting-label">{{ 'SETTINGS.TWO_FACTOR_AUTH' | translate }}</span>
           </div>
           <ion-toggle [(ngModel)]="twoFactorEnabled" (ionChange)="toggleTwoFactor()"></ion-toggle>
         </div>
@@ -69,7 +69,7 @@
         <div class="setting-item">
           <div class="setting-left">
             <ion-icon name="location-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">GPS Access</span>
+            <span class="setting-label">{{ 'SETTINGS.GPS_ACCESS' | translate }}</span>
           </div>
           <ion-toggle [(ngModel)]="gpsEnabled" (ionChange)="toggleGPS()"></ion-toggle>
         </div>
@@ -77,8 +77,8 @@
         <div class="setting-item">
           <div class="setting-left">
             <ion-icon name="time-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">Time-Based Alerts</span>
-            <span class="setting-subtitle">Smart alerts during high-risk hours</span>
+            <span class="setting-label">{{ 'SETTINGS.TIME_BASED_ALERTS' | translate }}</span>
+            <span class="setting-subtitle">{{ 'SETTINGS.TIME_BASED_ALERTS_HINT' | translate }}</span>
           </div>
           <ion-toggle [(ngModel)]="timeBasedAlerts" (ionChange)="toggleTimeBasedAlerts()"></ion-toggle>
         </div>
@@ -86,8 +86,8 @@
         <div class="setting-item">
           <div class="setting-left">
             <ion-icon name="warning-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">Danger Zone Alerts</span>
-            <span class="setting-subtitle">Notify when approaching danger zones</span>
+            <span class="setting-label">{{ 'SETTINGS.DANGER_ZONE_ALERTS' | translate }}</span>
+            <span class="setting-subtitle">{{ 'SETTINGS.DANGER_ZONE_ALERTS_HINT' | translate }}</span>
           </div>
           <ion-toggle [(ngModel)]="dangerZoneAlerts" (ionChange)="toggleDangerZoneAlerts()"></ion-toggle>
         </div>
@@ -95,8 +95,8 @@
         <div class="setting-item" (click)="doNotDisturbSettings()">
           <div class="setting-left">
             <ion-icon name="moon-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">Do Not Disturb Mode</span>
-            <span class="setting-subtitle">Time Schedule: 10PM - 6AM</span>
+            <span class="setting-label">{{ 'SETTINGS.DO_NOT_DISTURB' | translate }}</span>
+            <span class="setting-subtitle">{{ 'SETTINGS.DO_NOT_DISTURB_HINT' | translate }}</span>
           </div>
           <ion-toggle [(ngModel)]="doNotDisturbEnabled" (ionChange)="toggleDoNotDisturb()"></ion-toggle>
         </div>
@@ -114,7 +114,7 @@
         <div class="setting-item">
           <div class="setting-left">
             <ion-icon name="vibrate-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">Smart Vibration</span>
+            <span class="setting-label">{{ 'SETTINGS.SMART_VIBRATION' | translate }}</span>
           </div>
           <ion-toggle [(ngModel)]="smartVibration" (ionChange)="toggleSmartVibration()"></ion-toggle>
         </div>
@@ -122,7 +122,7 @@
         <div class="setting-item" (click)="alertSounds()">
           <div class="setting-left">
             <ion-icon name="volume-high-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">Alert Sounds</span>
+            <span class="setting-label">{{ 'SETTINGS.ALERT_SOUNDS' | translate }}</span>
           </div>
           <div class="setting-right">
             <span class="setting-value">{{selectedAlertSound}}</span>
@@ -144,8 +144,8 @@
         <div class="setting-item">
           <div class="setting-left">
             <ion-icon name="flash-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">Panic Mode Visuals</span>
-            <span class="setting-subtitle">Flash warning</span>
+            <span class="setting-label">{{ 'SETTINGS.PANIC_MODE_VISUALS' | translate }}</span>
+            <span class="setting-subtitle">{{ 'SETTINGS.PANIC_MODE_HINT' | translate }}</span>
           </div>
           <ion-toggle [(ngModel)]="panicModeVisuals" (ionChange)="togglePanicModeVisuals()"></ion-toggle>
         </div>
@@ -174,7 +174,7 @@
         <div class="setting-item" (click)="units()">
           <div class="setting-left">
             <ion-icon name="scale-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">Units</span>
+            <span class="setting-label">{{ 'SETTINGS.UNITS' | translate }}</span>
           </div>
           <div class="setting-right">
             <span class="setting-value">{{selectedUnit}}</span>
@@ -185,9 +185,24 @@
         <div class="setting-item">
           <div class="setting-left">
                                     <ion-icon name="language-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">Tourist Translation Mode</span>
+            <span class="setting-label">{{ 'SETTINGS.TOURIST_TRANSLATION' | translate }}</span>
           </div>
           <ion-toggle [(ngModel)]="touristTranslationMode" (ionChange)="toggleTouristTranslation()"></ion-toggle>
+        </div>
+        <div class="setting-item">
+          <div class="setting-left">
+            <ion-icon name="grid-outline" class="setting-icon"></ion-icon>
+            <span class="setting-label">{{ 'SETTINGS.HOME_UI_MODE' | translate }}</span>
+            <span class="setting-subtitle">{{ 'SETTINGS.HOME_UI_MODE_HINT' | translate }}</span>
+          </div>
+          <ion-segment value="{{homeUIMode}}" (ionChange)="onChangeHomeUiMode($event)" class="ui-mode-segment">
+            <ion-segment-button value="sidebar">
+              <ion-label>{{ 'SETTINGS.HOME_UI_SIDEBAR' | translate }}</ion-label>
+            </ion-segment-button>
+            <ion-segment-button value="buttons">
+              <ion-label>{{ 'SETTINGS.HOME_UI_BUTTONS' | translate }}</ion-label>
+            </ion-segment-button>
+          </ion-segment>
         </div>
       </div>
     </div>
@@ -203,7 +218,7 @@
         <div class="setting-item" (click)="termsOfService()">
           <div class="setting-left">
             <ion-icon name="document-text-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">Terms of Service</span>
+            <span class="setting-label">{{ 'SETTINGS.TERMS_OF_SERVICE' | translate }}</span>
           </div>
           <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
         </div>
@@ -211,7 +226,7 @@
         <div class="setting-item" (click)="privacyPolicy()">
           <div class="setting-left">
             <ion-icon name="shield-checkmark-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">Privacy Policy</span>
+            <span class="setting-label">{{ 'SETTINGS.PRIVACY_POLICY' | translate }}</span>
           </div>
           <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
         </div>
@@ -219,7 +234,7 @@
         <div class="setting-item" (click)="contactSupport()">
           <div class="setting-left">
             <ion-icon name="headset-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">Contact Support</span>
+            <span class="setting-label">{{ 'SETTINGS.CONTACT_SUPPORT' | translate }}</span>
           </div>
           <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
         </div>
@@ -229,7 +244,7 @@
     
     <div class="form-row">
       <div class="section-header">
-        <span>About Us</span>
+        <span>{{ 'SETTINGS.ABOUT_US' | translate }}</span>
         <div class="section-underline"></div>
       </div>
       
@@ -238,8 +253,8 @@
           <ion-icon name="information-circle-outline" class="about-icon"></ion-icon>
           <div class="about-text">
             <h3>GuardianCare</h3>
-            <p>Your Safety Companion - Keeping communities safe through intelligent location-based alerts and emergency response.</p>
-            <span class="version">Version 1.0.0</span>
+            <p>{{ 'SETTINGS.ABOUT_TEXT' | translate }}</p>
+            <span class="version">{{ 'SETTINGS.VERSION' | translate }}</span>
           </div>
         </div>
       </div>
@@ -251,7 +266,7 @@
     
     <div class="form-row">
       <div class="section-header">
-        <span>Account</span>
+        <span>{{ 'SETTINGS.ACCOUNT' | translate }}</span>
         <div class="section-underline"></div>
       </div>
       
@@ -259,13 +274,13 @@
         <button class="reset-btn" (click)="resetToDefaults()">
           <span>
             <ion-icon name="refresh-outline"></ion-icon>
-            Reset to Defaults
+            {{ 'SETTINGS.RESET_DEFAULTS' | translate }}
           </span>
         </button>
         <button class="logout-btn" (click)="logOut()">
           <span>
             <ion-icon name="log-out-outline"></ion-icon>
-            Logout
+            {{ 'SETTINGS.LOGOUT' | translate }}
           </span>
         </button>
       </div>

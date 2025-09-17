@@ -7,14 +7,14 @@
       </div>
       <div class="logo-glow"></div>
     </div>
-    <div class="app-title">Incident Report</div>
-    <div class="app-subtitle">Help keep your community safe</div>
+    <div class="app-title">{{ 'REPORTS.TITLE' | translate }}</div>
+    <div class="app-subtitle">{{ 'REPORTS.SUBTITLE' | translate }}</div>
     <div class="title-underline"></div>
   </div>
 
   <form [formGroup]="reportForm" (ngSubmit)="onSubmit()" class="report-form">
     <div class="section-header">
-      <span>Incident Details</span>
+      <span>{{ 'REPORTS.INCIDENT_DETAILS' | translate }}</span>
       <div class="section-underline"></div>
     </div>
 
@@ -23,46 +23,46 @@
         class="input-box incident-type-btn"
         [class.selected]="selectedIncidentType === 'crime-theft'"
         (click)="selectIncidentType('crime-theft')"
-        title="Crime / Theft">
+        title="{{ 'REPORTS.TYPE_CRIME' | translate }}">
         <ion-icon name="shield-outline"></ion-icon>
-        Crime / Theft
+        {{ 'REPORTS.TYPE_CRIME' | translate }}
       </button>
       <button type="button"
         class="input-box incident-type-btn"
         [class.selected]="selectedIncidentType === 'accident'"
         (click)="selectIncidentType('accident')"
-        title="Accident">
+        title="{{ 'REPORTS.TYPE_ACCIDENT' | translate }}">
         <ion-icon name="car-outline"></ion-icon>
-        Accident
+        {{ 'REPORTS.TYPE_ACCIDENT' | translate }}
       </button>
       <button type="button"
         class="input-box incident-type-btn"
         [class.selected]="selectedIncidentType === 'emergency'"
         (click)="selectIncidentType('emergency')"
-        title="Emergency">
+        title="{{ 'REPORTS.TYPE_EMERGENCY' | translate }}">
         <ion-icon name="warning-outline"></ion-icon>
-        Emergency
+        {{ 'REPORTS.TYPE_EMERGENCY' | translate }}
       </button>
       <button type="button"
         class="input-box incident-type-btn"
         [class.selected]="selectedIncidentType === 'suspicious-activity'"
         (click)="selectIncidentType('suspicious-activity')"
-        title="Suspicious Activity">
+        title="{{ 'REPORTS.TYPE_SUSPICIOUS' | translate }}">
         <ion-icon name="eye-outline"></ion-icon>
-        Suspicious Activity
+        {{ 'REPORTS.TYPE_SUSPICIOUS' | translate }}
       </button>
       <button type="button"
         class="input-box incident-type-btn"
         [class.selected]="selectedIncidentType === 'lost-item'"
         (click)="selectIncidentType('lost-item')"
-        title="Lost Item">
+        title="{{ 'REPORTS.TYPE_LOST' | translate }}">
         <ion-icon name="search-outline"></ion-icon>
-        Lost Item
+        {{ 'REPORTS.TYPE_LOST' | translate }}
       </button>
     </div>
 
     <div class="section-header">
-      <span>Description</span>
+      <span>{{ 'REPORTS.DESCRIPTION' | translate }}</span>
       <div class="section-underline"></div>
     </div>
 
@@ -73,25 +73,25 @@
           formControlName="description"
           rows="2"
           maxlength="1000"
-          placeholder="Describe what happened..."></textarea>
+          placeholder="{{ 'REPORTS.DESCRIPTION_PH' | translate }}"></textarea>
       </div>
     </div>
 
     <div class="section-header">
-      <span>Media Upload</span>
+      <span>{{ 'REPORTS.MEDIA_UPLOAD' | translate }}</span>
       <div class="section-underline"></div>
     </div>
 
     <div class="form-row">
       <div class="input-box media-box">
         <div class="media-buttons">
-          <button type="button" (click)="takePhoto()" title="Take Photo" class="media-btn camera-btn">
+          <button type="button" (click)="takePhoto()" title="{{ 'REPORTS.TAKE_PHOTO' | translate }}" class="media-btn camera-btn">
             <ion-icon name="camera-outline"></ion-icon>
-            <span>Take Photo</span>
+            <span>{{ 'REPORTS.TAKE_PHOTO' | translate }}</span>
           </button>
-          <button type="button" (click)="selectFromGallery()" title="Select from Gallery" class="media-btn gallery-btn">
+          <button type="button" (click)="selectFromGallery()" title="{{ 'REPORTS.GALLERY' | translate }}" class="media-btn gallery-btn">
             <ion-icon name="images-outline"></ion-icon>
-            <span>Gallery</span>
+            <span>{{ 'REPORTS.GALLERY' | translate }}</span>
           </button>
         </div>
         
@@ -100,17 +100,17 @@
         <div class="media-list" *ngIf="reportForm.get('media')?.value?.length > 0">
           <div class="media-chip" *ngFor="let media of reportForm.get('media')?.value; let i = index">
             <div class="media-preview" *ngIf="media.webPath || media.dataUrl">
-              <img [src]="media.webPath || media.dataUrl" alt="Media preview" class="preview-image">
+              <img [src]="media.webPath || media.dataUrl" alt="{{ 'REPORTS.MEDIA_PREVIEW' | translate }}" class="preview-image">
             </div>
             <span class="media-name">{{ media.name || 'Photo ' + (i + 1) }}</span>
-            <ion-icon name="close" class="remove" (click)="removeFile(i)" title="Remove"></ion-icon>
+            <ion-icon name="close" class="remove" (click)="removeFile(i)" title="{{ 'REPORTS.REMOVE' | translate }}"></ion-icon>
           </div>
         </div>
       </div>
     </div>
 
     <div class="section-header">
-      <span>Location</span>
+      <span>{{ 'REPORTS.LOCATION' | translate }}</span>
       <div class="section-underline"></div>
     </div>
 
@@ -118,8 +118,8 @@
       <div class="input-box location-box">
         <div class="location-header">
           <ion-icon name="location-outline" class="location-icon"></ion-icon>
-          <span class="location-title">Current Location</span>
-          <button type="button" class="refresh-location-btn" (click)="refreshLocation()" title="Refresh Location">
+          <span class="location-title">{{ 'REPORTS.CURRENT_LOCATION' | translate }}</span>
+          <button type="button" class="refresh-location-btn" (click)="refreshLocation()" title="{{ 'REPORTS.REFRESH_LOCATION' | translate }}">
             <ion-icon name="refresh-outline"></ion-icon>
           </button>
         </div>
@@ -131,14 +131,14 @@
               <div class="coordinate-item">
                 <ion-icon name="navigate-outline" class="coord-icon"></ion-icon>
                 <div class="coord-info">
-                  <span class="coord-label">Latitude</span>
+                  <span class="coord-label">{{ 'REPORTS.LATITUDE' | translate }}</span>
                   <span class="coord-value">{{ selectedLocation.lat | number:'1.8-8' }}</span>
                 </div>
               </div>
               <div class="coordinate-item">
                 <ion-icon name="navigate-outline" class="coord-icon"></ion-icon>
                 <div class="coord-info">
-                  <span class="coord-label">Longitude</span>
+                  <span class="coord-label">{{ 'REPORTS.LONGITUDE' | translate }}</span>
                   <span class="coord-value">{{ selectedLocation.lng | number:'1.8-8' }}</span>
                 </div>
               </div>
@@ -148,7 +148,7 @@
             <div class="address-display" *ngIf="locationAddress">
               <ion-icon name="location-outline" class="address-icon"></ion-icon>
               <div class="address-content">
-                <span class="address-label">Location Address</span>
+                <span class="address-label">{{ 'REPORTS.LOCATION_ADDRESS' | translate }}</span>
                 <span class="address-text">{{ locationAddress }}</span>
               </div>
             </div>
@@ -160,7 +160,7 @@
                 (click)="copyCoordinates()"
                 class="action-btn copy-btn">
                 <ion-icon name="copy-outline" slot="start"></ion-icon>
-                Copy Coordinates
+                {{ 'REPORTS.COPY_COORDS' | translate }}
               </ion-button>
               <ion-button
                 fill="clear"
@@ -168,7 +168,7 @@
                 (click)="openInMaps()"
                 class="action-btn map-btn">
                 <ion-icon name="map-outline" slot="start"></ion-icon>
-                Open in Maps
+                {{ 'REPORTS.OPEN_IN_MAPS' | translate }}
               </ion-button>
             </div>
           </div>
@@ -176,14 +176,14 @@
         
         <div class="location-status" *ngIf="!selectedLocation">
                           <ion-icon name="location-outline" class="status-icon"></ion-icon>
-          <span class="status-text">Location not available</span>
+          <span class="status-text">{{ 'REPORTS.LOCATION_UNAVAILABLE' | translate }}</span>
         </div>
       </div>
     </div>
 
     <div class="form-row anon-row">
       <div class="input-box anon-box">
-        <ion-label>Send as anonymous</ion-label>
+        <ion-label>{{ 'REPORTS.SEND_ANON' | translate }}</ion-label>
         <ion-toggle color="primary" formControlName="anonymous"></ion-toggle>
       </div>
     </div>
@@ -202,13 +202,13 @@
     <div class="button-row">
       <ion-button expand="block" color="danger" fill="solid" class="call-btn" (click)="callEmergency()">
         <ion-icon name="call" slot="start"></ion-icon>
-        Emergency Call (911)
+        {{ 'REPORTS.EMERGENCY_CALL' | translate }}
       </ion-button>
       
       <button type="submit" class="submit-btn" [disabled]="rateLimitStatus.isBlocked">
         <span>
           <ion-icon name="send-outline"></ion-icon>
-          {{ rateLimitStatus.isBlocked ? 'Rate Limit Exceeded' : 'Submit Report' }}
+          {{ rateLimitStatus.isBlocked ? ( 'REPORTS.RATE_LIMIT_EXCEEDED' | translate ) : ( 'REPORTS.SUBMIT_REPORT' | translate ) }}
         </span>
       </button>
     </div>

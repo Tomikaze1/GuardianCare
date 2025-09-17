@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { Platform } from '@ionic/angular';
 
@@ -11,7 +12,8 @@ import { Platform } from '@ionic/angular';
 export class AppComponent implements OnInit {
   constructor(
     private afAuth: AngularFireAuth,
-    private platform: Platform
+    private platform: Platform,
+    private translate: TranslateService
   ) {
     this.initializeApp();
   }
@@ -23,6 +25,9 @@ export class AppComponent implements OnInit {
   private initializeApp(): void {
     this.platform.ready().then(() => {
       console.log('Platform ready, initializing Firebase auth');
+      // Apply saved language globally at app start
+      const savedLanguage = localStorage.getItem('userLanguage') || 'en';
+      this.translate.use(savedLanguage);
       this.setupAuthStateMonitoring();
     });
   }

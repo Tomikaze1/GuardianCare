@@ -390,8 +390,8 @@
 
 .gps-status {
   position: absolute;
-  top: 20px;
-  left: 20px;
+  top: 14px;
+  left: 60px;
   z-index: 1000;
   pointer-events: none;
   
@@ -423,6 +423,120 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+
+.edge-handle {
+  position: absolute;
+  top: 200px;
+  right: 0;
+  width: 8px;
+  height: 64px;
+  border-radius: 8px 0 0 8px;
+  background: linear-gradient(180deg, #94a3b8, #64748b);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  z-index: 1100;
+  cursor: grab;
+  opacity: 0.85;
+}
+
+.edge-handle:active {
+  cursor: grabbing;
+}
+
+.home-actions-menu {
+  --width: 320px;
+  --background: rgba(10, 14, 26, 0.45);
+  --box-shadow: -8px 0 24px rgba(0,0,0,0.35);
+  border-left: 1px solid rgba(255,255,255,0.06);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  backdrop-filter: blur(14px) saturate(120%);
+  --ion-item-background: transparent; /* force ion-item bg */
+
+  .menu-toolbar {
+    --background: linear-gradient(135deg, var(--primary-purple), var(--primary-blue));
+    --color: #fff;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+
+  ion-content { --background: transparent; }
+  ion-content::part(background) { background: transparent !important; }
+  ion-content::part(scroll) { background: transparent !important; }
+  ion-list { --background: transparent; }
+  ion-list::part(container) { background: transparent !important; }
+
+  .menu-section {
+    padding: 10px 16px;
+    font-weight: 700;
+    color: #9aa7c7;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 12px;
+  }
+
+  .menu-list {
+    padding: 8px 10px 20px 10px;
+  }
+
+  .menu-item {
+    --background: transparent !important;
+    --color: #e5e7eb;
+    margin: 8px 6px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+    background: transparent !important;
+    position: relative;
+    overflow: visible;
+
+    /* Force Ion Item background to be transparent */
+    &::part(native) { background: transparent !important; }
+    &::part(container) { background: transparent !important; }
+    &::part(detail-icon) { background: transparent !important; }
+
+    /* Custom translucent surface */
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 2px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(124,58,237,0.14), rgba(59,130,246,0.14));
+      border: 1px solid rgba(255,255,255,0.12);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    ion-icon {
+      font-size: 20px;
+      color: #c7d2fe;
+      z-index: 1;
+    }
+
+    .menu-note {
+      font-size: 11px;
+      color: #a5b4fc;
+      opacity: 0.85;
+      margin-left: 8px;
+      z-index: 1;
+    }
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+      border-color: rgba(255,255,255,0.18);
+      &::before {
+        background: linear-gradient(135deg, rgba(124,58,237,0.20), rgba(59,130,246,0.20));
+      }
+    }
+  }
+
+  .menu-item.critical ion-icon { color: #ff6b6b; }
+  .menu-item.primary ion-icon { color: #60a5fa; }
+  .menu-item.accent ion-icon { color: #f59e0b; }
+  .menu-item.info ion-icon { color: #38bdf8; }
+  .menu-item.danger ion-icon { color: #ef4444; }
+  .menu-item.success ion-icon { color: #34d399; }
 }
 
 #test-incidents {
@@ -459,6 +573,17 @@
   
   &:active {
     transform: scale(0.95);
+  }
+
+  /* Force circular pill-like items */
+  .circle-menu .menu-item {
+    border-radius: 999px !important;
+  }
+  .circle-menu .menu-item::before {
+    border-radius: 999px !important;
+  }
+  .circle-menu .menu-item ion-icon {
+    margin-left: 6px;
   }
 }
 

@@ -34,6 +34,7 @@ export class SettingsPage implements OnInit {
   // Localization
   selectedUnit = 'Metric';
   touristTranslationMode = false;
+  homeUIMode: 'sidebar' | 'buttons' = 'sidebar';
   
   languages = [
     { code: 'en', name: 'English' },
@@ -109,6 +110,8 @@ export class SettingsPage implements OnInit {
     
     this.selectedAlertSound = localStorage.getItem('selectedAlertSound') || 'Default';
     this.selectedUnit = localStorage.getItem('selectedUnit') || 'Metric';
+    const savedUi = localStorage.getItem('homeUIMode');
+    this.homeUIMode = (savedUi === 'buttons' || savedUi === 'sidebar') ? (savedUi as any) : 'sidebar';
     
     // Load saved language
     const savedLanguage = localStorage.getItem('userLanguage') || 'en';
@@ -345,6 +348,15 @@ export class SettingsPage implements OnInit {
     localStorage.setItem('panicModeVisuals', this.panicModeVisuals.toString());
     const message = this.panicModeVisuals ? 'Panic mode visuals enabled' : 'Panic mode visuals disabled';
     this.notificationService.success('Success', message, 'OK', 2000);
+  }
+
+  onChangeHomeUiMode(event: CustomEvent) {
+    const value = event.detail?.value as 'sidebar' | 'buttons';
+    if (value === 'sidebar' || value === 'buttons') {
+      this.homeUIMode = value;
+      localStorage.setItem('homeUIMode', value);
+      this.notificationService.success('Success', `Home UI set to ${value === 'sidebar' ? 'Sidebar' : 'Floating Buttons'}`, 'OK', 2000);
+    }
   }
 
   // Localization Methods

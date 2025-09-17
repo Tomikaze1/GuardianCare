@@ -1,6 +1,70 @@
+<ion-menu *ngIf="uiMode === 'sidebar'" side="end" menuId="home-actions" contentId="home-content" class="home-actions-menu">
+  <ion-header>
+    <ion-toolbar class="menu-toolbar">
+      <ion-title>{{ 'HOME.ACTIONS_TITLE' | translate }}</ion-title>
+    </ion-toolbar>
+  </ion-header>
+  <ion-content>
+    <ion-list class="menu-list circle-menu">
+      <ion-item class="menu-item critical" button (click)="triggerPanicButton()">
+        <ion-icon name="alert-circle" slot="start"></ion-icon>
+        <ion-label>{{ 'HOME.ACTIONS.PANIC' | translate }}</ion-label>
+        <ion-note slot="end" class="menu-note">{{ 'HOME.ACTIONS.PANIC_NOTE' | translate }}</ion-note>
+      </ion-item>
+      <ion-item class="menu-item primary" button (click)="refreshLocation()" [disabled]="isRefreshingLocation">
+        <ion-icon name="refresh" slot="start"></ion-icon>
+        <ion-label>{{ 'HOME.ACTIONS.REFRESH' | translate }}</ion-label>
+        <ion-spinner *ngIf="isRefreshingLocation" name="lines" slot="end"></ion-spinner>
+        <ion-note *ngIf="!isRefreshingLocation" slot="end" class="menu-note">{{ 'HOME.ACTIONS.REFRESH_NOTE' | translate }}</ion-note>
+      </ion-item>
+      <ion-item class="menu-item accent" button (click)="toggleHeatmap()">
+        <ion-icon name="flame" slot="start"></ion-icon>
+        <ion-label>{{ 'HOME.ACTIONS.HEATMAP' | translate }}</ion-label>
+        <ion-badge slot="end" color="warning" *ngIf="isHeatmapVisible">On</ion-badge>
+        <ion-note slot="end" class="menu-note" *ngIf="!isHeatmapVisible">{{ 'HOME.ACTIONS.HEATMAP_NOTE' | translate }}</ion-note>
+      </ion-item>
 
+      <div class="menu-section">{{ 'HOME.ACTIONS.TESTING' | translate }}</div>
+      <ion-item class="menu-item info" button (click)="testIncidentAlerts()">
+        <ion-icon name="bug" slot="start"></ion-icon>
+        <ion-label>{{ 'HOME.ACTIONS.TEST_INCIDENTS' | translate }}</ion-label>
+        <ion-note slot="end" class="menu-note">{{ 'HOME.ACTIONS.SIMULATE' | translate }}</ion-note>
+      </ion-item>
+      <ion-item class="menu-item danger" button (click)="testRedZoneEntry()">
+        <ion-icon name="warning" slot="start"></ion-icon>
+        <ion-label>{{ 'HOME.ACTIONS.TEST_RED_ZONE' | translate }}</ion-label>
+        <ion-note slot="end" class="menu-note">{{ 'HOME.ACTIONS.SIMULATE' | translate }}</ion-note>
+      </ion-item>
+      <ion-item class="menu-item success" button (click)="testTimeBasedZoneChanges()">
+        <ion-icon name="time" slot="start"></ion-icon>
+        <ion-label>{{ 'HOME.ACTIONS.TEST_TIME_ZONES' | translate }}</ion-label>
+        <ion-note slot="end" class="menu-note">{{ 'HOME.ACTIONS.SIMULATE' | translate }}</ion-note>
+      </ion-item>
+    </ion-list>
+  </ion-content>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+</ion-menu>
 
-<ion-content [fullscreen]="true">
+<ion-content [fullscreen]="true" id="home-content">
   <div id="map"></div>
   
   <div class="heatmap-legend" *ngIf="isHeatmapVisible">
@@ -23,7 +87,7 @@
     </div>
   </div>
 
-  <div class="floating-ui">
+  <div class="floating-ui" *ngIf="uiMode === 'buttons'">
     <ion-button 
       id="panic-button" 
       (click)="triggerPanicButton()" 
@@ -72,6 +136,7 @@
     </ion-button>
   </div>
 
+
   <div class="gps-status" *ngIf="gpsAccuracy">
     <ion-chip [color]="getGPSStatusColor()">
       <ion-icon name="location"></ion-icon>
@@ -85,4 +150,6 @@
       <ion-label>You are in a danger zone!</ion-label>
     </ion-chip>
   </div>
+  
+  <div *ngIf="uiMode === 'sidebar'" #edgeHandle class="edge-handle" (click)="openActionsMenu()" aria-label="Open Sidebar"></div>
 </ion-content>
