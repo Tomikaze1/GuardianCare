@@ -1,0 +1,601 @@
+.profile-content {
+  --background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);
+  min-height: 100vh;
+  font-family: 'DM Sans', 'Plus Jakarta Sans', Arial, sans-serif;
+  padding: 0;
+  padding-bottom: 120px;
+}
+
+// Logo/Title Section
+.logo-container {
+  text-align: center;
+  margin-top: 20px;
+  margin-bottom: 4px;
+  
+  .logo-wrapper {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 0.4rem;
+    
+    .custom-logo {
+      position: relative;
+      display: inline-block;
+      font-size: 4.5rem;
+      animation: logoFloat 4s ease-in-out infinite;
+      z-index: 2;
+      
+      .shield-icon {
+        color: var(--primary-purple);
+        filter: drop-shadow(0 8px 20px rgba(124, 58, 237, 0.25));
+        position: relative;
+        z-index: 1;
+      }
+      
+      .person-icon {
+        position: absolute;
+        top: 42%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 2rem;
+        color: #ffffff;
+        z-index: 2;
+      }
+    }
+    
+    .logo-glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 120px;
+      height: 120px;
+      background: radial-gradient(circle, rgba(124, 58, 237, 0.15) 0%, transparent 70%);
+      border-radius: 50%;
+      animation: glowPulse 3s ease-in-out infinite;
+      z-index: 0;
+    }
+  }
+  
+  .app-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-purple) 50%, var(--accent-purple) 100%);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0 0 0.3rem 0;
+    text-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    letter-spacing: -1px;
+    animation: textShimmer 4s ease infinite;
+    filter: drop-shadow(0 2px 6px rgba(124, 58, 237, 0.15));
+  }
+  
+  .app-subtitle {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #61677c;
+    margin: 0 0 0.8rem 0;
+    animation: fadeInUp 1s ease-out 0.5s both;
+    letter-spacing: 0.5px;
+  }
+  
+  .title-underline {
+    width: 58px;
+    height: 2.5px;
+    background: linear-gradient(90deg, var(--primary-purple), var(--primary-indigo), var(--primary-purple));
+    margin: 0 auto;
+    border-radius: 3px;
+    box-shadow: 0 1px 8px rgba(124, 58, 237, 0.1);
+    animation: expandWidth 1.2s ease-out 0.8s both;
+  }
+}
+
+// Section Headers
+.section-header {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.07rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin-top: 20px;
+  margin-bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  
+  span {
+    position: relative;
+    z-index: 2;
+    letter-spacing: 0.01rem;
+  }
+  
+  .section-underline {
+    width: 30px;
+    height: 2.5px;
+    background: var(--primary-purple);
+    border-radius: 2px;
+    margin: 3px 0 6px 0;
+    box-shadow: 0 1px 5px rgba(124, 58, 237, 0.1);
+  }
+}
+
+.profile-form {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto 32px auto;
+  display: flex;
+  flex-direction: column;
+  background: none;
+  padding: 0 8px 28px 8px;
+  gap: 0;
+}
+
+.form-row {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+// Profile Picture Section
+.profile-picture-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+  
+  .profile-picture-wrapper {
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      transform: scale(1.05);
+      
+      .edit-overlay {
+        opacity: 1;
+      }
+    }
+    
+    .profile-picture {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 4px solid var(--primary-purple);
+      box-shadow: 0 8px 32px rgba(124, 58, 237, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      
+      &.has-image {
+        border: 4px solid var(--primary-purple);
+      }
+      
+      .profile-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+      }
+      
+      .default-avatar {
+        font-size: 4rem;
+        color: var(--primary-purple);
+      }
+    }
+    
+    .edit-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(124, 58, 237, 0.8);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: all 0.3s ease;
+      color: white;
+      
+      .edit-icon {
+        font-size: 1.5rem;
+        margin-bottom: 4px;
+      }
+      
+      .edit-text {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-align: center;
+        line-height: 1.2;
+      }
+    }
+  }
+}
+
+// Input Boxes
+.input-box {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 4px 18px rgba(124, 58, 237, 0.08);
+  border: 1.5px solid #e7eef7;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.85rem 1rem;
+  transition: box-shadow 0.16s, border-color 0.15s;
+  font-size: 1rem;
+  position: relative;
+
+  &:focus-within,
+  &.selected {
+    border: 1.5px solid var(--primary-purple);
+    box-shadow: 0 2px 16px rgba(124, 58, 237, 0.15);
+  }
+
+  ion-icon {
+    color: var(--primary-purple);
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    transition: color 0.14s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  &:focus-within ion-icon,
+  &.selected ion-icon {
+    color: var(--primary-purple);
+  }
+
+  ion-input {
+    --color: #0f172a;
+    --placeholder-color: #64748b;
+    font-size: 1rem;
+    font-family: 'DM Sans', sans-serif;
+    
+    &[readonly] {
+      --color: #64748b;
+    }
+  }
+}
+
+// Emergency Contacts Section
+.emergency-contacts-container {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.08);
+  border: 1px solid rgba(124, 58, 237, 0.1);
+  
+  .contacts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    
+    .contacts-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1a202c;
+    }
+    
+    .add-contact-btn {
+      --color: var(--primary-purple);
+      --border-radius: 12px;
+      --padding-start: 12px;
+      --padding-end: 12px;
+      --padding-top: 8px;
+      --padding-bottom: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      
+      ion-icon {
+        font-size: 1rem;
+        margin-right: 4px;
+      }
+    }
+  }
+  
+  .contacts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    
+    .contact-item {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.3s ease;
+      
+      &:hover {
+        border-color: var(--primary-purple);
+        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.15);
+        transform: translateY(-1px);
+      }
+      
+      .contact-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex: 1;
+        
+        .contact-avatar {
+          .contact-icon {
+            font-size: 2.5rem;
+            color: var(--primary-purple);
+          }
+        }
+        
+        .contact-details {
+          flex: 1;
+          
+          .contact-name {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 4px;
+          }
+          
+          .contact-phone {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            color: var(--primary-purple);
+            font-weight: 600;
+            margin-bottom: 2px;
+          }
+          
+          .contact-relationship {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: 500;
+            text-transform: capitalize;
+          }
+        }
+      }
+      
+      .contact-actions {
+        display: flex;
+        gap: 4px;
+        
+        .edit-btn {
+          --color: var(--primary-purple);
+          --padding-start: 8px;
+          --padding-end: 8px;
+          --padding-top: 8px;
+          --padding-bottom: 8px;
+          --border-radius: 8px;
+          
+          ion-icon {
+            font-size: 1.1rem;
+          }
+        }
+        
+        .delete-btn {
+          --color: #ef4444;
+          --padding-start: 8px;
+          --padding-end: 8px;
+          --padding-top: 8px;
+          --padding-bottom: 8px;
+          --border-radius: 8px;
+          
+          ion-icon {
+            font-size: 1.1rem;
+          }
+        }
+      }
+    }
+  }
+  
+  .no-contacts {
+    text-align: center;
+    padding: 40px 20px;
+    
+    .no-contacts-icon {
+      font-size: 3rem;
+      color: #cbd5e1;
+      margin-bottom: 16px;
+    }
+    
+    .no-contacts-text {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      color: #64748b;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    
+    .add-first-contact-btn {
+      --border-color: var(--primary-purple);
+      --color: var(--primary-purple);
+      --border-radius: 12px;
+      --padding-start: 20px;
+      --padding-end: 20px;
+      --padding-top: 12px;
+      --padding-bottom: 12px;
+      font-weight: 600;
+      
+      ion-icon {
+        margin-right: 8px;
+      }
+    }
+  }
+}
+
+// Button Row
+.button-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  
+  .edit-profile-btn {
+    font-size: 1.04rem;
+    font-weight: 700;
+    border-radius: 12px;
+    box-shadow: 0 2px 14px rgba(124, 58, 237, 0.2);
+    
+    ion-icon {
+      font-size: 1.13rem;
+      margin-right: 8px;
+    }
+  }
+  
+  .edit-actions {
+    display: flex;
+    gap: 12px;
+    
+    .cancel-btn {
+      flex: 1;
+      font-weight: 600;
+      border-radius: 12px;
+      --border-color: #64748b;
+      --color: #64748b;
+      
+      ion-icon {
+        margin-right: 8px;
+      }
+    }
+    
+    .save-btn {
+      flex: 2;
+      font-weight: 700;
+      border-radius: 12px;
+      box-shadow: 0 2px 14px rgba(124, 58, 237, 0.2);
+      
+      ion-icon {
+        margin-right: 8px;
+      }
+      
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+
+// Animations
+@keyframes textShimmer {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes logoFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes expandWidth {
+  from {
+    width: 0;
+  }
+  to {
+    width: 58px;
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .profile-picture-container {
+    .profile-picture-wrapper {
+      .profile-picture {
+        width: 100px;
+        height: 100px;
+        
+        .default-avatar {
+          font-size: 3rem;
+        }
+      }
+    }
+  }
+  
+  .emergency-contacts-container {
+    .contacts-list {
+      .contact-item {
+        .contact-info {
+          .contact-details {
+            .contact-name {
+              font-size: 0.95rem;
+            }
+            
+            .contact-phone {
+              font-size: 0.85rem;
+            }
+            
+            .contact-relationship {
+              font-size: 0.75rem;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .emergency-contacts-container {
+    .contacts-header {
+      flex-direction: column;
+      gap: 12px;
+      align-items: stretch;
+      
+      .add-contact-btn {
+        align-self: center;
+      }
+    }
+  }
+  
+  .button-row {
+    .edit-actions {
+      flex-direction: column;
+      
+      .cancel-btn,
+      .save-btn {
+        flex: 1;
+      }
+    }
+  }
+}

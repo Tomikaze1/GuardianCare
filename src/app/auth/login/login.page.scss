@@ -52,68 +52,6 @@
     }
   }
 
-  // Enhanced floating shapes
-  .floating-shapes {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 0;
-    
-    .shape {
-      position: absolute;
-      border-radius: 50%;
-      background: linear-gradient(45deg, rgba(59, 130, 246, 0.08), rgba(59, 130, 246, 0.03));
-      backdrop-filter: blur(40px);
-      
-      &.shape-1 {
-        width: 150px;
-        height: 150px;
-        top: 10%;
-        left: 8%;
-        animation: float 12s ease-in-out infinite;
-        background: linear-gradient(45deg, rgba(197, 165, 176, 0.15), rgba(197, 165, 176, 0.06));
-      }
-      
-      &.shape-2 {
-        width: 100px;
-        height: 100px;
-        top: 20%;
-        right: 12%;
-        animation: float 14s ease-in-out infinite reverse;
-        background: linear-gradient(45deg, rgba(155, 122, 133, 0.12), rgba(155, 122, 133, 0.05));
-      }
-      
-      &.shape-3 {
-        width: 180px;
-        height: 180px;
-        bottom: 15%;
-        left: 5%;
-        animation: float 16s ease-in-out infinite;
-        background: linear-gradient(45deg, rgba(139, 107, 118, 0.1), rgba(139, 107, 118, 0.04));
-      }
-      
-      &.shape-4 {
-        width: 80px;
-        height: 80px;
-        top: 55%;
-        right: 20%;
-        animation: float 10s ease-in-out infinite reverse;
-        background: linear-gradient(45deg, rgba(59, 130, 246, 0.08), rgba(59, 130, 246, 0.03));
-      }
-      
-      &.shape-5 {
-        width: 120px;
-        height: 120px;
-        bottom: 10%;
-        right: 8%;
-        animation: float 13s ease-in-out infinite;
-        background: linear-gradient(45deg, rgba(99, 102, 241, 0.06), rgba(99, 102, 241, 0.02));
-      }
-    }
-  }
 
   // Content wrapper
   .content-wrapper {
@@ -124,6 +62,34 @@
     animation: slideInFromBottom 1.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
+  // Section Headers
+  .section-header {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1a202c;
+    margin-top: 1.5rem;
+    margin-bottom: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    
+    span {
+      position: relative;
+      z-index: 2;
+      letter-spacing: 0.01rem;
+    }
+    
+    .section-underline {
+      width: 30px;
+      height: 2.5px;
+      background: linear-gradient(90deg, var(--primary-purple), var(--accent-purple));
+      border-radius: 2px;
+      margin-top: 0.3rem;
+      animation: expandWidth 1.2s ease-out 0.8s both;
+    }
+  }
+
   // Enhanced header section
   .header-section {
     text-align: center;
@@ -131,34 +97,25 @@
     
     .logo-container {
       animation: slideInFromTop 1.2s cubic-bezier(0.16, 1, 0.3, 1);
-            .logo-wrapper {
-        position: relative;
-        display: inline-block;
-        margin-bottom: 1.5rem;
-        
-        .custom-logo {
+        .logo-wrapper {
           position: relative;
           display: inline-block;
-          font-size: 4.5rem;
+          margin-bottom: 0.1rem;
+        
+        .official-logo {
+          width: 200px;
+          height: auto;
+          max-width: 100%;
+          position: relative;
+          display: inline-block;
           animation: logoFloat 4s ease-in-out infinite;
           z-index: 2;
+          filter: drop-shadow(0 8px 20px rgba(124, 58, 237, 0.25));
+          transition: transform 0.3s ease;
           
-          .shield-icon {
-            color: var(--primary-purple);
-            filter: drop-shadow(0 8px 20px rgba(124, 58, 237, 0.25));
-            position: relative;
-            z-index: 1;
+          &:hover {
+            transform: scale(1.05);
           }
-          
-                       .location-pin {
-               position: absolute;
-               top: 45%;
-               left: 50%;
-               transform: translate(-50%, -50%);
-               font-size: 2rem;
-               color: #ffffff;
-               z-index: 2;
-             }
         }
         
         .logo-glow {
@@ -183,9 +140,9 @@
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-        margin: 0 0 0.5rem 0;
+        margin: 0.05rem 0 0.1rem 0;
         text-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
-        letter-spacing: -2px;
+        letter-spacing: -0.5px;
         animation: textShimmer 4s ease infinite;
         filter: drop-shadow(0 2px 6px rgba(124, 58, 237, 0.15));
       }
@@ -465,11 +422,11 @@
       position: relative;
       overflow: hidden;
       border: none;
-      background: linear-gradient(135deg, var(--primary-purple) 0%, var(--accent-purple) 100%);
+      background: linear-gradient(135deg, #5b21b6 0%, #4c1d95 50%, #3730a3 100%);
       background-size: 200% 200%;
       animation: buttonGradientShift 6s ease infinite;
       box-shadow: 
-        0 8px 25px rgba(124, 58, 237, 0.3),
+        0 8px 25px rgba(91, 33, 182, 0.4),
         0 4px 12px rgba(0, 0, 0, 0.1);
       letter-spacing: 0.5px;
       
@@ -499,8 +456,9 @@
       &:hover {
         transform: translateY(-2px);
         box-shadow: 
-          0 12px 35px rgba(124, 58, 237, 0.4),
-          0 6px 18px rgba(0, 0, 0, 0.15);
+          0 12px 35px rgba(91, 33, 182, 0.5),
+          0 6px 18px rgba(0, 0, 0, 0.2);
+        background: linear-gradient(135deg, #4c1d95 0%, #3730a3 50%, #312e81 100%);
         
         .button-glow {
           opacity: 1;
@@ -519,126 +477,6 @@
     }
   }
   
-  // Enhanced social login
-  .social-login {
-    animation: fadeInUp 1s ease-out 1.6s both;
-    
-    .divider {
-      text-align: center;
-      margin: 2rem 0;
-      position: relative;
-      
-      &::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 0;
-        right: 0;
-        height: 1px;
-        background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
-      }
-      
-      span {
-        background: rgba(255, 255, 255, 0.95);
-        padding: 0 1.2rem;
-        color: #64748b;
-        font-family: 'DM Sans', sans-serif;
-        font-size: 0.85rem;
-        font-weight: 500;
-        position: relative;
-        z-index: 1;
-        letter-spacing: 0.2px;
-      }
-    }
-    
-    .social-buttons {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 2rem;
-      
-      .social-button-wrapper {
-        flex: 1;
-        
-        .social-btn {
-          width: 100%;
-          height: 52px;
-          border-radius: 16px;
-          font-family: 'DM Sans', sans-serif;
-          font-weight: 600;
-          text-transform: none;
-          position: relative;
-          overflow: hidden;
-          transition: all 0.3s ease;
-          border: 2px solid #e2e8f0;
-          letter-spacing: 0.2px;
-          background: #ffffff;
-          
-          .social-content {
-            position: relative;
-            z-index: 2;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            
-            .google-icon,
-            .facebook-icon {
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              width: 22px;
-              height: 22px;
-              
-              svg {
-                width: 22px;
-                height: 22px;
-                filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
-              }
-            }
-            
-            .social-text {
-              font-size: 0.9rem;
-              font-weight: 600;
-              color: #374151;
-            }
-          }
-          
-          .social-glow {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), transparent);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-                        border-radius: 16px;
-          }
-          
-          &:hover {
-            transform: translateY(-2px);
-            border-color: #cbd5e1;
-            background: #f8fafc;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-            
-            .social-glow {
-              opacity: 1;
-            }
-          }
-          
-          &.google-btn:hover {
-            border-color: #4285f4;
-            box-shadow: 0 6px 20px rgba(66, 133, 244, 0.2);
-          }
-          
-          &.facebook-btn:hover {
-            border-color: #1877f2;
-            box-shadow: 0 6px 20px rgba(24, 119, 242, 0.2);
-          }
-        }
-      }
-    }
-  }
   
   // Enhanced register section
   .register-section {
@@ -655,7 +493,7 @@
       line-height: 1.6;
       
               ion-button {
-          color: var(--primary-purple);
+          color: #5b21b6;
           font-family: 'DM Sans', sans-serif;
           font-weight: 700;
           text-transform: none;
@@ -665,7 +503,7 @@
           letter-spacing: 0.3px;
           
           &:hover {
-            color: var(--accent-purple);
+            color: #4c1d95;
             transform: scale(1.05);
           }
         
@@ -764,13 +602,9 @@
       margin-bottom: 2.5rem;
       
       .logo-container {
-                 .logo-wrapper .custom-logo {
-           font-size: 3.5rem;
-           
-           .location-pin {
-             font-size: 1.6rem;
-           }
-         }
+                  .logo-wrapper .official-logo {
+            width: 160px;
+          }
         
         .app-title {
           font-size: 2.2rem;
@@ -826,23 +660,7 @@
       border-radius: 16px;
     }
     
-    .social-buttons {
-      flex-direction: column;
-      gap: 0.8rem;
-      
-      .social-button-wrapper .social-btn {
-        height: 50px;
-        border-radius: 14px;
-      }
-    }
     
-    .floating-shapes .shape {
-      opacity: 0.4;
-      
-      &.shape-1, &.shape-3 {
-        display: none;
-      }
-    }
   }
 }
 
@@ -954,12 +772,6 @@
     }
   }
   
-  // Professional micro-interactions
-  .social-btn {
-    &:active {
-      transform: translateY(-1px) scale(0.98);
-    }
-  }
   
   .custom-checkbox {
     &:checked {
@@ -1030,19 +842,6 @@
       color: #94a3b8;
     }
     
-    .social-btn {
-      background: #1e293b;
-      border-color: #334155;
-      
-      .social-text {
-        color: #f1f5f9;
-      }
-      
-      &:hover {
-        background: #334155;
-        border-color: #475569;
-      }
-    }
     
     .remember-me span {
       color: #94a3b8;

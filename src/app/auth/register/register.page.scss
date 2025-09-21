@@ -1,985 +1,452 @@
-  // Import professional fonts perfect for capstone projects
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Inter:wght@300;400;500;600;700;800;900&family=Manrope:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap');
+.register-content {
+  --background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);
+  min-height: 100vh;
+  font-family: 'DM Sans', 'Plus Jakarta Sans', Arial, sans-serif;
+  padding: 0;
+  padding-bottom: 120px;
+}
 
-  .register-content {
-  // Enhanced gradient background
-  --background: linear-gradient(135deg, #000000 0%, #020617 50%, #0f172a 100%);
-  background-size: 400% 400%;
-  animation: gradientShift 20s ease infinite;
-    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    height: 100vh;
-    overflow: hidden;
-    scroll-behavior: smooth;
+// Logo/Title Section
+.logo-container {
+  text-align: center;
+  margin-top: 20px;
+  margin-bottom: 4px;
+  
+  .logo-wrapper {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 0.4rem;
     
-    // Hide any global tabs on auth pages
-    ion-tab-bar {
-      display: none !important;
-    }
-    
-    .register-container {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem 1rem;
+    .official-logo {
+      width: 200px;
+      height: auto;
+      max-width: 100%;
       position: relative;
-      overflow: hidden;
+      display: inline-block;
+      animation: logoFloat 4s ease-in-out infinite;
+      z-index: 2;
+      filter: drop-shadow(0 8px 20px rgba(124, 58, 237, 0.25));
+      transition: transform 0.3s ease;
       
-      &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: 
-          radial-gradient(circle at 20% 80%, rgba(124, 58, 237, 0.15) 0%, transparent 50%),
-          radial-gradient(circle at 80% 20%, rgba(76, 29, 149, 0.12) 0%, transparent 50%),
-          radial-gradient(circle at 40% 40%, rgba(99, 102, 241, 0.10) 0%, transparent 50%);
-        pointer-events: none;
-        animation: backgroundPulse 18s ease-in-out infinite;
-      }
-      
-      &::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(124,58,237,0.03)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
-        opacity: 0.5;
-        animation: gridMove 40s linear infinite;
+      &:hover {
+        transform: scale(1.05);
       }
     }
-
-    // Enhanced floating shapes
-    .floating-shapes {
+    
+    .logo-glow {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 120px;
+      height: 120px;
+      background: radial-gradient(circle, rgba(124, 58, 237, 0.15) 0%, transparent 70%);
+      border-radius: 50%;
+      animation: glowPulse 3s ease-in-out infinite;
       z-index: 0;
-      
-      .shape {
-        position: absolute;
-        border-radius: 50%;
-        background: linear-gradient(45deg, rgba(124, 58, 237, 0.08), rgba(124, 58, 237, 0.03));
-        backdrop-filter: blur(40px);
-        
-                 &.shape-1 {
-           width: 150px;
-           height: 150px;
-           top: 10%;
-           left: 8%;
-           animation: float 12s ease-in-out infinite;
-           background: linear-gradient(45deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.08));
-         }
-         
-         &.shape-2 {
-           width: 100px;
-           height: 100px;
-           top: 20%;
-           right: 12%;
-           animation: float 14s ease-in-out infinite reverse;
-           background: linear-gradient(45deg, rgba(255, 255, 255, 0.20), rgba(255, 255, 255, 0.06));
-         }
-         
-         &.shape-3 {
-           width: 180px;
-           height: 180px;
-           bottom: 15%;
-           left: 5%;
-           animation: float 16s ease-in-out infinite;
-           background: linear-gradient(45deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.05));
-         }
-         
-         &.shape-4 {
-           width: 80px;
-           height: 80px;
-           top: 55%;
-           right: 20%;
-           animation: float 10s ease-in-out infinite reverse;
-           background: linear-gradient(45deg, rgba(255, 255, 255, 0.20), rgba(255, 255, 255, 0.06));
-         }
-         
-         &.shape-5 {
-           width: 120px;
-           height: 120px;
-           bottom: 10%;
-           right: 8%;
-           animation: float 13s ease-in-out infinite;
-           background: linear-gradient(45deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.04));
-         }
-      }
     }
+  }
+  
+  .app-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-purple) 50%, var(--accent-purple) 100%);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0 0 0.3rem 0;
+    text-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    letter-spacing: -1px;
+    animation: textShimmer 4s ease infinite;
+    filter: drop-shadow(0 2px 6px rgba(124, 58, 237, 0.15));
+  }
+  
+  .app-subtitle {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #61677c;
+    margin: 0 0 0.8rem 0;
+    animation: fadeInUp 1s ease-out 0.5s both;
+    letter-spacing: 0.5px;
+  }
+  
+  .title-underline {
+    width: 58px;
+    height: 2.5px;
+    background: linear-gradient(90deg, var(--primary-purple), var(--primary-indigo), var(--primary-purple));
+    margin: 0 auto;
+    border-radius: 3px;
+    box-shadow: 0 1px 8px rgba(124, 58, 237, 0.1);
+    animation: expandWidth 1.2s ease-out 0.8s both;
+  }
+}
 
-    // Content wrapper
-    .content-wrapper {
-      width: 100%;
-      max-width: 480px;
-      z-index: 1;
-      position: relative;
-      animation: slideInFromBottom 1.4s cubic-bezier(0.16, 1, 0.3, 1);
-    }
+// Section Headers
+.section-header {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.07rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin-top: 20px;
+  margin-bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  
+  span {
+    position: relative;
+    z-index: 2;
+    letter-spacing: 0.01rem;
+  }
+  
+  .section-underline {
+    width: 30px;
+    height: 2.5px;
+    background: var(--primary-purple);
+    border-radius: 2px;
+    margin: 3px 0 6px 0;
+    box-shadow: 0 1px 5px rgba(124, 58, 237, 0.1);
+  }
+}
 
-    // Enhanced header section
-    .header-section {
-      text-align: center;
-      margin-bottom: 3rem;
-      
-      .logo-container {
-        animation: slideInFromTop 1.2s cubic-bezier(0.16, 1, 0.3, 1);
-        
-        .logo-wrapper {
-          position: relative;
-          display: inline-block;
-          margin-bottom: 1.5rem;
-          
-          .custom-logo {
-            position: relative;
-            display: inline-block;
-            font-size: 4rem;
-            animation: logoFloat 4s ease-in-out infinite;
-            z-index: 2;
-            
-            .shield-icon {
-              color: var(--primary-purple);
-              filter: drop-shadow(0 8px 20px rgba(124, 58, 237, 0.25));
-              position: relative;
-              z-index: 1;
-            }
-            
-                         .location-pin {
-               position: absolute;
-               top: 45%;
-               left: 50%;
-               transform: translate(-50%, -50%);
-               font-size: 1.8rem;
-               color: #ffffff;
-               z-index: 2;
-             }
-          }
-          
-          .logo-glow {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 120px;
-            height: 120px;
-            background: radial-gradient(circle, rgba(124, 58, 237, 0.2) 0%, transparent 70%);
-            border-radius: 50%;
-            animation: glowPulse 3s ease-in-out infinite;
-          }
-        }
-        
-        .app-title {
-          font-family: 'Plus Jakarta Sans', sans-serif;
-          font-size: 2.5rem;
-          font-weight: 800;
-          background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-purple) 50%, var(--accent-purple) 100%);
-          background-size: 200% 200%;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          margin: 0 0 0.5rem 0;
-          text-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
-          letter-spacing: -1.5px;
-          animation: textShimmer 4s ease infinite;
-          filter: drop-shadow(0 2px 6px rgba(124, 58, 237, 0.15));
-        }
-        
-                 .app-subtitle {
-           font-family: 'Inter', sans-serif;
-           font-size: 1.1rem;
-           font-weight: 500;
-           color: #ffffff;
-           margin: 0 0 1.5rem 0;
-           animation: fadeInUp 1s ease-out 0.5s both;
-           letter-spacing: 0.5px;
-         }
-        
-        .title-underline {
-          width: 90px;
-          height: 3px;
-          background: linear-gradient(90deg, var(--primary-blue), var(--primary-purple), var(--primary-blue));
-          margin: 0 auto;
-          border-radius: 2px;
-          animation: expandWidth 1.2s ease-out 1s both;
-          box-shadow: 0 2px 8px rgba(124, 58, 237, 0.25);
-        }
-      }
-    }
+.register-form {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto 32px auto;
+  display: flex;
+  flex-direction: column;
+  background: none;
+  padding: 0 8px 28px 8px;
+  gap: 0;
+}
 
-    // Form container
-    .form-container {
-      animation: fadeInUp 1s ease-out 0.8s both;
-    }
+.form-row {
+  width: 100%;
+  margin-bottom: 12px;
+}
 
-    // Form header
-    .form-header {
-      text-align: center;
-      margin-bottom: 2.5rem;
-      
-             .form-title {
-         font-family: 'Manrope', sans-serif;
-         font-size: 2rem;
-         font-weight: 700;
-         color: #ffffff;
-         margin: 0 0 0.5rem 0;
-         letter-spacing: -1px;
-         line-height: 1.2;
-       }
-       
-       .form-subtitle {
-         font-family: 'DM Sans', sans-serif;
-         color: #e2e8f0;
-         font-size: 1rem;
-         font-weight: 400;
-         margin: 0;
-         letter-spacing: 0.2px;
-         line-height: 1.4;
-       }
-    }
+// Input Boxes
+.input-box {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 4px 18px rgba(124, 58, 237, 0.08);
+  border: 1.5px solid #e7eef7;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.85rem 1rem;
+  transition: box-shadow 0.16s, border-color 0.15s;
+  font-size: 1rem;
+  position: relative;
 
-    // Form sections
-    .form-section {
-      margin-bottom: 2.5rem;
-      animation: fadeInUp 1s ease-out 1s both;
-      
-             h3 {
-         font-family: 'Manrope', sans-serif;
-         font-size: 1.2rem;
-         font-weight: 600;
-         color: #ffffff;
-         margin: 0 0 1.5rem 0;
-         padding-bottom: 0.5rem;
-         border-bottom: 2px solid #475569;
-         letter-spacing: -0.5px;
-         position: relative;
-        
-        &::after {
-          content: '';
-          position: absolute;
-          bottom: -2px;
-          left: 0;
-          width: 40px;
-          height: 2px;
-          background: linear-gradient(90deg, var(--primary-blue), var(--primary-purple));
-          border-radius: 1px;
-        }
-      }
-    }
+  &:focus-within,
+  &.selected {
+    border: 1.5px solid var(--primary-purple);
+    box-shadow: 0 2px 16px rgba(124, 58, 237, 0.15);
+  }
 
-    // Enhanced input styling
-    .input-group {
-      margin-bottom: 1.8rem;
-      
-      .input-wrapper {
-        position: relative;
-        
-        .input-box {
-          position: relative;
-          width: 100%;
-          height: 58px;
-          background: #ffffff;
-          border: 2px solid #e2e8f0;
-          border-radius: 18px;
-          display: flex;
-          align-items: center;
-          padding: 0 22px;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 
-            0 2px 8px rgba(0, 0, 0, 0.04),
-            inset 0 1px 0 rgba(255, 255, 255, 0.9);
-          overflow: hidden;
-          
-          &:hover {
-            background: #f8fafc;
-            border-color: #cbd5e1;
-            transform: translateY(-1px);
-            box-shadow: 
-              0 4px 12px rgba(0, 0, 0, 0.08),
-              inset 0 1px 0 rgba(255, 255, 255, 0.9);
-            
-            .input-glow {
-              opacity: 0.4;
-            }
-          }
-          
-          &:focus-within {
-            background: #ffffff;
-            border-color: var(--primary-purple);
-            transform: translateY(-2px);
-            box-shadow: 
-              0 0 0 4px rgba(124, 58, 237, 0.1),
-              0 8px 20px rgba(124, 58, 237, 0.15),
-              inset 0 1px 0 rgba(255, 255, 255, 0.9);
-            
-            .input-border {
-              transform: scaleX(1);
-            }
-            
-            .input-glow {
-              opacity: 0.8;
-            }
-            
-            .input-icon {
-              color: var(--primary-purple);
-              transform: scale(1.05);
-            }
-          }
-          
-          .input-border {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, var(--primary-blue), var(--primary-purple), var(--primary-blue));
-            transform: scaleX(0);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 0 0 18px 18px;
-          }
-          
-          .input-glow {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(124, 58, 237, 0.05), transparent);
-            border-radius: 18px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            pointer-events: none;
-          }
-          
-          .input-icon {
-            color: #64748b;
-            font-size: 1.25rem;
-            margin-right: 16px;
-            transition: all 0.3s ease;
-            flex-shrink: 0;
-          }
-          
-          .custom-input-field {
-            flex: 1;
-            background: transparent;
-            border: none;
-            outline: none;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 1rem;
-            font-weight: 500;
-            color: #1e293b;
-            letter-spacing: 0.2px;
-            
-            &::placeholder {
-              color: #94a3b8;
-              font-weight: 400;
-            }
-            
-            &:focus {
-              outline: none;
-            }
-          }
-          
-          .password-toggle {
-            background: transparent;
-            color: #64748b;
-            margin: 0;
-            padding: 8px;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-            flex-shrink: 0;
-            
-            &:hover {
-              color: var(--primary-purple);
-              background: rgba(124, 58, 237, 0.1);
-              transform: scale(1.05);
-            }
-          }
-        }
-      }
-      
-      .error-message {
-        color: #ef4444;
-        font-family: 'DM Sans', sans-serif;
-        font-size: 0.85rem;
-        font-weight: 500;
-        margin: 10px 0 0 22px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        animation: shakeError 0.5s ease-in-out;
-        
-        ion-icon {
-          font-size: 0.95rem;
-          flex-shrink: 0;
-                }
-        
-        span {
-          letter-spacing: 0.1px;
-        }
-      }
-    }
+  ion-icon {
+    color: var(--primary-purple);
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    transition: color 0.14s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
 
-    // Terms and conditions section
-    .terms-section {
-      margin-bottom: 2rem;
-      
-      .terms-checkbox {
-        display: flex;
-        align-items: flex-start;
-        gap: 12px;
-        margin-bottom: 1rem;
-        
-        .custom-checkbox {
-          --color: var(--primary-purple);
-          --color-checked: var(--primary-purple);
-          --checkmark-color: #ffffff;
-          --border-radius: 8px;
-          --border-width: 2px;
-          --border-color: #cbd5e1;
-          --border-color-checked: var(--primary-purple);
-          --background-checked: var(--primary-purple);
-          transform: scale(0.95);
-          margin-top: 2px;
-          flex-shrink: 0;
-        }
-        
-                 .terms-text {
-           font-family: 'DM Sans', sans-serif;
-           font-size: 0.9rem;
-           font-weight: 400;
-           color: #e2e8f0;
-           line-height: 1.5;
-           letter-spacing: 0.2px;
-          
-                     .terms-link {
-             color: #e879f9;
-             text-decoration: none;
-             font-weight: 600;
-             transition: all 0.3s ease;
-             
-             &:hover {
-               color: #f0abfc;
-               text-decoration: underline;
-             }
-           }
-        }
-      }
-    }
+  &:focus-within ion-icon,
+  &.selected ion-icon {
+    color: var(--primary-purple);
+  }
 
-    // Enhanced button styling
-    .button-wrapper {
-      margin-bottom: 2.5rem;
-      animation: fadeInUp 1s ease-out 1.4s both;
-      
-      .register-button {
-        width: 100%;
-        height: 58px;
-        border-radius: 18px;
-        font-family: 'Manrope', sans-serif;
-        font-size: 1.1rem;
-        font-weight: 700;
-        text-transform: none;
-        position: relative;
-        overflow: hidden;
-        border: none;
-        background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-purple) 100%);
-        background-size: 200% 200%;
-        animation: buttonGradientShift 6s ease infinite;
-        box-shadow: 
-          0 8px 25px rgba(124, 58, 237, 0.3),
-          0 4px 12px rgba(0, 0, 0, 0.1);
-        letter-spacing: 0.5px;
-        
-        .button-content {
-          position: relative;
-          z-index: 2;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 10px;
-          color: white;
-          text-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-        }
-        
-        .button-glow {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), transparent);
-          opacity: 0;
-          transition: opacity 0.3s ease;
-          border-radius: 18px;
-        }
-        
-        &:hover {
-          transform: translateY(-2px);
-          box-shadow: 
-            0 12px 35px rgba(124, 58, 237, 0.4),
-            0 6px 18px rgba(0, 0, 0, 0.15);
-          
-          .button-glow {
-            opacity: 1;
-          }
-        }
-        
-        &:active {
-          transform: translateY(-1px);
-        }
-        
-        &.button-disabled {
-          opacity: 0.6;
-          transform: none;
-          animation: none;
-          cursor: not-allowed;
-        }
-      }
-    }
-
-    // Login section
-    .login-section {
-      text-align: center;
-      animation: fadeInUp 1s ease-out 1.6s both;
-      
-             .login-text {
-         color: #e2e8f0;
-         margin: 0;
-         font-family: 'DM Sans', sans-serif;
-         font-size: 0.95rem;
-         font-weight: 500;
-         letter-spacing: 0.2px;
-         line-height: 1.6;
-        
-                 ion-button {
-           color: #e879f9;
-           font-family: 'DM Sans', sans-serif;
-           font-weight: 700;
-           text-transform: none;
-           margin: 0;
-           padding: 0;
-           transition: all 0.3s ease;
-           letter-spacing: 0.3px;
-           
-           &:hover {
-             color: #f0abfc;
-             transform: scale(1.05);
-           }
-          
-          ion-icon {
-            font-size: 1rem;
-            margin-left: 6px;
-          }
-          
-          span {
-            margin-right: 2px;
-          }
-        }
-      }
-    }
-
-    // Professional animations
-    @keyframes buttonGradientShift {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-    }
-
-    @keyframes gradientShift {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-    }
-
-    @keyframes backgroundPulse {
-      0%, 100% { opacity: 0.3; }
-      50% { opacity: 0.6; }
-    }
-
-    @keyframes gridMove {
-      0% { transform: translate(0, 0); }
-      100% { transform: translate(10px, 10px); }
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0px) rotate(0deg); }
-      33% { transform: translateY(-15px) rotate(120deg); }
-      66% { transform: translateY(8px) rotate(240deg); }
-    }
-
-    @keyframes logoFloat {
-      0%, 100% { transform: translateY(0px) scale(1); }
-      50% { transform: translateY(-8px) scale(1.02); }
-    }
-
-    @keyframes glowPulse {
-      0%, 100% { opacity: 0.2; transform: translate(-50%, -50%) scale(1); }
-      50% { opacity: 0.35; transform: translate(-50%, -50%) scale(1.05); }
-    }
-
-    @keyframes textShimmer {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-    }
-
-    @keyframes slideInFromTop {
-      0% { opacity: 0; transform: translateY(-30px); }
-      100% { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes slideInFromBottom {
-      0% { opacity: 0; transform: translateY(30px); }
-      100% { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes fadeInUp {
-      0% { opacity: 0; transform: translateY(15px); }
-      100% { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes expandWidth {
-      0% { width: 0; }
-      100% { width: 90px; }
-    }
-
-    @keyframes shakeError {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-3px); }
-      75% { transform: translateX(3px); }
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.7; }
-    }
-
-    @keyframes checkboxBounce {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-      100% { transform: scale(1); }
-    }
-
-    // Enhanced responsive design
-    @media (max-width: 768px) {
-      .register-container {
-        padding: 1.5rem 1rem;
-      }
-      
-      .content-wrapper {
-        max-width: 100%;
-      }
-      
-      .header-section {
-        margin-bottom: 2.5rem;
-        
-        .logo-container {
-          .logo-wrapper .custom-logo {
-            font-size: 3.5rem;
-            
-            .location-pin {
-              font-size: 1.6rem;
-            }
-          }
-          
-          .app-title {
-            font-size: 2.2rem;
-            letter-spacing: -1px;
-          }
-          
-          .app-subtitle {
-            font-size: 1rem;
-          }
-        }
-      }
-      
-      .form-header {
-        margin-bottom: 2rem;
-        
-        .form-title {
-          font-size: 1.8rem;
-        }
-        
-        .form-subtitle {
-          font-size: 0.9rem;
-        }
-      }
-      
-      .form-section {
-        margin-bottom: 2rem;
-        
-        h3 {
-          font-size: 1.1rem;
-        }
-      }
-      
-      .input-group .input-wrapper .input-box {
-        height: 54px;
-        padding: 0 18px;
-        border-radius: 16px;
-        
-        .input-icon {
-          font-size: 1.1rem;
-          margin-right: 14px;
-        }
-        
-        .custom-input-field {
-          font-size: 0.95rem;
-        }
-      }
-      
-      .button-wrapper .register-button {
-        height: 54px;
-        font-size: 1rem;
-        border-radius: 16px;
-      }
-      
-      .floating-shapes .shape {
-        opacity: 0.4;
-        
-        &.shape-1, &.shape-3 {
-          display: none;
-        }
-      }
-    }
-
-    @media (max-width: 480px) {
-      .register-container {
-        padding: 1rem 0.75rem;
-      }
-      
-      .header-section {
-        margin-bottom: 2rem;
-        
-        .logo-container {
-          .logo-wrapper .custom-logo {
-            font-size: 3rem;
-            
-            .location-pin {
-              font-size: 1.4rem;
-            }
-          }
-          
-          .app-title {
-            font-size: 2rem;
-          }
-          
-          .app-subtitle {
-            font-size: 0.9rem;
-          }
-        }
-      }
-      
-      .form-header {
-        margin-bottom: 1.5rem;
-        
-        .form-title {
-          font-size: 1.6rem;
-        }
-      }
-      
-      .form-section {
-        margin-bottom: 1.5rem;
-      }
-      
-      .input-group .input-wrapper .input-box {
-        height: 52px;
-        padding: 0 16px;
-        border-radius: 14px;
-        
-        .input-icon {
-          margin-right: 12px;
-        }
-      }
-      
-      .terms-checkbox {
-        flex-direction: column;
-        gap: 8px;
-        
-        .custom-checkbox {
-          margin-top: 0;
-        }
-      }
-    }
-
-    @media (max-width: 360px) {
-      .register-container {
-        padding: 0.75rem 0.5rem;
-      }
-      
-      .header-section {
-        margin-bottom: 1.5rem;
-        
-        .logo-container {
-          .app-title {
-            font-size: 1.8rem;
-          }
-        }
-      }
-      
-      .form-header {
-        margin-bottom: 1.25rem;
-        
-        .form-title {
-          font-size: 1.5rem;
-        }
-      }
-      
-      .input-group .input-wrapper .input-box {
-        height: 50px;
-        padding: 0 14px;
-        border-radius: 12px;
-      }
-      
-      .button-wrapper .register-button {
-        height: 50px;
-        border-radius: 12px;
-      }
-    }
-
-    // Additional enhancements for professional look
-    // Better touch targets
-    ion-button {
-      min-height: 44px;
-      touch-action: manipulation;
-    }
+  ion-input {
+    --color: #0f172a;
+    --placeholder-color: #64748b;
+    font-size: 1rem;
+    font-family: 'DM Sans', sans-serif;
     
-    // Improved accessibility
-    .input-box:focus-within {
-      outline: 2px solid var(--primary-purple);
-      outline-offset: 2px;
+    &[readonly] {
+      --color: #64748b;
     }
+  }
+
+  .password-toggle {
+    background: transparent;
+    color: #64748b;
+    margin: 0;
+    padding: 8px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
     
-    // Loading state improvements
-    .register-button {
-      &.loading {
-        cursor: not-allowed;
-        pointer-events: none;
-        
-        .button-content {
-          opacity: 0.8;
-        }
-      }
+    &:hover {
+      color: var(--primary-purple);
+      background: rgba(124, 58, 237, 0.1);
+      transform: scale(1.05);
     }
+  }
+}
+
+// Terms Section
+.terms-section {
+  margin: 20px 0;
+  
+  .terms-checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
     
-    // Enhanced error states
-    .input-group.error {
-      .input-box {
-        border-color: #ef4444;
-        background: #fef2f2;
-        
-        &:focus-within {
-          border-color: #ef4444;
-          box-shadow: 
-            0 0 0 3px rgba(239, 68, 68, 0.1),
-            0 8px 20px rgba(239, 68, 68, 0.15);
-        }
-      }
-    }
-    
-    // Success states
-    .input-group.success {
-      .input-box {
-        border-color: #10b981;
-        
-        &:focus-within {
-          border-color: #10b981;
-          box-shadow: 
-            0 0 0 3px rgba(16, 185, 129, 0.1),
-            0 8px 20px rgba(16, 185, 129, 0.15);
-        }
-      }
-    }
-    
-    // Enhanced visual feedback
-    .input-box {
-      &.typing {
-        .input-icon {
-          color: var(--primary-purple);
-          animation: pulse 2s infinite;
-        }
-      }
-    }
-    
-    // Professional micro-interactions
     .custom-checkbox {
-      &:checked {
-        animation: checkboxBounce 0.3s ease-out;
-      }
+      --color: var(--primary-purple);
+      --color-checked: var(--primary-purple);
+      --checkmark-color: #ffffff;
+      --border-radius: 8px;
+      --border-width: 2px;
+      --border-color: #cbd5e1;
+      --border-color-checked: var(--primary-purple);
+      --background-checked: var(--primary-purple);
+      transform: scale(0.95);
+      margin-top: 2px;
+      flex-shrink: 0;
     }
     
-    .terms-link {
-      &:active {
-        transform: scale(0.98);
-      }
-    }
-
-    // Dark mode support (optional)
-    @media (prefers-color-scheme: dark) {
-      --background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-purple) 100%);
+    .terms-text {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 400;
+      color: #61677c;
+      line-height: 1.5;
+      letter-spacing: 0.2px;
       
-      .register-container {
-        &::before {
-          background: 
-            radial-gradient(circle at 20% 80%, rgba(124, 58, 237, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 40% 40%, rgba(109, 40, 217, 0.08) 0%, transparent 50%);
-        }
-      }
-      
-      .form-header {
-        .form-title {
-          color: #f1f5f9;
-        }
-        
-        .form-subtitle {
-          color: #94a3b8;
-        }
-      }
-      
-      .form-section h3 {
-        color: #f1f5f9;
-        border-bottom-color: #4a3f4a;
-      }
-      
-      .input-box {
-        background: var(--bg-card);
-        border-color: #4a3f4a;
-        
-        .custom-input-field {
-          color: #f1f5f9;
-          
-          &::placeholder {
-            color: #64748b;
-          }
-        }
-        
-              .input-icon {
-          color: #94a3b8;
-        }
+      .terms-link {
+        color: var(--primary-purple);
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
         
         &:hover {
-          background: var(--bg-secondary);
-          border-color: #5a4f5a;
+          color: var(--accent-purple);
+          text-decoration: underline;
         }
-      }
-      
-      .login-text {
-        color: #94a3b8;
-      }
-      
-      .terms-text {
-        color: #94a3b8;
-      }
-      
-      .error-message {
-        color: #f87171;
       }
     }
   }
-          
+}
+
+// Button Styling
+.button-wrapper {
+  margin: 24px 0;
+  
+  .register-button {
+    width: 100%;
+    height: 58px;
+    border-radius: 18px;
+    font-family: 'Manrope', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-transform: none;
+    position: relative;
+    overflow: hidden;
+    border: none;
+    background: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-indigo) 100%);
+    box-shadow: 0 8px 25px rgba(124, 58, 237, 0.3);
+    letter-spacing: 0.5px;
+    
+    .button-content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: white;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+    
+    .button-glow {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), transparent);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      border-radius: 18px;
+    }
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 35px rgba(124, 58, 237, 0.4);
+      
+      .button-glow {
+        opacity: 1;
+      }
+    }
+    
+    &:active {
+      transform: translateY(-1px);
+    }
+    
+    &.button-disabled {
+      opacity: 0.6;
+      transform: none;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// Login Section
+.login-section {
+  text-align: center;
+  margin-top: 20px;
+  
+  .login-text {
+    color: #61677c;
+    margin: 0;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    line-height: 1.6;
+    
+    ion-button {
+      color: var(--primary-purple);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      text-transform: none;
+      margin: 0;
+      padding: 0;
+      transition: all 0.3s ease;
+      letter-spacing: 0.3px;
+      
+      &:hover {
+        color: var(--primary-indigo);
+        transform: scale(1.05);
+      }
+      
+      ion-icon {
+        font-size: 1rem;
+        margin-left: 6px;
+      }
+      
+      span {
+        margin-right: 2px;
+      }
+    }
+  }
+}
+
+// Animations
+@keyframes logoFloat {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-8px) scale(1.02); }
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.15; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.25; transform: translate(-50%, -50%) scale(1.05); }
+}
+
+@keyframes textShimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(15px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes expandWidth {
+  0% { width: 0; }
+  100% { width: 58px; }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .logo-container {
+    margin-top: 15px;
+    
+    .logo-wrapper .official-logo {
+      width: 160px;
+    }
+    
+    .app-title {
+      font-size: 1.8rem;
+    }
+    
+    .app-subtitle {
+      font-size: 0.9rem;
+    }
+  }
+  
+  .register-form {
+    max-width: 100%;
+    padding: 0 16px 20px 16px;
+  }
+  
+  .input-box {
+    padding: 0.75rem 0.9rem;
+    
+    ion-icon {
+      font-size: 1.1rem;
+    }
+  }
+  
+  .button-wrapper .register-button {
+    height: 54px;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo-container {
+    margin-top: 10px;
+    
+    .logo-wrapper .official-logo {
+      width: 140px;
+    }
+    
+    .app-title {
+      font-size: 1.6rem;
+    }
+    
+    .app-subtitle {
+      font-size: 0.85rem;
+    }
+  }
+  
+  .register-form {
+    padding: 0 12px 16px 12px;
+  }
+  
+  .input-box {
+    padding: 0.7rem 0.8rem;
+    border-radius: 12px;
+    
+    ion-icon {
+      font-size: 1rem;
+    }
+  }
+  
+  .button-wrapper .register-button {
+    height: 52px;
+    border-radius: 16px;
+    font-size: 0.95rem;
+  }
+  
+  .terms-section .terms-checkbox {
+    flex-direction: column;
+    gap: 8px;
+    
+    .custom-checkbox {
+      margin-top: 0;
+    }
+  }
+}

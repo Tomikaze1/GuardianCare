@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { AngularFireStorage } from '@angular/fire/compat/storage';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -32,7 +33,14 @@ export class FirebaseService {
         console.error('FirebaseService: Firestore instance is not available');
         throw new Error('Firestore instance not available');
       }
-      return this.firestore.collection(collectionName).valueChanges({ idField: 'id' });
+      // Use snapshotChanges() instead of valueChanges() to avoid injection context issues
+      return this.firestore.collection(collectionName).snapshotChanges().pipe(
+        map(actions => actions.map(a => {
+          const data = a.payload.doc.data();
+          const id = a.payload.doc.id;
+          return { id, ...(data as any) };
+        }))
+      );
     } catch (error) {
       console.error('FirebaseService: Error in getDocuments:', error);
       throw error;

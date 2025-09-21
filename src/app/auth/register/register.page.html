@@ -1,275 +1,180 @@
-<ion-content class="register-content">
-  <div class="register-container">
-    <div class="floating-shapes">
-      <div class="shape shape-1"></div>
-      <div class="shape shape-2"></div>
-      <div class="shape shape-3"></div>
-      <div class="shape shape-4"></div>
-      <div class="shape shape-5"></div>
+<ion-content class="register-content" fullscreen>
+  <div class="logo-container">
+    <div class="logo-wrapper">
+      <img src="assets/logo/GuardianCareLogo.png" alt="GuardianCare Logo" class="official-logo">
+      <div class="logo-glow"></div>
+    </div>
+    <div class="app-title">GuardianCare</div>
+    <div class="app-subtitle">Join our community</div>
+    <div class="title-underline"></div>
+  </div>
+  <form [formGroup]="registerForm" (ngSubmit)="onRegister()" class="register-form">
+    
+    <!-- Personal Information Section -->
+    <div class="section-header">
+      <span>Personal Information</span>
+      <div class="section-underline"></div>
+    </div>
+    <div class="form-row">
+      <div class="input-box">
+        <ion-icon name="person-outline"></ion-icon>
+        <ion-input 
+          type="text" 
+          formControlName="firstName" 
+          placeholder="First Name"
+          [class.ion-invalid]="registerForm.get('firstName')?.invalid && registerForm.get('firstName')?.touched">
+        </ion-input>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="input-box">
+        <ion-icon name="person-outline"></ion-icon>
+        <ion-input 
+          type="text" 
+          formControlName="lastName" 
+          placeholder="Last Name"
+          [class.ion-invalid]="registerForm.get('lastName')?.invalid && registerForm.get('lastName')?.touched">
+        </ion-input>
+      </div>
     </div>
     
-    <div class="content-wrapper">
-      <div class="header-section">
-        <div class="logo-container">
-          <div class="logo-wrapper">
-            <div class="custom-logo">
-              <ion-icon name="shield" class="shield-icon"></ion-icon>
-              <ion-icon name="location" class="location-pin"></ion-icon>
-            </div>
-            <div class="logo-glow"></div>
-          </div>
-          <h1 class="app-title">GuardianCare</h1>
-          <p class="app-subtitle">Join our community</p>
-          <div class="title-underline"></div>
-        </div>
-      </div>
-      
-      <div class="form-container">
-        <div class="form-header">
-          <h2 class="form-title">Create Account</h2>
-          <p class="form-subtitle">Start protecting your community today</p>
-        </div>
-        
-        <form [formGroup]="registerForm" (ngSubmit)="onRegister()" class="register-form">
-          <div class="form-section">
-            <h3>Personal Information</h3>
-            
-            <div class="input-group">
-              <div class="input-wrapper">
-                <div class="input-box">
-                  <ion-icon name="person-outline" class="input-icon"></ion-icon>
-                  <ion-input 
-                    type="text" 
-                    formControlName="firstName" 
-                    placeholder="First Name"
-                    class="custom-input-field"
-                    [class.ion-invalid]="registerForm.get('firstName')?.invalid && registerForm.get('firstName')?.touched">
-                  </ion-input>
-                  <div class="input-border"></div>
-                  <div class="input-glow"></div>
-                </div>
-              </div>
-              <div class="error-message" *ngIf="getErrorMessage('firstName')">
-                <ion-icon name="alert-circle-outline"></ion-icon>
-                <span>{{ getErrorMessage('firstName') }}</span>
-              </div>
-            </div>
-            
-            <div class="input-group">
-              <div class="input-wrapper">
-                <div class="input-box">
-                  <ion-icon name="person-outline" class="input-icon"></ion-icon>
-                  <ion-input 
-                    type="text" 
-                    formControlName="lastName" 
-                    placeholder="Last Name"
-                    class="custom-input-field"
-                    [class.ion-invalid]="registerForm.get('lastName')?.invalid && registerForm.get('lastName')?.touched">
-                  </ion-input>
-                  <div class="input-border"></div>
-                  <div class="input-glow"></div>
-                </div>
-              </div>
-              <div class="error-message" *ngIf="getErrorMessage('lastName')">
-                <ion-icon name="alert-circle-outline"></ion-icon>
-                <span>{{ getErrorMessage('lastName') }}</span>
-              </div>
-            </div>
-            
-            <div class="input-group">
-              <div class="input-wrapper">
-                <div class="input-box">
-                  <ion-icon name="mail-outline" class="input-icon"></ion-icon>
-                  <ion-input 
-                    type="email" 
-                    formControlName="email" 
-                    placeholder="Email Address"
-                    class="custom-input-field"
-                    [class.ion-invalid]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">
-                  </ion-input>
-                  <div class="input-border"></div>
-                  <div class="input-glow"></div>
-                </div>
-              </div>
-              <div class="error-message" *ngIf="getErrorMessage('email')">
-                <ion-icon name="alert-circle-outline"></ion-icon>
-                <span>{{ getErrorMessage('email') }}</span>
-              </div>
-            </div>
-            
-            <div class="input-group">
-              <div class="input-wrapper">
-                <div class="input-box">
-                  <ion-icon name="call-outline" class="input-icon"></ion-icon>
-                  <ion-input 
-                    type="tel" 
-                    formControlName="phone" 
-                    placeholder="Phone Number"
-                    class="custom-input-field"
-                    [class.ion-invalid]="registerForm.get('phone')?.invalid && registerForm.get('phone')?.touched">
-                  </ion-input>
-                  <div class="input-border"></div>
-                  <div class="input-glow"></div>
-                </div>
-              </div>
-              <div class="error-message" *ngIf="getErrorMessage('phone')">
-                <ion-icon name="alert-circle-outline"></ion-icon>
-                <span>{{ getErrorMessage('phone') }}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div class="form-section">
-            <h3>Security</h3>
-            
-            <div class="input-group">
-              <div class="input-wrapper">
-                <div class="input-box">
-                  <ion-icon name="lock-closed-outline" class="input-icon"></ion-icon>
-                  <ion-input 
-                    [type]="showPassword ? 'text' : 'password'" 
-                    formControlName="password" 
-                    placeholder="Create Password"
-                    class="custom-input-field"
-                    [class.ion-invalid]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
-                  </ion-input>
-                  <ion-button
-                    fill="clear"
-                    class="password-toggle"
-                    (click)="togglePasswordVisibility()"
-                    type="button">
-                    <ion-icon [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
-                  </ion-button>
-                  <div class="input-border"></div>
-                  <div class="input-glow"></div>
-                </div>
-              </div>
-              <div class="error-message" *ngIf="getErrorMessage('password')">
-                <ion-icon name="alert-circle-outline"></ion-icon>
-                <span>{{ getErrorMessage('password') }}</span>
-              </div>
-            </div>
-            
-            <div class="input-group">
-              <div class="input-wrapper">
-                <div class="input-box">
-                  <ion-icon name="lock-closed-outline" class="input-icon"></ion-icon>
-                  <ion-input 
-                    [type]="showConfirmPassword ? 'text' : 'password'" 
-                    formControlName="confirmPassword" 
-                    placeholder="Confirm Password"
-                    class="custom-input-field"
-                    [class.ion-invalid]="registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched">
-                  </ion-input>
-                  <ion-button
-                    fill="clear"
-                    class="password-toggle"
-                    (click)="toggleConfirmPasswordVisibility()"
-                    type="button">
-                    <ion-icon [name]="showConfirmPassword ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
-                  </ion-button>
-                  <div class="input-border"></div>
-                  <div class="input-glow"></div>
-                </div>
-              </div>
-              <div class="error-message" *ngIf="getErrorMessage('confirmPassword')">
-                <ion-icon name="alert-circle-outline"></ion-icon>
-                <span>{{ getErrorMessage('confirmPassword') }}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div class="form-section">
-            <h3>Emergency Contact</h3>
-            
-            <div class="input-group">
-              <div class="input-wrapper">
-                <div class="input-box">
-                  <ion-icon name="person-add-outline" class="input-icon"></ion-icon>
-                  <ion-input 
-                    type="text" 
-                    formControlName="emergencyContactName" 
-                    placeholder="Emergency Contact Name"
-                    class="custom-input-field"
-                    [class.ion-invalid]="registerForm.get('emergencyContactName')?.invalid && registerForm.get('emergencyContactName')?.touched">
-                  </ion-input>
-                  <div class="input-border"></div>
-                  <div class="input-glow"></div>
-                </div>
-              </div>
-              <div class="error-message" *ngIf="getErrorMessage('emergencyContactName')">
-                <ion-icon name="alert-circle-outline"></ion-icon>
-                <span>{{ getErrorMessage('emergencyContactName') }}</span>
-              </div>
-            </div>
-            
-            <div class="input-group">
-              <div class="input-wrapper">
-                <div class="input-box">
-                  <ion-icon name="call-outline" class="input-icon"></ion-icon>
-                  <ion-input 
-                    type="tel" 
-                    formControlName="emergencyContact" 
-                    placeholder="Emergency Contact Number"
-                    class="custom-input-field"
-                    [class.ion-invalid]="registerForm.get('emergencyContact')?.invalid && registerForm.get('emergencyContact')?.touched">
-                  </ion-input>
-                  <div class="input-border"></div>
-                  <div class="input-glow"></div>
-                </div>
-              </div>
-              <div class="error-message" *ngIf="getErrorMessage('emergencyContact')">
-                <ion-icon name="alert-circle-outline"></ion-icon>
-                <span>{{ getErrorMessage('emergencyContact') }}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div class="form-section">
-            <div class="terms-section">
-              <div class="terms-checkbox">
-                <ion-checkbox
-                  formControlName="acceptTerms"
-                  class="custom-checkbox"
-                  [class.ion-invalid]="registerForm.get('acceptTerms')?.invalid && registerForm.get('acceptTerms')?.touched">
-                </ion-checkbox>
-                <span class="terms-text">
-                  I agree to the <a href="#" class="terms-link">Terms of Service</a> and <a href="#" class="terms-link">Privacy Policy</a> *
-                </span>
-              </div>
-              <div class="error-message" *ngIf="registerForm.get('acceptTerms')?.invalid && registerForm.get('acceptTerms')?.touched">
-                <ion-icon name="alert-circle-outline"></ion-icon>
-                <span>You must accept the terms and conditions</span>
-              </div>
-            </div>
-          </div>
-          
-          <div class="button-wrapper">
-            <ion-button 
-              expand="block" 
-              type="submit" 
-              [disabled]="registerForm.invalid"
-              class="register-button"
-              [class.button-disabled]="registerForm.invalid">
-              <div class="button-content">
-                <span>Create Account</span>
-                <ion-icon name="arrow-forward-outline"></ion-icon>
-              </div>
-              <div class="button-glow"></div>
-            </ion-button>
-          </div>
-        </form>
-        
-        <div class="login-section">
-          <p class="login-text">
-            Already have an account? 
-            <ion-button fill="clear" size="small" (click)="goToLogin()">
-              <span>Sign In</span>
-              <ion-icon name="arrow-forward-outline" slot="end"></ion-icon>
-            </ion-button>
-          </p>
-        </div>
+    <div class="form-row">
+      <div class="input-box">
+        <ion-icon name="mail-outline"></ion-icon>
+        <ion-input 
+          type="email" 
+          formControlName="email" 
+          placeholder="Email Address"
+          [class.ion-invalid]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">
+        </ion-input>
       </div>
     </div>
+    
+    <div class="form-row">
+      <div class="input-box">
+        <ion-icon name="call-outline"></ion-icon>
+        <ion-input 
+          type="tel" 
+          formControlName="phone" 
+          placeholder="Phone Number"
+          [class.ion-invalid]="registerForm.get('phone')?.invalid && registerForm.get('phone')?.touched">
+        </ion-input>
+      </div>
+    </div>
+    
+    <!-- Security Section -->
+    <div class="section-header">
+      <span>Security</span>
+      <div class="section-underline"></div>
+    </div>
+    
+    <div class="form-row">
+      <div class="input-box">
+        <ion-icon name="lock-closed-outline"></ion-icon>
+        <ion-input 
+          [type]="showPassword ? 'text' : 'password'" 
+          formControlName="password" 
+          placeholder="Create Password"
+          [class.ion-invalid]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
+        </ion-input>
+        <ion-button
+          fill="clear"
+          class="password-toggle"
+          (click)="togglePasswordVisibility()"
+          type="button">
+          <ion-icon [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+        </ion-button>
+      </div>
+    </div>
+    
+    <div class="form-row">
+      <div class="input-box">
+        <ion-icon name="lock-closed-outline"></ion-icon>
+        <ion-input 
+          [type]="showConfirmPassword ? 'text' : 'password'" 
+          formControlName="confirmPassword" 
+          placeholder="Confirm Password"
+          [class.ion-invalid]="registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched">
+        </ion-input>
+        <ion-button
+          fill="clear"
+          class="password-toggle"
+          (click)="toggleConfirmPasswordVisibility()"
+          type="button">
+          <ion-icon [name]="showConfirmPassword ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+        </ion-button>
+      </div>
+    </div>
+    
+    <!-- Emergency Contact Section -->
+    <div class="section-header">
+      <span>Emergency Contact</span>
+      <div class="section-underline"></div>
+    </div>
+    
+    <div class="form-row">
+      <div class="input-box">
+        <ion-icon name="person-add-outline"></ion-icon>
+        <ion-input 
+          type="text" 
+          formControlName="emergencyContactName" 
+          placeholder="Emergency Contact Name"
+          [class.ion-invalid]="registerForm.get('emergencyContactName')?.invalid && registerForm.get('emergencyContactName')?.touched">
+        </ion-input>
+      </div>
+    </div>
+    
+    <div class="form-row">
+      <div class="input-box">
+        <ion-icon name="call-outline"></ion-icon>
+        <ion-input 
+          type="tel" 
+          formControlName="emergencyContact" 
+          placeholder="Emergency Contact Number"
+          [class.ion-invalid]="registerForm.get('emergencyContact')?.invalid && registerForm.get('emergencyContact')?.touched">
+        </ion-input>
+      </div>
+    </div>
+    
+    <!-- Terms Section -->
+    <div class="terms-section">
+      <div class="terms-checkbox">
+        <ion-checkbox
+          formControlName="acceptTerms"
+          class="custom-checkbox"
+          [class.ion-invalid]="registerForm.get('acceptTerms')?.invalid && registerForm.get('acceptTerms')?.touched">
+        </ion-checkbox>
+        <span class="terms-text">
+          I agree to the <a href="#" class="terms-link">Terms of Service</a> and <a href="#" class="terms-link">Privacy Policy</a> *
+        </span>
+      </div>
+    </div>
+    
+    <!-- Submit Button -->
+    <div class="button-wrapper">
+      <ion-button 
+        expand="block" 
+        type="submit" 
+        [disabled]="registerForm.invalid"
+        class="register-button"
+        [class.button-disabled]="registerForm.invalid">
+        <div class="button-content">
+          <span>Create Account</span>
+          <ion-icon name="arrow-forward-outline"></ion-icon>
+        </div>
+        <div class="button-glow"></div>
+      </ion-button>
+    </div>
+  </form>
+  
+  <!-- Login Link -->
+  <div class="login-section">
+    <p class="login-text">
+      Already have an account? 
+      <ion-button fill="clear" size="small" (click)="goToLogin()">
+        <span>Sign In</span>
+        <ion-icon name="arrow-forward-outline" slot="end"></ion-icon>
+      </ion-button>
+    </p>
   </div>
 </ion-content>

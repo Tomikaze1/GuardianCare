@@ -76,9 +76,11 @@ export class ZoneDangerEngineService {
   };
 
   private alertHistory: Set<string> = new Set();
+  private isInitialized = false;
 
   constructor(private firebaseService: FirebaseService) {
-    this.startPeriodicUpdates();
+    // Don't start periodic updates in constructor to avoid injection context issues
+    // They will be started when initializeZones() is called
   }
 
   private startPeriodicUpdates() {
@@ -87,11 +89,20 @@ export class ZoneDangerEngineService {
   }
 
   public initializeZones() {
-    // Add a small delay to ensure Angular's injection context is ready
+    if (this.isInitialized) {
+      console.log('ZoneDangerEngineService: Already initialized, skipping');
+      return;
+    }
+
+    // Load fallback zones immediately to avoid any injection context issues
+    this.loadFallbackZones();
+    
+    // Try to load from Firebase with a delay, but don't fail if injection context is not available
     setTimeout(() => {
       this.loadZonesWithRetry();
       this.startPeriodicUpdates();
-    }, 100);
+      this.isInitialized = true;
+    }, 1000);
   }
 
   private loadZonesWithRetry(retryCount = 0, maxRetries = 3) {
@@ -125,24 +136,48 @@ export class ZoneDangerEngineService {
         return;
       }
 
+      // Check if we're in a proper injection context before attempting Firebase operations
+      try {
+        // Test if we can access Firebase without injection context issues
+        const testDoc = firestoreInstance.collection('dangerZones').doc('test');
+        if (!testDoc) {
+          throw new Error('Cannot access Firestore document');
+        }
+      } catch (injectionError: any) {
+        if (injectionError.message && injectionError.message.includes('NG0203')) {
+          console.warn('ZoneDangerEngineService: Injection context not available, using fallback zones');
+          this.loadFallbackZones();
+          return;
+        }
+        throw injectionError;
+      }
+
       // Use a more robust approach to handle Firebase operations
       this.safeFirebaseOperation(() => {
-        this.firebaseService.getDocuments('dangerZones').subscribe({
-          next: (zones) => {
-            console.log('ZoneDangerEngineService: Zones loaded from Firestore:', zones);
-            if (zones && zones.length > 0) {
-              this.zones.next(zones as DangerZone[]);
-            } else {
-              console.log('ZoneDangerEngineService: No zones found in Firestore, using fallback zones');
+        try {
+          this.firebaseService.getDocuments('dangerZones').subscribe({
+            next: (zones) => {
+              console.log('ZoneDangerEngineService: Zones loaded from Firestore:', zones);
+              if (zones && zones.length > 0) {
+                this.zones.next(zones as DangerZone[]);
+              } else {
+                console.log('ZoneDangerEngineService: No zones found in Firestore, using fallback zones');
+                this.loadFallbackZones();
+              }
+              this.updateAllZones();
+            },
+            error: (error) => {
+              console.error('ZoneDangerEngineService: Error loading zones from Firestore:', error);
               this.loadFallbackZones();
             }
-            this.updateAllZones();
-          },
-          error: (error) => {
-            console.error('ZoneDangerEngineService: Error loading zones from Firestore:', error);
-            this.loadFallbackZones();
+          });
+        } catch (injectionError: any) {
+          console.error('ZoneDangerEngineService: Injection error in getDocuments call:', injectionError);
+          if (injectionError.message && injectionError.message.includes('NG0203')) {
+            console.warn('ZoneDangerEngineService: Angular injection context error in getDocuments, using fallback zones');
           }
-        });
+          this.loadFallbackZones();
+        }
       });
     } catch (error) {
       console.error('ZoneDangerEngineService: Error in loadZones:', error);
@@ -163,6 +198,7 @@ export class ZoneDangerEngineService {
   }
 
   private loadFallbackZones() {
+    console.log('ZoneDangerEngineService: Loading fallback zones...');
     const fallbackZones: DangerZone[] = [
       {
         id: 'guadalupe-danger-zone',
@@ -255,8 +291,9 @@ export class ZoneDangerEngineService {
       }
     ];
     
-    console.log('ZoneDangerEngineService: Loading fallback zones:', fallbackZones.length);
+    console.log('ZoneDangerEngineService: Loaded fallback zones:', fallbackZones.length);
     this.zones.next(fallbackZones);
+    console.log('ZoneDangerEngineService: Fallback zones loaded successfully');
   }
 
   public processIncident(location: { lat: number; lng: number }, severity: 'low' | 'medium' | 'high', type: 'theft' | 'assault' | 'vandalism' | 'harassment' | 'other' = 'other', description?: string) {

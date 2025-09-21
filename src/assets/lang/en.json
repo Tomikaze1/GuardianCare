@@ -49,6 +49,36 @@
     "JAPANESE": "Japanese",
     "FILIPINO": "Filipino"
   },
+  "AUTH": {
+    "LOGIN_TITLE": "Login",
+    "LOGIN_SUBTITLE": "Sign in to your account",
+    "REGISTER_TITLE": "Register",
+    "REGISTER_SUBTITLE": "Create your account",
+    "EMAIL": "Email Address",
+    "EMAIL_PLACEHOLDER": "Enter your email",
+    "PASSWORD": "Password",
+    "PASSWORD_PLACEHOLDER": "Enter your password",
+    "CONFIRM_PASSWORD": "Confirm Password",
+    "FIRST_NAME": "First Name",
+    "LAST_NAME": "Last Name",
+    "PHONE_NUMBER": "Phone Number",
+    "PERSONAL_INFO": "Personal Information",
+    "SECURITY": "Security",
+    "EMERGENCY_CONTACT": "Emergency Contact",
+    "EMERGENCY_CONTACT_NAME": "Emergency Contact Name",
+    "EMERGENCY_CONTACT_PHONE": "Emergency Contact Phone",
+    "REMEMBER_ME": "Remember me",
+    "FORGOT_PASSWORD": "Forgot Password?",
+    "SIGN_IN": "Sign In",
+    "SIGN_UP": "Sign Up",
+    "CREATE_ACCOUNT": "Create Account",
+    "NO_ACCOUNT": "Don't have an account?",
+    "HAVE_ACCOUNT": "Already have an account?",
+    "ACCEPT_TERMS": "I accept the",
+    "TERMS_OF_SERVICE": "Terms of Service",
+    "PRIVACY_POLICY": "Privacy Policy",
+    "AND": "and"
+  },
   "ALERTS": {
     "LANGUAGE_CHANGED": "Language changed successfully",
     "DANGER_ZONE": "Warning! Danger zone detected!",
@@ -58,6 +88,7 @@
   "TABS": {
     "HOME": "Home",
     "REPORTS": "Reports",
+    "PROFILE": "Profile",
     "HEATMAP": "Heatmap",
     "SETTINGS": "Settings"
   },
@@ -107,5 +138,24 @@
     "EMERGENCY_CALL": "Emergency Call (911)",
     "RATE_LIMIT_EXCEEDED": "Rate Limit Exceeded",
     "SUBMIT_REPORT": "Submit Report"
+  },
+  "PROFILE": {
+    "TITLE": "Profile",
+    "SUBTITLE": "Manage your personal information",
+    "PROFILE_PICTURE": "Profile Picture",
+    "CHANGE_PHOTO": "Change Photo",
+    "PERSONAL_INFO": "Personal Information",
+    "FULL_NAME": "Full Name",
+    "PHONE_NUMBER": "Phone Number",
+    "EMAIL": "Email Address",
+    "EMERGENCY_CONTACTS": "Emergency Contacts",
+    "MANAGE_CONTACTS": "Manage Emergency Contacts",
+    "ADD_CONTACT": "Add Contact",
+    "ADD_FIRST_CONTACT": "Add Your First Contact",
+    "NO_EMERGENCY_CONTACTS": "No emergency contacts added yet",
+    "EDIT_PROFILE": "Edit Profile",
+    "REFRESH_PROFILE": "Refresh Profile",
+    "CANCEL": "Cancel",
+    "SAVE_CHANGES": "Save Changes"
   }
 }

@@ -111,8 +111,26 @@ export class RegisterPage implements OnInit {
     this.showPassword = !this.showPassword;
   }
 
+  togglePassword() {
+    this.showPassword = !this.showPassword;
+  }
+
   toggleConfirmPasswordVisibility() {
     this.showConfirmPassword = !this.showConfirmPassword;
+  }
+
+  toggleConfirmPassword() {
+    this.showConfirmPassword = !this.showConfirmPassword;
+  }
+
+  viewTerms() {
+    // TODO: Implement terms of service view
+    console.log('View terms of service');
+  }
+
+  viewPrivacy() {
+    // TODO: Implement privacy policy view
+    console.log('View privacy policy');
   }
 
   async onRegister() {

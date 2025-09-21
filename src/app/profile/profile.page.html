@@ -1,0 +1,195 @@
+<ion-content class="profile-content" fullscreen>
+  <div class="logo-container">
+    <div class="logo-wrapper">
+      <div class="custom-logo">
+        <ion-icon name="shield" class="shield-icon"></ion-icon>
+        <ion-icon name="person" class="person-icon"></ion-icon>
+      </div>
+      <div class="logo-glow"></div>
+    </div>
+    <div class="app-title">{{ 'PROFILE.TITLE' | translate }}</div>
+    <div class="app-subtitle">{{ 'PROFILE.SUBTITLE' | translate }}</div>
+    <div class="title-underline"></div>
+  </div>
+
+  <div class="profile-form">
+    <form [formGroup]="profileForm" (ngSubmit)="updateProfile()">
+      
+      <!-- Profile Picture Section -->
+      <div class="section-header">
+        <span>{{ 'PROFILE.PROFILE_PICTURE' | translate }}</span>
+        <div class="section-underline"></div>
+      </div>
+
+      <div class="form-row">
+        <div class="profile-picture-container">
+          <div class="profile-picture-wrapper" (click)="selectProfileImage()">
+            <div class="profile-picture" [class.has-image]="profileImage">
+              <img *ngIf="profileImage" [src]="profileImage" alt="Profile Picture" class="profile-image">
+              <ion-icon *ngIf="!profileImage" name="person-circle" class="default-avatar"></ion-icon>
+            </div>
+            <div class="edit-overlay">
+              <ion-icon name="camera" class="edit-icon"></ion-icon>
+              <span class="edit-text">{{ 'PROFILE.CHANGE_PHOTO' | translate }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Personal Information Section -->
+      <div class="section-header">
+        <span>{{ 'PROFILE.PERSONAL_INFO' | translate }}</span>
+        <div class="section-underline"></div>
+      </div>
+
+      <div class="form-row">
+        <div class="input-box">
+          <ion-icon name="person-outline"></ion-icon>
+          <ion-input
+            formControlName="displayName"
+            placeholder="{{ 'PROFILE.FULL_NAME' | translate }}"
+            [readonly]="!isEditing">
+          </ion-input>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="input-box">
+          <ion-icon name="call-outline"></ion-icon>
+          <ion-input
+            formControlName="phone"
+            placeholder="{{ 'PROFILE.PHONE_NUMBER' | translate }}"
+            type="tel"
+            [readonly]="!isEditing">
+          </ion-input>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="input-box">
+          <ion-icon name="mail-outline"></ion-icon>
+          <ion-input
+            formControlName="email"
+            placeholder="{{ 'PROFILE.EMAIL' | translate }}"
+            type="email"
+            readonly>
+          </ion-input>
+        </div>
+      </div>
+
+      <!-- Emergency Contacts Section -->
+      <div class="section-header">
+        <span>{{ 'PROFILE.EMERGENCY_CONTACTS' | translate }}</span>
+        <div class="section-underline"></div>
+      </div>
+
+      <div class="form-row">
+        <div class="emergency-contacts-container">
+          <div class="contacts-header">
+            <span class="contacts-title">{{ 'PROFILE.MANAGE_CONTACTS' | translate }}</span>
+            <ion-button 
+              fill="clear" 
+              size="small" 
+              (click)="addEmergencyContact()"
+              class="add-contact-btn">
+              <ion-icon name="add" slot="start"></ion-icon>
+              {{ 'PROFILE.ADD_CONTACT' | translate }}
+            </ion-button>
+          </div>
+
+          <div class="contacts-list" *ngIf="emergencyContacts.length > 0">
+            <div class="contact-item" *ngFor="let contact of emergencyContacts">
+              <div class="contact-info">
+                <div class="contact-avatar">
+                  <ion-icon name="person-circle" class="contact-icon"></ion-icon>
+                </div>
+                <div class="contact-details">
+                  <div class="contact-name">{{ contact.name }}</div>
+                  <div class="contact-phone">{{ contact.phone }}</div>
+                  <div class="contact-relationship">{{ contact.relationship }}</div>
+                </div>
+              </div>
+              <div class="contact-actions">
+                <ion-button 
+                  fill="clear" 
+                  size="small" 
+                  (click)="editEmergencyContact(contact)"
+                  class="edit-btn">
+                  <ion-icon name="create-outline"></ion-icon>
+                </ion-button>
+                <ion-button 
+                  fill="clear" 
+                  size="small" 
+                  (click)="deleteEmergencyContact(contact)"
+                  class="delete-btn">
+                  <ion-icon name="trash-outline"></ion-icon>
+                </ion-button>
+              </div>
+            </div>
+          </div>
+
+          <div class="no-contacts" *ngIf="emergencyContacts.length === 0">
+            <ion-icon name="people-outline" class="no-contacts-icon"></ion-icon>
+            <p class="no-contacts-text">{{ 'PROFILE.NO_EMERGENCY_CONTACTS' | translate }}</p>
+            <ion-button 
+              fill="outline" 
+              size="small" 
+              (click)="addEmergencyContact()"
+              class="add-first-contact-btn">
+              <ion-icon name="add" slot="start"></ion-icon>
+              {{ 'PROFILE.ADD_FIRST_CONTACT' | translate }}
+            </ion-button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="button-row">
+        <ion-button 
+          *ngIf="!isEditing"
+          expand="block" 
+          fill="outline" 
+          color="medium"
+          (click)="refreshProfile()"
+          class="refresh-profile-btn">
+          <ion-icon name="refresh-outline" slot="start"></ion-icon>
+          {{ 'PROFILE.REFRESH_PROFILE' | translate }}
+        </ion-button>
+        
+        <ion-button 
+          *ngIf="!isEditing"
+          expand="block" 
+          fill="solid" 
+          color="primary"
+          (click)="toggleEdit()"
+          class="edit-profile-btn">
+          <ion-icon name="create-outline" slot="start"></ion-icon>
+          {{ 'PROFILE.EDIT_PROFILE' | translate }}
+        </ion-button>
+
+        <div *ngIf="isEditing" class="edit-actions">
+          <ion-button 
+            expand="block" 
+            fill="outline" 
+            color="medium"
+            (click)="toggleEdit()"
+            class="cancel-btn">
+            <ion-icon name="close-outline" slot="start"></ion-icon>
+            {{ 'PROFILE.CANCEL' | translate }}
+          </ion-button>
+          
+          <ion-button 
+            expand="block" 
+            fill="solid" 
+            color="primary"
+            type="submit"
+            [disabled]="!profileForm.valid"
+            class="save-btn">
+            <ion-icon name="checkmark-outline" slot="start"></ion-icon>
+            {{ 'PROFILE.SAVE_CHANGES' | translate }}
+          </ion-button>
+        </div>
+      </div>
+    </form>
+  </div>
+</ion-content>
