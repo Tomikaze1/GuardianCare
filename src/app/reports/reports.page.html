@@ -155,18 +155,18 @@
             <ion-button
               fill="clear"
               size="small"
-              (click)="copyCoordinates()"
-              class="action-btn copy-btn">
-              <ion-icon name="copy-outline" slot="start"></ion-icon>
-              {{ 'REPORTS.COPY_COORDS' | translate }}
+              (click)="toggleLocationEditMode()"
+              class="action-btn edit-btn">
+              <ion-icon name="create-outline" slot="start"></ion-icon>
+              {{ isLocationEditMode ? 'Done Editing' : 'Edit Location' }}
             </ion-button>
             <ion-button
               fill="clear"
               size="small"
-              (click)="openInMaps()"
-              class="action-btn map-btn">
-              <ion-icon name="map-outline" slot="start"></ion-icon>
-              {{ 'REPORTS.OPEN_IN_MAPS' | translate }}
+              (click)="resetToCurrentLocation()"
+              class="action-btn current-btn">
+              <ion-icon name="locate-outline" slot="start"></ion-icon>
+              Use Current Location
             </ion-button>
           </div>
         </div>

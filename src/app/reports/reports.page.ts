@@ -24,6 +24,9 @@ export class ReportsPage implements OnInit, OnDestroy {
   map: mapboxgl.Map | null = null;
   lastKnownLocation: { lat: number; lng: number } | null = null;
   gpsAccuracy: { accuracy: number; status: string } | null = null;
+  isLocationEditMode = false;
+  editableMarker: mapboxgl.Marker | null = null;
+  private handleMapClick: (e: mapboxgl.MapMouseEvent) => void = () => {};
   rateLimitStatus = {
     remainingReports: 5,
     timeUntilReset: '',
@@ -312,12 +315,6 @@ export class ReportsPage implements OnInit, OnDestroy {
     }
   }
 
-  async openInMaps() {
-    if (this.selectedLocation) {
-      const url = `https://www.google.com/maps?q=${this.selectedLocation.lat},${this.selectedLocation.lng}`;
-      window.open(url, '_blank');
-    }
-  }
 
   async takePhoto() {
     try {
@@ -526,18 +523,6 @@ export class ReportsPage implements OnInit, OnDestroy {
     this.notificationService.info('Removed', 'Media item removed from report', 'OK', 2000);
   }
 
-  async copyCoordinates() {
-    if (this.selectedLocation) {
-      const coordinates = `${this.selectedLocation.lat}, ${this.selectedLocation.lng}`;
-      try {
-        await navigator.clipboard.writeText(coordinates);
-        this.notificationService.success('Success!', 'Coordinates copied to clipboard!', 'OK', 3000);
-      } catch (error) {
-        console.error('Failed to copy coordinates:', error);
-        this.notificationService.error('Error!', 'Failed to copy coordinates', 'OK', 3000);
-      }
-    }
-  }
 
   async callEmergency() {
     const alert = await this.alertController.create({
@@ -613,5 +598,152 @@ export class ReportsPage implements OnInit, OnDestroy {
     if (accuracy <= 20) return 'warning';
     if (accuracy <= 50) return 'warning';
     return 'danger';
+  }
+
+  toggleLocationEditMode() {
+    this.isLocationEditMode = !this.isLocationEditMode;
+    
+    if (this.isLocationEditMode) {
+      this.enableLocationEditing();
+      this.notificationService.info('Edit Mode', 'Tap anywhere on the map to set the report location', 'OK', 3000);
+    } else {
+      this.disableLocationEditing();
+      this.notificationService.success('Location Set', 'Report location has been updated', 'OK', 2000);
+    }
+  }
+
+  private enableLocationEditing() {
+    if (!this.map) return;
+
+    // Remove existing markers
+    const markers = document.querySelectorAll('.mapboxgl-marker');
+    markers.forEach(marker => marker.remove());
+
+    // Add draggable marker at current location
+    this.editableMarker = new mapboxgl.Marker({
+      color: '#ff6b35',
+      scale: 1.5,
+      draggable: true
+    })
+      .setLngLat([this.selectedLocation!.lng, this.selectedLocation!.lat])
+      .addTo(this.map);
+
+    // Add popup for editable marker
+    const popup = new mapboxgl.Popup({
+      offset: 25,
+      closeButton: false
+    }).setHTML(`
+      <div class="location-popup">
+        <strong>Report Location</strong><br>
+        <small>Drag to adjust location</small>
+        <br><small style="color: #ff6b35;">📍 Editable Location</small>
+      </div>
+    `);
+
+    this.editableMarker.setPopup(popup);
+
+    // Handle marker drag end
+    this.editableMarker.on('dragend', () => {
+      const lngLat = this.editableMarker!.getLngLat();
+      this.selectedLocation = { lat: lngLat.lat, lng: lngLat.lng };
+      this.updateLocationAddress();
+      this.updateEditableMarkerPopup();
+    });
+
+    // Handle map clicks to move marker
+    this.handleMapClick = (e: mapboxgl.MapMouseEvent) => {
+      const lngLat = e.lngLat;
+      this.selectedLocation = { lat: lngLat.lat, lng: lngLat.lng };
+      this.editableMarker!.setLngLat([lngLat.lng, lngLat.lat]);
+      this.updateLocationAddress();
+      this.updateEditableMarkerPopup();
+    };
+    
+    this.map.on('click', this.handleMapClick);
+
+    // Change cursor to indicate editing mode
+    this.map.getCanvas().style.cursor = 'crosshair';
+  }
+
+  private disableLocationEditing() {
+    if (!this.map) return;
+
+    // Remove click event listener
+    this.map.off('click', this.handleMapClick);
+    
+    // Change cursor back to normal
+    this.map.getCanvas().style.cursor = '';
+
+    // Remove editable marker
+    if (this.editableMarker) {
+      this.editableMarker.remove();
+      this.editableMarker = null;
+    }
+
+    // Add back the regular marker
+    this.addRegularMarker();
+  }
+
+  private addRegularMarker() {
+    if (!this.map || !this.selectedLocation) return;
+
+    const marker = new mapboxgl.Marker({
+      color: this.isOffline ? '#ff6b35' : '#4CAF50',
+      scale: 1.5
+    })
+      .setLngLat([this.selectedLocation.lng, this.selectedLocation.lat])
+      .addTo(this.map);
+
+    const popup = new mapboxgl.Popup({
+      offset: 25,
+      closeButton: false
+    }).setHTML(`
+      <div class="location-popup">
+        <strong>${this.isOffline ? 'Last Known Location' : 'Your Exact Device Location'}</strong><br>
+        <small>${this.locationAddress || `${this.selectedLocation.lat.toFixed(8)}, ${this.selectedLocation.lng.toFixed(8)}`}</small>
+        <br><small style="color: #10b981;">📍 Device GPS Location</small>
+      </div>
+    `);
+
+    marker.setPopup(popup);
+  }
+
+  private updateEditableMarkerPopup() {
+    if (!this.editableMarker || !this.selectedLocation) return;
+
+    const popup = new mapboxgl.Popup({
+      offset: 25,
+      closeButton: false
+    }).setHTML(`
+      <div class="location-popup">
+        <strong>Report Location</strong><br>
+        <small>${this.locationAddress || `${this.selectedLocation.lat.toFixed(8)}, ${this.selectedLocation.lng.toFixed(8)}`}</small>
+        <br><small style="color: #ff6b35;">📍 Editable Location</small>
+      </div>
+    `);
+
+    this.editableMarker.setPopup(popup);
+  }
+
+  async resetToCurrentLocation() {
+    try {
+      // Get fresh current location
+      this.currentLocation = await this.locationService.getDeviceExactLocation();
+      this.selectedLocation = this.currentLocation;
+      this.isOffline = false;
+      await this.updateLocationAddress();
+      await this.saveLastKnownLocation();
+      
+      // Update the editable marker position
+      if (this.editableMarker) {
+        this.editableMarker.setLngLat([this.selectedLocation.lng, this.selectedLocation.lat]);
+        this.updateEditableMarkerPopup();
+      }
+      
+      this.notificationService.success('Location Reset', 'Using your current device location', 'OK', 2000);
+    } catch (error) {
+      console.error('Error resetting to current location:', error);
+      this.notificationService.error('Error', 'Failed to get current location', 'OK', 3000);
+    }
   }
 }

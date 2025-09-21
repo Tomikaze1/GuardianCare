@@ -523,6 +523,7 @@
         }
       }
     }
+    
   }
   
   .address-display {
@@ -584,8 +585,6 @@
     
     .action-btn {
       flex: 1;
-      --color: var(--primary-purple);
-      --background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
       font-size: 0.9rem;
       font-weight: 600;
       --padding-start: 16px;
@@ -599,18 +598,49 @@
       ion-icon {
         margin-right: 6px;
         font-size: 1rem;
-        color: var(--primary-purple);
       }
       
       &:hover {
-        --background: linear-gradient(135deg, var(--primary-indigo) 0%, var(--primary-purple) 100%);
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(139, 107, 118, 0.2);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         border-color: #d1d5db;
       }
       
       &:active {
         transform: translateY(0);
+      }
+      
+      &.edit-btn {
+        --color: var(--primary-purple);
+        --background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        
+        ion-icon {
+          color: var(--primary-purple);
+        }
+        
+        &:hover {
+          --background: linear-gradient(135deg, var(--primary-indigo) 0%, var(--primary-purple) 100%);
+          --color: white;
+          
+          ion-icon {
+            color: white;
+          }
+        }
+      }
+      
+      &.current-btn {
+        --color: white;
+        --background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-color: #10b981;
+        
+        ion-icon {
+          color: white;
+        }
+        
+        &:hover {
+          --background: linear-gradient(135deg, #059669 0%, #047857 100%);
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
       }
     }
   }
@@ -890,11 +920,36 @@
 @media (max-width: 768px) {
   .map-container {
     height: 180px;
+    
+    .map-controls {
+      ion-button {
+        font-size: 0.75rem;
+        height: 28px;
+        
+        ion-icon {
+          font-size: 0.8rem;
+        }
+      }
+    }
   }
 }
 
 @media (max-width: 480px) {
   .map-container {
     height: 160px;
+    
+    .map-controls {
+      flex-direction: column;
+      gap: 4px;
+      
+      ion-button {
+        font-size: 0.7rem;
+        height: 26px;
+        
+        ion-icon {
+          font-size: 0.75rem;
+        }
+      }
+    }
   }
 }
