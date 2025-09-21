@@ -32,6 +32,8 @@ export interface Report {
   location: {
     lat: number;
     lng: number;
+    simplifiedAddress?: string; // Short location description
+    fullAddress?: string; // Full address for reference
   };
   locationAddress: string;
   anonymous: boolean;
@@ -42,6 +44,13 @@ export interface Report {
   status: 'Pending' | 'In Progress' | 'Resolved' | 'Closed';
   createdAt?: any;
   updatedAt?: any;
+  // Enhanced fields
+  timezone?: string; // User's timezone
+  zoneDangerLevel?: 'Safe' | 'Neutral' | 'Caution' | 'Danger';
+  zoneName?: string; // Name of the danger zone if applicable
+  timeOfDay?: 'Morning' | 'Afternoon' | 'Evening' | 'Night';
+  dayOfWeek?: string; // Day of the week
+  localTime?: string; // Formatted local time
 }
 
 export interface QueuedReport {
@@ -446,12 +455,22 @@ export class ReportService {
       const riskLevel = this.getRiskLevel(data.type);
       console.log(`⚠️ Risk level for ${data.type}: ${riskLevel}`);
 
-      // Create report object
+      // Create report object with enhanced information
       console.log('📝 Creating report object...');
+      
+      // Get enhanced location and time information
+      const enhancedLocation = await this.getEnhancedLocationInfo(data.location.lat, data.location.lng);
+      const timeInfo = this.getTimeInformation();
+      const zoneInfo = await this.getZoneInformation(data.location.lat, data.location.lng);
+      
       const report: Omit<Report, 'id'> = {
         type: data.type,
         description: data.description,
-        location: data.location,
+        location: {
+          ...data.location,
+          simplifiedAddress: enhancedLocation.simplifiedAddress,
+          fullAddress: enhancedLocation.fullAddress
+        },
         locationAddress,
         anonymous: data.anonymous,
         userId: user.uid,
@@ -460,7 +479,14 @@ export class ReportService {
         isSilent: data.isSilent || false,
         status: 'Pending',
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
+        // Enhanced fields
+        timezone: timeInfo.timezone,
+        zoneDangerLevel: zoneInfo.dangerLevel,
+        zoneName: zoneInfo.zoneName,
+        timeOfDay: timeInfo.timeOfDay,
+        dayOfWeek: timeInfo.dayOfWeek,
+        localTime: timeInfo.localTime
       };
 
       console.log('📝 Report object created:', {
@@ -611,6 +637,168 @@ export class ReportService {
    */
   getQueuedReports$(): Observable<QueuedReport[]> {
     return this.queueSubject.asObservable();
+  }
+
+  /**
+   * Get enhanced location information with simplified address
+   */
+  private async getEnhancedLocationInfo(lat: number, lng: number): Promise<{
+    simplifiedAddress: string;
+    fullAddress: string;
+  }> {
+    try {
+      const fullAddress = await this.getReadableAddress(lat, lng);
+      
+      // Create simplified address (e.g., "Downtown Cebu" instead of full street address)
+      const simplifiedAddress = this.simplifyAddress(fullAddress);
+      
+      return {
+        simplifiedAddress,
+        fullAddress
+      };
+    } catch (error) {
+      console.error('Error getting enhanced location info:', error);
+      return {
+        simplifiedAddress: 'Location not available',
+        fullAddress: 'Location not available'
+      };
+    }
+  }
+
+  /**
+   * Simplify address to show only area/district name
+   */
+  private simplifyAddress(fullAddress: string): string {
+    if (!fullAddress || fullAddress === 'Location not available') {
+      return 'Unknown Location';
+    }
+
+    // Extract area/district from full address
+    // This is a simple implementation - you can enhance based on your location patterns
+    const addressParts = fullAddress.split(',');
+    
+    if (addressParts.length >= 2) {
+      // Return the second part (usually area/district)
+      return addressParts[1].trim();
+    } else if (addressParts.length === 1) {
+      // Return the first part if only one part
+      return addressParts[0].trim();
+    }
+    
+    return 'Unknown Location';
+  }
+
+  /**
+   * Get time information including timezone and time of day
+   */
+  private getTimeInformation(): {
+    timezone: string;
+    timeOfDay: 'Morning' | 'Afternoon' | 'Evening' | 'Night';
+    dayOfWeek: string;
+    localTime: string;
+  } {
+    const now = new Date();
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    
+    // Determine time of day
+    const hour = now.getHours();
+    let timeOfDay: 'Morning' | 'Afternoon' | 'Evening' | 'Night';
+    
+    if (hour >= 6 && hour < 12) {
+      timeOfDay = 'Morning';
+    } else if (hour >= 12 && hour < 17) {
+      timeOfDay = 'Afternoon';
+    } else if (hour >= 17 && hour < 21) {
+      timeOfDay = 'Evening';
+    } else {
+      timeOfDay = 'Night';
+    }
+    
+    // Get day of week
+    const dayOfWeek = now.toLocaleDateString('en-US', { weekday: 'long' });
+    
+    // Get formatted local time
+    const localTime = now.toLocaleString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: timezone
+    });
+    
+    return {
+      timezone,
+      timeOfDay,
+      dayOfWeek,
+      localTime
+    };
+  }
+
+  /**
+   * Get zone danger information based on location
+   */
+  private async getZoneInformation(lat: number, lng: number): Promise<{
+    dangerLevel: 'Safe' | 'Neutral' | 'Caution' | 'Danger';
+    zoneName: string;
+  }> {
+    try {
+      // This would integrate with your ZoneDangerEngineService
+      // For now, we'll provide a simple implementation
+      // You can enhance this to actually check against your danger zones
+      
+      // Simple logic based on coordinates (this is just an example)
+      // In a real implementation, you'd check against your zone database
+      const zoneName = this.getZoneNameFromCoordinates(lat, lng);
+      const dangerLevel = this.getDangerLevelFromZone(zoneName);
+      
+      return {
+        dangerLevel,
+        zoneName
+      };
+    } catch (error) {
+      console.error('Error getting zone information:', error);
+      return {
+        dangerLevel: 'Neutral',
+        zoneName: 'Unknown Zone'
+      };
+    }
+  }
+
+  /**
+   * Get zone name based on coordinates (simplified implementation)
+   */
+  private getZoneNameFromCoordinates(lat: number, lng: number): string {
+    // This is a simplified implementation
+    // In a real app, you'd check against your zone database
+    
+    // Example zones for Cebu area (you can expand this)
+    if (lat >= 10.3 && lat <= 10.35 && lng >= 123.9 && lng <= 123.95) {
+      return 'Downtown Cebu';
+    } else if (lat >= 10.31 && lat <= 10.33 && lng >= 123.89 && lng <= 123.91) {
+      return 'Lahug Area';
+    } else if (lat >= 10.32 && lat <= 10.34 && lng >= 123.92 && lng <= 123.94) {
+      return 'Mabolo District';
+    } else {
+      return 'General Area';
+    }
+  }
+
+  /**
+   * Get danger level based on zone name (simplified implementation)
+   */
+  private getDangerLevelFromZone(zoneName: string): 'Safe' | 'Neutral' | 'Caution' | 'Danger' {
+    // This is a simplified implementation
+    // In a real app, you'd get this from your zone danger engine
+    
+    const dangerZones = ['Downtown Cebu', 'Lahug Area'];
+    const cautionZones = ['Mabolo District'];
+    
+    if (dangerZones.includes(zoneName)) {
+      return 'Danger';
+    } else if (cautionZones.includes(zoneName)) {
+      return 'Caution';
+    } else {
+      return 'Safe';
+    }
   }
 
   /**

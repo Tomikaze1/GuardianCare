@@ -119,58 +119,55 @@
         <div class="location-header">
           <ion-icon name="location-outline" class="location-icon"></ion-icon>
           <span class="location-title">{{ 'REPORTS.CURRENT_LOCATION' | translate }}</span>
+          <div class="gps-status-indicator" *ngIf="gpsAccuracy">
+            <ion-chip [color]="getGPSStatusColor()" size="small">
+              <ion-icon name="radio-outline"></ion-icon>
+              <ion-label>{{ gpsAccuracy.status }}</ion-label>
+            </ion-chip>
+          </div>
           <button type="button" class="refresh-location-btn" (click)="refreshLocation()" title="{{ 'REPORTS.REFRESH_LOCATION' | translate }}">
             <ion-icon name="refresh-outline"></ion-icon>
           </button>
         </div>
         
-        <!-- Enhanced Coordinates Display Card -->
-        <div class="coordinates-card" *ngIf="selectedLocation">
-          <div class="coordinates-content">
-            <div class="coordinate-row">
-              <div class="coordinate-item">
-                <ion-icon name="navigate-outline" class="coord-icon"></ion-icon>
-                <div class="coord-info">
-                  <span class="coord-label">{{ 'REPORTS.LATITUDE' | translate }}</span>
-                  <span class="coord-value">{{ selectedLocation.lat | number:'1.8-8' }}</span>
-                </div>
-              </div>
-              <div class="coordinate-item">
-                <ion-icon name="navigate-outline" class="coord-icon"></ion-icon>
-                <div class="coord-info">
-                  <span class="coord-label">{{ 'REPORTS.LONGITUDE' | translate }}</span>
-                  <span class="coord-value">{{ selectedLocation.lng | number:'1.8-8' }}</span>
-                </div>
-              </div>
+        <!-- Map Display Card -->
+        <div class="map-card" *ngIf="selectedLocation">
+          <div class="map-container">
+            <div id="reports-map" class="reports-map"></div>
+            <div class="map-overlay" *ngIf="isOffline">
+              <ion-chip color="warning">
+                <ion-icon name="cloud-offline-outline"></ion-icon>
+                <ion-label>Offline - Last Known Location</ion-label>
+              </ion-chip>
             </div>
-            
-            <!-- Enhanced Address Display -->
-            <div class="address-display" *ngIf="locationAddress">
-              <ion-icon name="location-outline" class="address-icon"></ion-icon>
-              <div class="address-content">
-                <span class="address-label">{{ 'REPORTS.LOCATION_ADDRESS' | translate }}</span>
-                <span class="address-text">{{ locationAddress }}</span>
-              </div>
+          </div>
+          
+          <!-- Enhanced Address Display -->
+          <div class="address-display" *ngIf="locationAddress">
+            <ion-icon name="location-outline" class="address-icon"></ion-icon>
+            <div class="address-content">
+              <span class="address-label">{{ 'REPORTS.LOCATION_ADDRESS' | translate }}</span>
+              <span class="address-text">{{ locationAddress }}</span>
             </div>
-            
-            <div class="location-actions">
-              <ion-button
-                fill="clear"
-                size="small"
-                (click)="copyCoordinates()"
-                class="action-btn copy-btn">
-                <ion-icon name="copy-outline" slot="start"></ion-icon>
-                {{ 'REPORTS.COPY_COORDS' | translate }}
-              </ion-button>
-              <ion-button
-                fill="clear"
-                size="small"
-                (click)="openInMaps()"
-                class="action-btn map-btn">
-                <ion-icon name="map-outline" slot="start"></ion-icon>
-                {{ 'REPORTS.OPEN_IN_MAPS' | translate }}
-              </ion-button>
-            </div>
+          </div>
+          
+          <div class="location-actions">
+            <ion-button
+              fill="clear"
+              size="small"
+              (click)="copyCoordinates()"
+              class="action-btn copy-btn">
+              <ion-icon name="copy-outline" slot="start"></ion-icon>
+              {{ 'REPORTS.COPY_COORDS' | translate }}
+            </ion-button>
+            <ion-button
+              fill="clear"
+              size="small"
+              (click)="openInMaps()"
+              class="action-btn map-btn">
+              <ion-icon name="map-outline" slot="start"></ion-icon>
+              {{ 'REPORTS.OPEN_IN_MAPS' | translate }}
+            </ion-button>
           </div>
         </div>
         

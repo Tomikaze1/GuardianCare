@@ -34,10 +34,10 @@ export class LocationService {
         return;
       }
 
-      // First try with high accuracy and longer timeout
+      // First try with maximum accuracy and longer timeout
       const highAccuracyOptions = {
         enableHighAccuracy: true,
-        timeout: 30000, // 30 seconds for high accuracy
+        timeout: 45000, // 45 seconds for maximum accuracy
         maximumAge: 0 // Don't use cached position
       };
 
@@ -235,5 +235,139 @@ export class LocationService {
   async refreshLocationWithHighAccuracy(): Promise<Location> {
     console.log('Forcing high accuracy location refresh...');
     return this.getCurrentLocation();
+  }
+
+  // Method to get maximum precision location
+  async getMaximumPrecisionLocation(): Promise<Location> {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation is not supported by this browser'));
+        return;
+      }
+
+      // Maximum precision options
+      const maxPrecisionOptions = {
+        enableHighAccuracy: true,
+        timeout: 60000, // 60 seconds for maximum precision
+        maximumAge: 0 // Always get fresh position
+      };
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          console.log('Maximum Precision GPS Position obtained:', {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy + ' meters',
+            altitude: position.coords.altitude,
+            altitudeAccuracy: position.coords.altitudeAccuracy,
+            heading: position.coords.heading,
+            speed: position.coords.speed,
+            timestamp: new Date(position.timestamp).toLocaleString()
+          });
+
+          const location: Location = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          this.currentLocationSubject.next(location);
+          resolve(location);
+        },
+        (error) => {
+          console.error('Maximum Precision GPS Error:', error);
+          reject(new Error(`Maximum precision location error: ${error.message} (Code: ${error.code})`));
+        },
+        maxPrecisionOptions
+      );
+    });
+  }
+
+  // Method to get the most accurate location possible with multiple attempts
+  async getDeviceExactLocation(): Promise<Location> {
+    return new Promise(async (resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation is not supported by this browser'));
+        return;
+      }
+
+      let bestLocation: Location | null = null;
+      let bestAccuracy = Infinity;
+      let attempts = 0;
+      const maxAttempts = 3;
+
+      const tryGetLocation = (): Promise<void> => {
+        return new Promise((resolveAttempt, rejectAttempt) => {
+          attempts++;
+          
+          const options = {
+            enableHighAccuracy: true,
+            timeout: 30000,
+            maximumAge: 0
+          };
+
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const accuracy = position.coords.accuracy;
+              console.log(`Location attempt ${attempts}:`, {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                accuracy: accuracy + ' meters',
+                timestamp: new Date(position.timestamp).toLocaleString()
+              });
+
+              // If this is the most accurate location so far, save it
+              if (accuracy < bestAccuracy) {
+                bestAccuracy = accuracy;
+                bestLocation = {
+                  lat: position.coords.latitude,
+                  lng: position.coords.longitude
+                } as Location;
+              }
+
+              // If we have excellent accuracy (≤5m) or we've tried enough times, resolve
+              if (accuracy <= 5 || attempts >= maxAttempts) {
+                resolveAttempt();
+              } else {
+                // Wait a bit and try again for better accuracy
+                setTimeout(() => {
+                  tryGetLocation().then(resolveAttempt).catch(rejectAttempt);
+                }, 2000);
+              }
+            },
+            (error) => {
+              console.error(`Location attempt ${attempts} failed:`, error);
+              if (attempts >= maxAttempts) {
+                rejectAttempt(error);
+              } else {
+                // Try again after a short delay
+                setTimeout(() => {
+                  tryGetLocation().then(resolveAttempt).catch(rejectAttempt);
+                }, 3000);
+              }
+            },
+            options
+          );
+        });
+      };
+
+      try {
+        await tryGetLocation();
+        
+        if (bestLocation) {
+          const location = bestLocation as Location;
+          console.log('Best location found:', {
+            latitude: location.lat,
+            longitude: location.lng,
+            accuracy: bestAccuracy + ' meters'
+          });
+          
+          this.currentLocationSubject.next(location);
+          resolve(location);
+        } else {
+          reject(new Error('Unable to get device location after multiple attempts'));
+        }
+      } catch (error) {
+        reject(error);
+      }
+    });
   }
 }

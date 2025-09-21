@@ -1,10 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ToastController, AlertController, LoadingController } from '@ionic/angular';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { Router } from '@angular/router';
 import { UserService } from '../services/user.service';
 import { NotificationService } from '../shared/services/notification.service';
+import { ReportService, Report } from '../services/report.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-settings',
@@ -12,10 +14,15 @@ import { NotificationService } from '../shared/services/notification.service';
   styleUrls: ['./settings.page.scss'],
   standalone: false,
 })
-export class SettingsPage implements OnInit {
+export class SettingsPage implements OnInit, OnDestroy {
   currentLanguage = 'en';
   userRole = 'Unknown';
   userId = 'Unknown';
+  
+  // User profile data
+  userProfile: any = null;
+  userReports: Report[] = [];
+  private subscriptions: Subscription[] = [];
   
   // Account & Security
   twoFactorEnabled = false;
@@ -63,14 +70,17 @@ export class SettingsPage implements OnInit {
     private router: Router,
     private userService: UserService,
     private notificationService: NotificationService,
-    private loadingController: LoadingController
+    private loadingController: LoadingController,
+    private reportService: ReportService
   ) {
     // Don't set language here - let initializeLanguage() handle it
   }
 
   ngOnInit() {
-    this.userService.getCurrentUserData().subscribe(userData => {
+    // Load user profile data
+    const userDataSub = this.userService.getCurrentUserData().subscribe(userData => {
       if (userData) {
+        this.userProfile = userData;
         this.userRole = userData.role || 'No role set';
         this.userId = userData.uid || 'No UID';
         console.log('Current user data:', userData);
@@ -78,14 +88,155 @@ export class SettingsPage implements OnInit {
         console.log('User ID:', this.userId);
       } else {
         console.log('No user data found');
+        this.userProfile = null;
       }
     });
+    this.subscriptions.push(userDataSub);
+
+    // Load user reports
+    const reportsSub = this.reportService.getUserReports().subscribe(reports => {
+      this.userReports = reports;
+      console.log('User reports loaded:', reports.length);
+    });
+    this.subscriptions.push(reportsSub);
     
     this.initializeLanguage();
     this.loadSettings();
     
     // Check GPS status on page load
     this.checkGPSStatus();
+  }
+
+  ngOnDestroy() {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  // Helper methods for user profile display
+  getUserDisplayName(): string {
+    if (this.userProfile) {
+      return `${this.userProfile.firstName || ''} ${this.userProfile.lastName || ''}`.trim() || 'User';
+    }
+    return 'User';
+  }
+
+  getUserEmail(): string {
+    return this.userProfile?.email || 'No email';
+  }
+
+  getUserPhone(): string {
+    return this.userProfile?.phone || 'No phone number';
+  }
+
+  getEmergencyContact(): string {
+    if (this.userProfile?.emergencyContactName && this.userProfile?.emergencyContact) {
+      return `${this.userProfile.emergencyContactName} - ${this.userProfile.emergencyContact}`;
+    }
+    return 'No emergency contact set';
+  }
+
+  getReportStatusBadgeClass(status: string): string {
+    switch (status?.toLowerCase()) {
+      case 'pending': return 'status-pending';
+      case 'in progress': return 'status-progress';
+      case 'resolved': return 'status-resolved';
+      case 'closed': return 'status-closed';
+      default: return 'status-pending';
+    }
+  }
+
+  getReportTypeIcon(type: string): string {
+    switch (type?.toLowerCase()) {
+      case 'crime-theft': return 'shield-outline';
+      case 'accident': return 'car-outline';
+      case 'emergency': return 'medical-outline';
+      case 'suspicious-activity': return 'eye-outline';
+      case 'lost-item': return 'search-outline';
+      default: return 'alert-circle-outline';
+    }
+  }
+
+  formatDate(timestamp: any): string {
+    if (!timestamp) return 'Unknown date';
+    
+    let date: Date;
+    if (timestamp.toDate) {
+      // Firestore timestamp
+      date = timestamp.toDate();
+    } else if (timestamp instanceof Date) {
+      date = timestamp;
+    } else {
+      date = new Date(timestamp);
+    }
+    
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+  }
+
+  formatReportType(type: string): string {
+    if (!type) return 'Unknown';
+    return type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
+  }
+
+  // Enhanced report display methods
+  getZoneDangerBadgeClass(level?: string): string {
+    if (!level) return 'zone-neutral';
+    
+    switch (level.toLowerCase()) {
+      case 'safe': return 'zone-safe';
+      case 'neutral': return 'zone-neutral';
+      case 'caution': return 'zone-caution';
+      case 'danger': return 'zone-danger';
+      default: return 'zone-neutral';
+    }
+  }
+
+  getZoneDangerIcon(level?: string): string {
+    if (!level) return 'shield-outline';
+    
+    switch (level.toLowerCase()) {
+      case 'safe': return 'shield-checkmark-outline';
+      case 'neutral': return 'shield-outline';
+      case 'caution': return 'warning-outline';
+      case 'danger': return 'alert-circle-outline';
+      default: return 'shield-outline';
+    }
+  }
+
+  getTimeOfDayIcon(timeOfDay?: string): string {
+    if (!timeOfDay) return 'time-outline';
+    
+    switch (timeOfDay.toLowerCase()) {
+      case 'morning': return 'sunny-outline';
+      case 'afternoon': return 'sunny-outline';
+      case 'evening': return 'partly-sunny-outline';
+      case 'night': return 'moon-outline';
+      default: return 'time-outline';
+    }
+  }
+
+  formatEnhancedDate(report: any): string {
+    if (!report.createdAt) return 'Unknown date';
+    
+    let date: Date;
+    if (report.createdAt.toDate) {
+      date = report.createdAt.toDate();
+    } else if (report.createdAt instanceof Date) {
+      date = report.createdAt;
+    } else {
+      date = new Date(report.createdAt);
+    }
+    
+    // Use local time if available, otherwise format normally
+    if (report.localTime) {
+      const dateStr = date.toLocaleDateString();
+      return `${dateStr} at ${report.localTime}`;
+    }
+    
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+  }
+
+  getSimplifiedLocation(report: any): string {
+    // Use simplified address if available, otherwise fall back to locationAddress
+    return report.location?.simplifiedAddress || report.locationAddress || 'Location not available';
   }
 
   private initializeLanguage() {

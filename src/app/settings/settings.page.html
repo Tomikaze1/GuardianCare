@@ -14,6 +14,47 @@
     <div class="title-underline"></div>
   </div>
 
+  <!-- User Profile Section -->
+  <div class="profile-section" *ngIf="userProfile">
+    <div class="profile-card">
+      <div class="profile-header">
+        <div class="profile-avatar">
+          <ion-icon name="person-circle" class="avatar-icon"></ion-icon>
+        </div>
+        <div class="profile-info">
+          <h2 class="profile-name">{{ getUserDisplayName() }}</h2>
+          <p class="profile-role">{{ userRole }}</p>
+        </div>
+      </div>
+      
+      <div class="profile-details">
+        <div class="detail-item">
+          <ion-icon name="mail-outline" class="detail-icon"></ion-icon>
+          <span class="detail-label">Email:</span>
+          <span class="detail-value">{{ getUserEmail() }}</span>
+        </div>
+        
+        <div class="detail-item">
+          <ion-icon name="call-outline" class="detail-icon"></ion-icon>
+          <span class="detail-label">Phone:</span>
+          <span class="detail-value">{{ getUserPhone() }}</span>
+        </div>
+        
+        <div class="detail-item">
+          <ion-icon name="person-add-outline" class="detail-icon"></ion-icon>
+          <span class="detail-label">Emergency Contact:</span>
+          <span class="detail-value">{{ getEmergencyContact() }}</span>
+        </div>
+        
+        <div class="detail-item">
+          <ion-icon name="document-text-outline" class="detail-icon"></ion-icon>
+          <span class="detail-label">Reports Submitted:</span>
+          <span class="detail-value">{{ userReports.length }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="settings-form">
     
     <div class="form-row">
@@ -263,6 +304,97 @@
     
 
 
+    
+    <!-- Report History Section -->
+    <div class="form-row" *ngIf="userReports.length > 0">
+      <div class="section-header">
+        <span>Report History</span>
+        <div class="section-underline"></div>
+      </div>
+      
+      <div class="reports-container">
+        <div class="report-item" *ngFor="let report of userReports">
+          <div class="report-header">
+            <div class="report-type">
+              <ion-icon [name]="getReportTypeIcon(report.type)" class="report-type-icon"></ion-icon>
+              <span class="report-type-label">{{ formatReportType(report.type) }}</span>
+            </div>
+            <div class="report-status">
+              <span class="status-badge" [class]="getReportStatusBadgeClass(report.status)">{{ report.status }}</span>
+            </div>
+          </div>
+          
+          <div class="report-content">
+            <p class="report-description">{{ report.description }}</p>
+            
+            <!-- Enhanced Time and Zone Information -->
+            <div class="report-enhancements">
+              <!-- Zone Danger Level -->
+              <div class="zone-info" *ngIf="report.zoneDangerLevel">
+                <div class="zone-badge" [class]="getZoneDangerBadgeClass(report.zoneDangerLevel)">
+                  <ion-icon [name]="getZoneDangerIcon(report.zoneDangerLevel)" class="zone-icon"></ion-icon>
+                  <span class="zone-level">{{ report.zoneDangerLevel }}</span>
+                  <span class="zone-name" *ngIf="report.zoneName"> - {{ report.zoneName }}</span>
+                </div>
+              </div>
+
+              <!-- Time Information -->
+              <div class="time-info">
+                <div class="time-detail">
+                  <ion-icon [name]="getTimeOfDayIcon(report.timeOfDay)" class="time-icon"></ion-icon>
+                  <span class="time-text">{{ formatEnhancedDate(report) }}</span>
+                </div>
+                <div class="time-context" *ngIf="report.timeOfDay && report.dayOfWeek">
+                  <span class="time-of-day">{{ report.timeOfDay }}</span>
+                  <span class="day-of-week"> • {{ report.dayOfWeek }}</span>
+                  <span class="timezone" *ngIf="report.timezone"> • {{ report.timezone }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Location Information -->
+            <div class="report-meta">
+              <div class="report-location">
+                <ion-icon name="location-outline" class="meta-icon"></ion-icon>
+                <span class="location-text">{{ getSimplifiedLocation(report) }}</span>
+              </div>
+              <!-- Show full address as tooltip or expandable if different from simplified -->
+              <div class="full-address" *ngIf="report.location?.fullAddress && report.location?.fullAddress !== getSimplifiedLocation(report)">
+                <ion-icon name="information-circle-outline" class="info-icon"></ion-icon>
+                <span class="address-tooltip">{{ report.location.fullAddress }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="report-footer" *ngIf="report.media && report.media.length > 0">
+            <div class="report-media">
+              <ion-icon name="camera-outline" class="media-icon"></ion-icon>
+              <span>{{ report.media.length }} photo(s)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- No Reports Message -->
+    <div class="form-row" *ngIf="userReports.length === 0 && userProfile">
+      <div class="section-header">
+        <span>Report History</span>
+        <div class="section-underline"></div>
+      </div>
+      
+      <div class="no-reports-container">
+        <div class="no-reports-icon">
+          <ion-icon name="document-text-outline"></ion-icon>
+        </div>
+        <h3 class="no-reports-title">No Reports Yet</h3>
+        <p class="no-reports-message">You haven't submitted any reports yet. Start by reporting an incident to help keep your community safe.</p>
+        <ion-button fill="outline" routerLink="/tabs/reports" class="submit-report-btn">
+          <ion-icon name="add-outline" slot="start"></ion-icon>
+          Submit Your First Report
+        </ion-button>
+      </div>
+    </div>
     
     <div class="form-row">
       <div class="section-header">

@@ -1,10 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AlertController, LoadingController } from '@ionic/angular';
 import { Camera, CameraResultType, CameraSource, Photo } from '@capacitor/camera';
 import { LocationService } from '../services/location.service';
 import { ReportService, ReportFormData } from '../services/report.service';
 import { NotificationService } from '../shared/services/notification.service';
+import * as mapboxgl from 'mapbox-gl';
 
 @Component({
   selector: 'app-reports',
@@ -12,13 +13,17 @@ import { NotificationService } from '../shared/services/notification.service';
   styleUrls: ['./reports.page.scss'],
   standalone: false
 })
-export class ReportsPage implements OnInit {
+export class ReportsPage implements OnInit, OnDestroy {
   reportForm: FormGroup;
   currentLocation: { lat: number; lng: number } | null = null;
   selectedLocation: { lat: number; lng: number } | null = null;
   locationAddress: string = '';
   isAnonymous = false;
   selectedIncidentType: string = '';
+  isOffline = false;
+  map: mapboxgl.Map | null = null;
+  lastKnownLocation: { lat: number; lng: number } | null = null;
+  gpsAccuracy: { accuracy: number; status: string } | null = null;
   rateLimitStatus = {
     remainingReports: 5,
     timeUntilReset: '',
@@ -56,6 +61,14 @@ export class ReportsPage implements OnInit {
     this.initializeLocation();
     this.checkCameraPermissions();
     this.loadRateLimitStatus();
+    this.loadLastKnownLocation();
+    this.checkGPSAccuracy();
+  }
+
+  ngOnDestroy() {
+    if (this.map) {
+      this.map.remove();
+    }
   }
 
   private async checkCameraPermissions() {
@@ -89,24 +102,69 @@ export class ReportsPage implements OnInit {
 
   private async initializeLocation() {
     try {
-      this.currentLocation = await this.locationService.getCurrentLocation();
+      // Try to get the exact device location with multiple attempts
+      try {
+        this.currentLocation = await this.locationService.getDeviceExactLocation();
+        this.notificationService.success('Location Found', 'Your exact device location has been pinpointed!', 'OK', 2000);
+      } catch (precisionError) {
+        console.log('Exact location failed, trying maximum precision...');
+        try {
+          this.currentLocation = await this.locationService.getMaximumPrecisionLocation();
+        } catch (maxPrecisionError) {
+          console.log('Maximum precision failed, trying standard location...');
+          this.currentLocation = await this.locationService.getCurrentLocation();
+        }
+      }
+      
       this.selectedLocation = this.currentLocation;
+      this.isOffline = false;
       await this.updateLocationAddress();
+      await this.saveLastKnownLocation();
+      this.initializeMap();
     } catch (error) {
       console.error('Error getting location:', error);
-      this.currentLocation = { lat: 10.3111, lng: 123.8931 };
-      this.selectedLocation = this.currentLocation;
+      this.isOffline = true;
+      
+      // Use last known location if available
+      if (this.lastKnownLocation) {
+        this.currentLocation = this.lastKnownLocation;
+        this.selectedLocation = this.lastKnownLocation;
+        await this.updateLocationAddress();
+        this.notificationService.warning(
+          'Offline Mode',
+          'Using last known location. Please check your internet connection.',
+          'OK',
+          5000
+        );
+      } else {
+        // Fallback to default location
+        this.currentLocation = { lat: 10.3111, lng: 123.8931 };
+        this.selectedLocation = this.currentLocation;
+        await this.updateLocationAddress();
+        this.notificationService.error(
+          'Location Unavailable',
+          'Unable to get current location. Using default location.',
+          'OK',
+          5000
+        );
+      }
+      this.initializeMap();
     }
   }
 
   async refreshLocation() {
     try {
-      this.currentLocation = await this.locationService.refreshLocationWithHighAccuracy();
+      // Use the exact device location method for the most accurate results
+      this.currentLocation = await this.locationService.getDeviceExactLocation();
       this.selectedLocation = this.currentLocation;
+      this.isOffline = false;
       await this.updateLocationAddress();
-      this.notificationService.success('Location Updated', 'Current location refreshed with high accuracy!', 'OK', 2000);
+      await this.saveLastKnownLocation();
+      this.updateMapLocation();
+      this.notificationService.success('Location Updated', 'Your exact device location has been refreshed with maximum precision!', 'OK', 2000);
     } catch (error) {
       console.error('Error refreshing location:', error);
+      this.isOffline = true;
       this.notificationService.error('Error', 'Failed to refresh location. Please check your GPS settings.', 'OK', 3000);
     }
   }
@@ -117,6 +175,114 @@ export class ReportsPage implements OnInit {
       console.log('Rate limit status loaded:', this.rateLimitStatus);
     } catch (error) {
       console.error('Error loading rate limit status:', error);
+    }
+  }
+
+  private async loadLastKnownLocation() {
+    try {
+      const stored = localStorage.getItem('lastKnownLocation');
+      if (stored) {
+        this.lastKnownLocation = JSON.parse(stored);
+        console.log('Last known location loaded:', this.lastKnownLocation);
+      }
+    } catch (error) {
+      console.error('Error loading last known location:', error);
+    }
+  }
+
+  private async saveLastKnownLocation() {
+    if (this.currentLocation) {
+      try {
+        localStorage.setItem('lastKnownLocation', JSON.stringify(this.currentLocation));
+        this.lastKnownLocation = this.currentLocation;
+        console.log('Last known location saved:', this.currentLocation);
+      } catch (error) {
+        console.error('Error saving last known location:', error);
+      }
+    }
+  }
+
+  private initializeMap() {
+    if (!this.selectedLocation) return;
+    
+    // Set Mapbox access token
+    (mapboxgl as any).accessToken = 'pk.eyJ1IjoidG9taWthemUxIiwiYSI6ImNtY25rM3NxazB2ZG8ybHFxeHVoZWthd28ifQ.Vnf9pMEQAryEI2rMJeMQGQ';
+    
+    // Remove existing map if it exists
+    if (this.map) {
+      this.map.remove();
+    }
+    
+    this.map = new mapboxgl.Map({
+      container: 'reports-map',
+      style: 'mapbox://styles/mapbox/streets-v11',
+      center: [this.selectedLocation.lng, this.selectedLocation.lat],
+      zoom: 18, // Increased zoom for more precise location
+      interactive: true,
+      attributionControl: false
+    });
+
+    // Add marker for current location with higher precision
+    const marker = new mapboxgl.Marker({
+      color: this.isOffline ? '#ff6b35' : '#4CAF50',
+      scale: 1.5 // Larger marker for better visibility
+    })
+      .setLngLat([this.selectedLocation.lng, this.selectedLocation.lat])
+      .addTo(this.map);
+
+    // Add popup with precise location info
+    const popup = new mapboxgl.Popup({
+      offset: 25,
+      closeButton: false
+    }).setHTML(`
+      <div class="location-popup">
+        <strong>${this.isOffline ? 'Last Known Location' : 'Your Exact Device Location'}</strong><br>
+        <small>${this.locationAddress || `${this.selectedLocation.lat.toFixed(8)}, ${this.selectedLocation.lng.toFixed(8)}`}</small>
+        <br><small style="color: #10b981;">📍 Device GPS Location</small>
+      </div>
+    `);
+
+    marker.setPopup(popup);
+    
+    // More precise map bounds for exact location
+    this.map.fitBounds([
+      [this.selectedLocation.lng - 0.0001, this.selectedLocation.lat - 0.0001],
+      [this.selectedLocation.lng + 0.0001, this.selectedLocation.lat + 0.0001]
+    ], {
+      padding: 20,
+      maxZoom: 20 // Allow higher zoom for precision
+    });
+  }
+
+  private updateMapLocation() {
+    if (this.map && this.selectedLocation) {
+      this.map.setCenter([this.selectedLocation.lng, this.selectedLocation.lat]);
+      this.map.setZoom(18); // Maintain high zoom level
+      
+      // Update marker
+      const markers = document.querySelectorAll('.mapboxgl-marker');
+      markers.forEach(marker => marker.remove());
+      
+      const marker = new mapboxgl.Marker({
+        color: this.isOffline ? '#ff6b35' : '#4CAF50',
+        scale: 1.5 // Larger marker for better visibility
+      })
+        .setLngLat([this.selectedLocation.lng, this.selectedLocation.lat])
+        .addTo(this.map);
+
+      // Update popup with precise coordinates
+      const popup = new mapboxgl.Popup({
+        offset: 25,
+        closeButton: false
+      }).setHTML(`
+        <div class="location-popup">
+          <strong>${this.isOffline ? 'Last Known Location' : 'Your Exact Device Location'}</strong><br>
+          <small>${this.locationAddress || `${this.selectedLocation.lat.toFixed(8)}, ${this.selectedLocation.lng.toFixed(8)}`}</small>
+          <br><small style="color: #10b981;">📍 Device GPS Location</small>
+        </div>
+      `);
+
+      marker.setPopup(popup);
     }
   }
 
@@ -414,5 +580,38 @@ export class ReportsPage implements OnInit {
       console.error('Error initiating emergency call:', error);
       this.notificationService.error('Error', 'Failed to initiate emergency call', 'OK', 3000);
     }
+  }
+
+  // Test method to simulate offline mode (for development/testing)
+  async testOfflineMode() {
+    this.isOffline = true;
+    if (this.lastKnownLocation) {
+      this.selectedLocation = this.lastKnownLocation;
+      this.updateMapLocation();
+      this.notificationService.warning('Test Mode', 'Simulating offline mode with last known location', 'OK', 3000);
+    } else {
+      this.notificationService.error('Test Mode', 'No last known location available for testing', 'OK', 3000);
+    }
+  }
+
+  private async checkGPSAccuracy() {
+    try {
+      this.gpsAccuracy = await this.locationService.checkGPSAccuracy();
+      console.log('GPS Accuracy:', this.gpsAccuracy);
+    } catch (error) {
+      console.error('Error checking GPS accuracy:', error);
+      this.gpsAccuracy = { accuracy: 0, status: 'Unknown' };
+    }
+  }
+
+  getGPSStatusColor(): string {
+    if (!this.gpsAccuracy) return 'medium';
+    
+    const accuracy = this.gpsAccuracy.accuracy;
+    if (accuracy <= 5) return 'success';
+    if (accuracy <= 10) return 'primary';
+    if (accuracy <= 20) return 'warning';
+    if (accuracy <= 50) return 'warning';
+    return 'danger';
   }
 }
