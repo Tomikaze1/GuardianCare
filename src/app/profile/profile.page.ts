@@ -67,6 +67,8 @@ export class ProfilePage implements OnInit {
     this.loadUserProfile();
   }
 
+  // (Removed temporary logout button; keep logic minimal here)
+
   // Pull-to-refresh handler
   async handleRefresh(event: any) {
     try {

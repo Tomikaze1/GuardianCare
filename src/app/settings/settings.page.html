@@ -60,6 +60,7 @@
     <div class="form-row">
       <div class="section-header" (click)="toggleSection('account')">
         <span>{{ 'SETTINGS.ACCOUNT_SECURITY' | translate }}</span>
+        <ion-icon name="chevron-forward-outline" class="section-toggle-icon" [class.open]="expandAccountSecurity"></ion-icon>
         <div class="section-underline"></div>
       </div>
       
@@ -103,6 +104,7 @@
     <div class="form-row">
       <div class="section-header" (click)="toggleSection('location')">
         <span>{{ 'SETTINGS.LOCATION_ALERTS' | translate }}</span>
+        <ion-icon name="chevron-forward-outline" class="section-toggle-icon" [class.open]="expandLocationAlerts"></ion-icon>
         <div class="section-underline"></div>
       </div>
       
@@ -148,6 +150,7 @@
     <div class="form-row">
       <div class="section-header" (click)="toggleSection('notifications')">
         <span>{{ 'SETTINGS.NOTIFICATIONS' | translate }}</span>
+        <ion-icon name="chevron-forward-outline" class="section-toggle-icon" [class.open]="expandNotifications"></ion-icon>
         <div class="section-underline"></div>
       </div>
       
@@ -215,6 +218,7 @@
     <div class="form-row">
       <div class="section-header" (click)="toggleSection('localization')">
         <span>{{ 'SETTINGS.LOCALIZATION' | translate }}</span>
+        <ion-icon name="chevron-forward-outline" class="section-toggle-icon" [class.open]="expandLocalization"></ion-icon>
         <div class="section-underline"></div>
       </div>
       
@@ -270,6 +274,7 @@
     <div class="form-row">
       <div class="section-header" (click)="toggleSection('legal')">
         <span>{{ 'SETTINGS.LEGAL_SUPPORT' | translate }}</span>
+        <ion-icon name="chevron-forward-outline" class="section-toggle-icon" [class.open]="expandLegalSupport"></ion-icon>
         <div class="section-underline"></div>
       </div>
       
