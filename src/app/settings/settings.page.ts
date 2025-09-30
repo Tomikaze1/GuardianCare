@@ -37,11 +37,23 @@ export class SettingsPage implements OnInit, OnDestroy {
   smartVibration = true;
   selectedAlertSound = 'Default';
   panicModeVisuals = true;
+  selectedVibrationPattern: 'gentle' | 'default' | 'strong' = 'default';
+  vibrationDuration = 200;
   
   // Localization
   selectedUnit = 'Metric';
   touristTranslationMode = false;
   homeUIMode: 'sidebar' | 'buttons' = 'sidebar';
+  
+  // UI state: collapsible sections
+  expandAccountSecurity = false;
+  expandLocationAlerts = false;
+  expandNotifications = false;
+  expandLocalization = false;
+  expandLegalSupport = false;
+  
+  // UI state: subpanels
+  smartVibrationOptionsOpen = false;
   
   languages = [
     { code: 'en', name: 'English' },
@@ -109,6 +121,27 @@ export class SettingsPage implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  // Collapsible helpers
+  toggleSection(section: 'account' | 'location' | 'notifications' | 'localization' | 'legal') {
+    switch (section) {
+      case 'account':
+        this.expandAccountSecurity = !this.expandAccountSecurity;
+        break;
+      case 'location':
+        this.expandLocationAlerts = !this.expandLocationAlerts;
+        break;
+      case 'notifications':
+        this.expandNotifications = !this.expandNotifications;
+        break;
+      case 'localization':
+        this.expandLocalization = !this.expandLocalization;
+        break;
+      case 'legal':
+        this.expandLegalSupport = !this.expandLegalSupport;
+        break;
+    }
   }
 
   // Helper methods for user profile display
@@ -258,6 +291,8 @@ export class SettingsPage implements OnInit, OnDestroy {
     this.panicModeVisuals = localStorage.getItem('panicModeVisuals') !== 'false'; // Default to true
     this.touristTranslationMode = localStorage.getItem('touristTranslationMode') === 'true'; // Default to false
     this.twoFactorEnabled = localStorage.getItem('twoFactorEnabled') === 'true'; // Default to false
+    this.selectedVibrationPattern = (localStorage.getItem('vibrationPattern') as any) || 'default';
+    this.vibrationDuration = Number(localStorage.getItem('vibrationDuration') || 200);
     
     this.selectedAlertSound = localStorage.getItem('selectedAlertSound') || 'Default';
     this.selectedUnit = localStorage.getItem('selectedUnit') || 'Metric';
@@ -437,6 +472,8 @@ export class SettingsPage implements OnInit, OnDestroy {
     localStorage.setItem('smartVibration', this.smartVibration.toString());
     const message = this.smartVibration ? 'Smart vibration enabled' : 'Smart vibration disabled';
     this.notificationService.success('Success', message, 'OK', 2000);
+    localStorage.setItem('vibrationPattern', this.selectedVibrationPattern);
+    localStorage.setItem('vibrationDuration', String(this.vibrationDuration));
   }
 
   async alertSounds() {

@@ -23,6 +23,7 @@ export interface ReportFormData {
   anonymous: boolean;
   media?: File[];
   isSilent?: boolean;
+  customDateTime?: Date | null;
 }
 
 export interface Report {
@@ -460,7 +461,7 @@ export class ReportService {
       
       // Get enhanced location and time information
       const enhancedLocation = await this.getEnhancedLocationInfo(data.location.lat, data.location.lng);
-      const timeInfo = this.getTimeInformation();
+      const timeInfo = data.customDateTime ? this.getTimeInformationFromDate(data.customDateTime) : this.getTimeInformation();
       const zoneInfo = await this.getZoneInformation(data.location.lat, data.location.lng);
       
       const report: Omit<Report, 'id'> = {
@@ -698,10 +699,22 @@ export class ReportService {
     localTime: string;
   } {
     const now = new Date();
+    return this.getTimeInformationFromDate(now);
+  }
+
+  /**
+   * Get time information from a specific date
+   */
+  private getTimeInformationFromDate(date: Date): {
+    timezone: string;
+    timeOfDay: 'Morning' | 'Afternoon' | 'Evening' | 'Night';
+    dayOfWeek: string;
+    localTime: string;
+  } {
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     
     // Determine time of day
-    const hour = now.getHours();
+    const hour = date.getHours();
     let timeOfDay: 'Morning' | 'Afternoon' | 'Evening' | 'Night';
     
     if (hour >= 6 && hour < 12) {
@@ -715,10 +728,10 @@ export class ReportService {
     }
     
     // Get day of week
-    const dayOfWeek = now.toLocaleDateString('en-US', { weekday: 'long' });
+    const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' });
     
     // Get formatted local time
-    const localTime = now.toLocaleString('en-US', {
+    const localTime = date.toLocaleString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       hour12: true,

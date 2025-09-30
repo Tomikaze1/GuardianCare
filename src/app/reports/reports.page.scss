@@ -675,6 +675,206 @@
   }
 }
 
+// Time and Date Box Styles
+.time-date-box {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  background: #fff;
+  padding: 20px;
+  
+  .time-date-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 16px;
+    
+    .time-icon {
+      color: var(--primary-purple);
+      font-size: 1.3rem;
+      margin-right: 10px;
+      background: rgba(124, 58, 237, 0.1);
+      padding: 8px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .time-title {
+      font-weight: 700;
+      color: #0f172a;
+      font-size: 1rem;
+      flex: 1;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    
+    .edit-time-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border: 1.5px solid #e2e8f0;
+      border-radius: 20px;
+      color: var(--primary-purple);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      
+      .edit-icon {
+        font-size: 1rem;
+        transition: transform 0.3s ease;
+      }
+      
+      &:hover {
+        background: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-indigo) 100%);
+        color: white;
+        border-color: var(--primary-purple);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
+        
+        .edit-icon {
+          transform: scale(1.1);
+        }
+      }
+      
+      &.custom-active {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border-color: #f59e0b;
+        color: #92400e;
+        
+        .edit-icon {
+          color: #f59e0b;
+        }
+      }
+      
+      &:active {
+        transform: translateY(0);
+      }
+    }
+  }
+  
+  .time-date-display {
+    width: 100%;
+    
+    .current-time-display {
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      transition: all 0.3s ease;
+      
+      &.custom-time {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border-color: #f59e0b;
+        border-left: 4px solid #f59e0b;
+      }
+      
+      .time-main {
+        display: flex;
+        align-items: center;
+        margin-bottom: 12px;
+        
+        .display-icon {
+          font-size: 1.5rem;
+          margin-right: 12px;
+          color: var(--primary-purple);
+          background: rgba(124, 58, 237, 0.1);
+          padding: 10px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .time-content {
+          flex: 1;
+          
+          .time-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0f172a;
+            font-family: 'DM Sans', sans-serif;
+            margin-bottom: 4px;
+          }
+          
+          .date-text {
+            font-size: 0.95rem;
+            color: #64748b;
+            font-weight: 500;
+            font-family: 'DM Sans', sans-serif;
+          }
+        }
+      }
+      
+      .time-status {
+        display: flex;
+        justify-content: flex-end;
+        
+        ion-chip {
+          font-size: 0.75rem;
+          font-weight: 600;
+          height: 28px;
+          
+          ion-icon {
+            font-size: 0.85rem;
+            margin-right: 4px;
+          }
+          
+          ion-label {
+            font-size: 0.75rem;
+          }
+        }
+      }
+    }
+    
+    .time-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+      justify-content: center;
+      
+      .action-btn {
+        --border-color: var(--primary-purple);
+        --color: var(--primary-purple);
+        --border-radius: 12px;
+        --padding-start: 16px;
+        --padding-end: 16px;
+        --padding-top: 8px;
+        --padding-bottom: 8px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        
+        ion-icon {
+          margin-right: 6px;
+          font-size: 1rem;
+        }
+        
+        &.edit-btn {
+          --border-color: var(--primary-purple);
+          --color: var(--primary-purple);
+        }
+        
+        &.reset-btn {
+          --border-color: #6b7280;
+          --color: #6b7280;
+        }
+        
+        &:hover {
+          --background: var(--primary-purple);
+          --color: white;
+          transform: translateY(-1px);
+        }
+      }
+    }
+  }
+}
+
 
 .anon-row {
   .anon-box {

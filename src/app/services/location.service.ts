@@ -158,6 +158,67 @@ export class LocationService {
     });
   }
 
+  // Real-time location tracking with configurable intervals
+  startRealTimeTracking(intervalMs: number = 5000): Observable<Location> {
+    return new Observable(observer => {
+      if (!navigator.geolocation) {
+        observer.error(new Error('Geolocation is not supported'));
+        return;
+      }
+
+      let isTracking = true;
+
+      const trackLocation = () => {
+        if (!isTracking) return;
+
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            console.log('Real-time GPS Position:', {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              accuracy: position.coords.accuracy + ' meters',
+              speed: position.coords.speed ? position.coords.speed + ' m/s' : 'N/A',
+              heading: position.coords.heading ? position.coords.heading + '°' : 'N/A',
+              timestamp: new Date(position.timestamp).toLocaleString()
+            });
+
+            const location: Location = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            };
+            
+            this.currentLocationSubject.next(location);
+            observer.next(location);
+
+            // Schedule next location update
+            if (isTracking) {
+              setTimeout(trackLocation, intervalMs);
+            }
+          },
+          (error) => {
+            console.error('Real-time tracking error:', error);
+            // Continue tracking even if one update fails
+            if (isTracking) {
+              setTimeout(trackLocation, intervalMs);
+            }
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 1000 // Allow 1 second cache for real-time updates
+          }
+        );
+      };
+
+      // Start tracking
+      trackLocation();
+
+      return () => {
+        isTracking = false;
+      };
+    });
+  }
+
   calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
     const R = 6371e3;
     const φ1 = lat1 * Math.PI / 180;

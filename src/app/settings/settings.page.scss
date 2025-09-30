@@ -96,11 +96,11 @@
 // Section Headers
 .section-header {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 1.07rem;
-  font-weight: 700;
+  font-size: 1.08rem;
+  font-weight: 800;
   color: #1a202c;
-  margin-top: 20px;
-  margin-bottom: 4px;
+  margin-top: 14px;
+  margin-bottom: 2px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -128,41 +128,40 @@
   display: flex;
   flex-direction: column;
   background: none;
-  padding: 0 8px 28px 8px;
+  padding: 0 8px 20px 8px;
   gap: 0;
 }
 
 .form-row {
   width: 100%;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 // About Card
 .about-card {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border: 1px solid #e2e8f0;
+  background: #0f172a;
+  border: 1px solid #0b1220;
   border-radius: 16px;
-  padding: 20px;
-  margin-bottom: 6px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  padding: 16px;
+  margin-bottom: 8px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
   transition: all 0.3s ease;
   
   &:hover {
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-    transform: translateY(-2px);
+    border-color: #24324a;
   }
   
   .about-content {
     display: flex;
     align-items: flex-start;
-    gap: 16px;
+    gap: 12px;
     
     .about-icon {
-      color: var(--primary-purple);
-      font-size: 2rem;
-      background: rgba(124, 58, 237, 0.1);
-      border-radius: 50%;
-      padding: 12px;
+      color: #c7d2fe;
+      font-size: 1.6rem;
+      background: rgba(99, 102, 241, 0.18);
+      border-radius: 14px;
+      padding: 10px;
       flex-shrink: 0;
     }
     
@@ -171,29 +170,29 @@
       
       h3 {
         font-family: 'Plus Jakarta Sans', sans-serif;
-        font-size: 1.3rem;
-        font-weight: 700;
-        color: var(--primary-purple);
-        margin: 0 0 8px 0;
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #e5e7eb;
+        margin: 0 0 4px 0;
         letter-spacing: -0.5px;
       }
       
       p {
         font-family: 'DM Sans', sans-serif;
-        font-size: 0.95rem;
-        color: #61677c;
-        line-height: 1.5;
-        margin: 0 0 12px 0;
+        font-size: 0.92rem;
+        color: #94a3b8;
+        line-height: 1.45;
+        margin: 0 0 10px 0;
       }
       
       .version {
         font-family: 'DM Sans', sans-serif;
         font-size: 0.85rem;
-        color: var(--primary-purple);
+        color: #cbd5e1;
         font-weight: 600;
-        background: rgba(124, 58, 237, 0.1);
-        padding: 4px 12px;
-        border-radius: 20px;
+        background: #111b2c;
+        padding: 4px 10px;
+        border-radius: 10px;
         display: inline-block;
       }
     }
@@ -204,14 +203,27 @@
 .settings-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 6px;
+  gap: 6px;
+  margin-bottom: 4px;
+  transition: max-height 0.25s ease, opacity 0.25s ease;
+  
+  &.collapsible {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    margin-bottom: 0;
+  }
+  &.collapsible.open {
+    max-height: 800px;
+    opacity: 1;
+    margin-bottom: 6px;
+  }
   
   .setting-item {
     background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
     border: 1px solid #e2e8f0;
     border-radius: 14px;
-    padding: 16px 20px;
+    padding: 14px 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -237,10 +249,10 @@
       
       .setting-icon {
         color: var(--primary-purple);
-        font-size: 1.3rem;
+        font-size: 1.2rem;
         background: rgba(124, 58, 237, 0.1);
-        border-radius: 50%;
-        padding: 8px;
+        border-radius: 12px;
+        padding: 6px;
         flex-shrink: 0;
         display: flex;
         align-items: center;
@@ -249,8 +261,8 @@
       
       .setting-label {
         font-family: 'DM Sans', sans-serif;
-        font-size: 1rem;
-        font-weight: 600;
+        font-size: 0.98rem;
+        font-weight: 700;
         color: #1a202c;
         margin: 0;
       }
@@ -289,6 +301,35 @@
       --handle-background: #ffffff;
       --handle-background-checked: #ffffff;
       --handle-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+  }
+}
+
+// Subpanel for nested options
+.subpanel {
+  background: #ffffff;
+  border-left: 3px solid var(--primary-purple);
+  margin: -6px 12px 8px 12px;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: none;
+  box-shadow: 0 2px 10px rgba(124,58,237,0.08);
+  
+  &.open {
+    display: block;
+    animation: fadeInUp 0.25s ease both;
+  }
+  
+  .sub-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 8px 0;
+    
+    span {
+      font-weight: 600;
+      color: #1e293b;
+      font-size: 0.9rem;
     }
   }
 }

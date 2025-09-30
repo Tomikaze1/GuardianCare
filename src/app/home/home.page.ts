@@ -30,6 +30,14 @@ export class HomePage implements OnInit, OnDestroy {
   @ViewChild('edgeHandle', { static: false }) edgeHandleRef?: ElementRef<HTMLDivElement>;
   private dragData: { dragging: boolean; startY: number; offsetY: number } = { dragging: false, startY: 0, offsetY: 200 };
   uiMode: 'sidebar' | 'buttons' = 'buttons';
+  
+  // Real-time tracking properties
+  private realTimeLocationSubscription: any = null;
+  private userMarker: mapboxgl.Marker | null = null;
+  isRealTimeTracking = false;
+  private trackingInterval = 3000; // 3 seconds for real-time updates
+  batteryOptimizationMode = false;
+  private trackingMode: 'high' | 'medium' | 'low' = 'medium';
 
   constructor(
     private locationService: LocationService,
@@ -58,11 +66,271 @@ export class HomePage implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.stopRealTimeTracking();
     if (this.map) {
       this.map.remove();
     }
     // Remove resize listener
     window.removeEventListener('resize', this.handleResize);
+  }
+
+  // Real-time location tracking methods
+  startRealTimeTracking() {
+    if (this.isRealTimeTracking) {
+      console.log('Real-time tracking already active');
+      return;
+    }
+
+    console.log('Starting real-time location tracking...');
+    this.isRealTimeTracking = true;
+
+    // Adjust tracking interval based on mode
+    const interval = this.getTrackingInterval();
+    console.log(`Using tracking interval: ${interval}ms (${this.trackingMode} mode)`);
+
+    this.realTimeLocationSubscription = this.locationService.startRealTimeTracking(interval)
+      .subscribe({
+        next: (location) => {
+          console.log('Real-time location update:', location);
+          this.updateUserMarker(location);
+          this.currentLocation = location;
+          this.zoneEngine.updateCurrentLocation(location);
+          
+          // Check if we should adjust tracking frequency based on movement
+          this.optimizeTrackingFrequency(location);
+        },
+        error: (error) => {
+          console.error('Real-time tracking error:', error);
+          this.notificationService.warning(
+            'Location Tracking',
+            'Real-time location tracking encountered an error. Please check your location permissions.',
+            'OK',
+            3000
+          );
+        }
+      });
+  }
+
+  private getTrackingInterval(): number {
+    if (this.batteryOptimizationMode) {
+      switch (this.trackingMode) {
+        case 'high':
+          return 5000; // 5 seconds
+        case 'medium':
+          return 10000; // 10 seconds
+        case 'low':
+          return 30000; // 30 seconds
+        default:
+          return 10000;
+      }
+    } else {
+      switch (this.trackingMode) {
+        case 'high':
+          return 1000; // 1 second
+        case 'medium':
+          return 3000; // 3 seconds
+        case 'low':
+          return 10000; // 10 seconds
+        default:
+          return 3000;
+      }
+    }
+  }
+
+  private optimizeTrackingFrequency(location: { lat: number; lng: number }) {
+    if (!this.currentLocation) return;
+
+    // Calculate distance moved
+    const distance = this.locationService.calculateDistance(
+      this.currentLocation.lat,
+      this.currentLocation.lng,
+      location.lat,
+      location.lng
+    );
+
+    // Adjust tracking frequency based on movement
+    if (distance > 100) { // Moving fast (>100m)
+      this.trackingMode = 'high';
+    } else if (distance > 10) { // Moving moderately (>10m)
+      this.trackingMode = 'medium';
+    } else { // Stationary or slow movement
+      this.trackingMode = 'low';
+    }
+  }
+
+  setTrackingMode(mode: 'high' | 'medium' | 'low') {
+    this.trackingMode = mode;
+    console.log(`Tracking mode changed to: ${mode}`);
+    
+    // Restart tracking with new interval if currently tracking
+    if (this.isRealTimeTracking) {
+      this.stopRealTimeTracking();
+      setTimeout(() => {
+        this.startRealTimeTracking();
+      }, 100);
+    }
+  }
+
+  toggleBatteryOptimization() {
+    this.batteryOptimizationMode = !this.batteryOptimizationMode;
+    console.log(`Battery optimization: ${this.batteryOptimizationMode ? 'ON' : 'OFF'}`);
+    
+    // Restart tracking with new settings if currently tracking
+    if (this.isRealTimeTracking) {
+      this.stopRealTimeTracking();
+      setTimeout(() => {
+        this.startRealTimeTracking();
+      }, 100);
+    }
+
+    this.notificationService.success(
+      'Battery Optimization',
+      `Battery optimization ${this.batteryOptimizationMode ? 'enabled' : 'disabled'}`,
+      'OK',
+      2000
+    );
+  }
+
+  stopRealTimeTracking() {
+    if (this.realTimeLocationSubscription) {
+      this.realTimeLocationSubscription.unsubscribe();
+      this.realTimeLocationSubscription = null;
+    }
+    this.isRealTimeTracking = false;
+    console.log('Real-time tracking stopped');
+  }
+
+  updateUserMarker(location: { lat: number; lng: number }) {
+    if (this.userMarker && this.map) {
+      // Smoothly animate marker movement
+      this.userMarker.setLngLat([location.lng, location.lat]);
+      
+      // Update heatmap with new location if visible
+      if (this.isHeatmapVisible) {
+        this.updateRealTimeUserLocationInHeatmap(location);
+      }
+      
+      // Optionally, smoothly pan the map to follow the user
+      // this.map.panTo([location.lng, location.lat]);
+    }
+  }
+
+  // Heatmap real-time location methods
+  addRealTimeUserLocationToHeatmap() {
+    if (!this.map || !this.currentLocation) return;
+
+    const sourceId = 'real-time-user-location';
+    const layerId = 'real-time-user-location-layer';
+
+    // Add source for real-time user location
+    if (!this.map.getSource(sourceId)) {
+      this.map.addSource(sourceId, {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: [{
+            type: 'Feature',
+            geometry: {
+              type: 'Point',
+              coordinates: [this.currentLocation.lng, this.currentLocation.lat]
+            },
+            properties: {
+              intensity: 1.0,
+              timestamp: Date.now()
+            }
+          }]
+        }
+      });
+    }
+
+    // Add heatmap layer for user location
+    if (!this.map.getLayer(layerId)) {
+      this.map.addLayer({
+        id: layerId,
+        type: 'heatmap',
+        source: sourceId,
+        maxzoom: 15,
+        paint: {
+          'heatmap-weight': [
+            'interpolate',
+            ['linear'],
+            ['get', 'intensity'],
+            0, 0,
+            1, 1
+          ],
+          'heatmap-intensity': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            0, 1,
+            15, 3
+          ],
+          'heatmap-color': [
+            'interpolate',
+            ['linear'],
+            ['heatmap-density'],
+            0, 'rgba(33, 102, 172, 0)',
+            0.2, 'rgb(103, 169, 207)',
+            0.4, 'rgb(209, 229, 240)',
+            0.6, 'rgb(253, 219, 199)',
+            0.8, 'rgb(239, 138, 98)',
+            1, 'rgb(178, 24, 43)'
+          ],
+          'heatmap-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            0, 2,
+            15, 20
+          ],
+          'heatmap-opacity': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            7, 1,
+            15, 0
+          ]
+        }
+      });
+    }
+  }
+
+  updateRealTimeUserLocationInHeatmap(location: { lat: number; lng: number }) {
+    if (!this.map) return;
+
+    const sourceId = 'real-time-user-location';
+    const source = this.map.getSource(sourceId) as mapboxgl.GeoJSONSource;
+
+    if (source) {
+      source.setData({
+        type: 'FeatureCollection',
+        features: [{
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: [location.lng, location.lat]
+          },
+          properties: {
+            intensity: 1.0,
+            timestamp: Date.now()
+          }
+        }]
+      });
+    }
+  }
+
+  removeRealTimeUserLocationFromHeatmap() {
+    if (!this.map) return;
+
+    const sourceId = 'real-time-user-location';
+    const layerId = 'real-time-user-location-layer';
+
+    if (this.map.getLayer(layerId)) {
+      this.map.removeLayer(layerId);
+    }
+    if (this.map.getSource(sourceId)) {
+      this.map.removeSource(sourceId);
+    }
   }
 
   private setupResizeListener() {
@@ -91,6 +359,9 @@ export class HomePage implements OnInit, OnDestroy {
 
   private async initializeApp() {
     try {
+      // Request location permissions first
+      await this.requestLocationPermissions();
+      
       const location = await this.locationService.getCurrentLocation();
       this.currentLocation = location;
       console.log('Current location set:', this.currentLocation);
@@ -103,11 +374,95 @@ export class HomePage implements OnInit, OnDestroy {
       this.initializeMap();
     } catch (error) {
       console.error('Error initializing app:', error);
+      this.handleLocationError(error);
+    }
+  }
+
+  private async requestLocationPermissions(): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        this.notificationService.error(
+          'Location Not Supported',
+          'Your device does not support location services.',
+          'OK',
+          5000
+        );
+        resolve(false);
+        return;
+      }
+
+      // Check if permissions are already granted
+      if (navigator.permissions) {
+        navigator.permissions.query({ name: 'geolocation' }).then((result) => {
+          if (result.state === 'granted') {
+            resolve(true);
+          } else if (result.state === 'prompt') {
+            // Permission will be requested when getCurrentPosition is called
+            resolve(true);
+          } else {
+            this.notificationService.warning(
+              'Location Permission Required',
+              'Please enable location access in your browser settings to use real-time tracking.',
+              'OK',
+              5000
+            );
+            resolve(false);
+          }
+        }).catch(() => {
+          // Fallback if permissions API is not supported
+          resolve(true);
+        });
+      } else {
+        // Fallback for browsers without permissions API
+        resolve(true);
+      }
+    });
+  }
+
+  private handleLocationError(error: any) {
+    let errorMessage = 'Unable to get your location';
+    let shouldUseDefault = true;
+
+    if (error.code) {
+      switch (error.code) {
+        case 1: // PERMISSION_DENIED
+          errorMessage = 'Location access denied. Please enable location permissions in your browser settings.';
+          this.notificationService.error(
+            'Location Permission Denied',
+            errorMessage,
+            'OK',
+            5000
+          );
+          break;
+        case 2: // POSITION_UNAVAILABLE
+          errorMessage = 'Location information is unavailable. Please check your GPS settings.';
+          this.notificationService.warning(
+            'Location Unavailable',
+            errorMessage,
+            'OK',
+            5000
+          );
+          break;
+        case 3: // TIMEOUT
+          errorMessage = 'Location request timed out. Please try again.';
+          this.notificationService.warning(
+            'Location Timeout',
+            errorMessage,
+            'OK',
+            3000
+          );
+          break;
+        default:
+          errorMessage = 'An unknown location error occurred.';
+          break;
+      }
+    }
+
+    if (shouldUseDefault) {
       this.currentLocation = { lat: 10.3157, lng: 123.8854 };
       console.log('Using default location due to error:', this.currentLocation);
       
       this.zoneEngine.updateCurrentLocation(this.currentLocation);
-      
       this.initializeMap();
     }
   }
@@ -265,7 +620,58 @@ export class HomePage implements OnInit, OnDestroy {
       attributionControl: false
     });
 
-    new mapboxgl.Marker()
+    // Create a custom live marker element
+    const markerElement = document.createElement('div');
+    markerElement.className = 'live-user-marker';
+    markerElement.innerHTML = `
+      <div class="marker-pulse"></div>
+      <div class="marker-icon">📍</div>
+    `;
+
+    // Add custom CSS for the live marker
+    const style = document.createElement('style');
+    style.textContent = `
+      .live-user-marker {
+        position: relative;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .marker-pulse {
+        position: absolute;
+        width: 40px;
+        height: 40px;
+        border: 3px solid #4CAF50;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+        opacity: 0.7;
+      }
+      .marker-icon {
+        position: relative;
+        z-index: 1;
+        font-size: 20px;
+        filter: drop-shadow(0 0 3px rgba(0,0,0,0.3));
+      }
+      @keyframes pulse {
+        0% {
+          transform: scale(0.8);
+          opacity: 0.7;
+        }
+        50% {
+          transform: scale(1.2);
+          opacity: 0.3;
+        }
+        100% {
+          transform: scale(0.8);
+          opacity: 0.7;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+
+    this.userMarker = new mapboxgl.Marker(markerElement)
       .setLngLat([this.currentLocation.lng, this.currentLocation.lat])
       .addTo(this.map);
 
@@ -285,8 +691,7 @@ export class HomePage implements OnInit, OnDestroy {
       }, 500);
       
       this.loadZones();
-      
-      
+      this.startRealTimeTracking();
     });
   }
 
@@ -862,9 +1267,13 @@ export class HomePage implements OnInit, OnDestroy {
           this.addZoneLayer(zone, index);
         });
       }
+      
+      // Add real-time user location to heatmap
+      this.addRealTimeUserLocationToHeatmap();
     } else {
       
       this.removeDangerZones();
+      this.removeRealTimeUserLocationFromHeatmap();
     }
 
     console.log('Heatmap updated successfully');

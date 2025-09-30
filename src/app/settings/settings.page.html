@@ -58,12 +58,12 @@
   <div class="settings-form">
     
     <div class="form-row">
-      <div class="section-header">
+      <div class="section-header" (click)="toggleSection('account')">
         <span>{{ 'SETTINGS.ACCOUNT_SECURITY' | translate }}</span>
         <div class="section-underline"></div>
       </div>
       
-      <div class="settings-list">
+      <div class="settings-list collapsible" [class.open]="expandAccountSecurity">
         <div class="setting-item" (click)="changePassword()">
           <div class="setting-left">
             <ion-icon name="key-outline" class="setting-icon"></ion-icon>
@@ -101,12 +101,12 @@
 
     
     <div class="form-row">
-      <div class="section-header">
+      <div class="section-header" (click)="toggleSection('location')">
         <span>{{ 'SETTINGS.LOCATION_ALERTS' | translate }}</span>
         <div class="section-underline"></div>
       </div>
       
-      <div class="settings-list">
+      <div class="settings-list collapsible" [class.open]="expandLocationAlerts">
         <div class="setting-item">
           <div class="setting-left">
             <ion-icon name="location-outline" class="setting-icon"></ion-icon>
@@ -146,18 +146,36 @@
 
     
     <div class="form-row">
-      <div class="section-header">
+      <div class="section-header" (click)="toggleSection('notifications')">
         <span>{{ 'SETTINGS.NOTIFICATIONS' | translate }}</span>
         <div class="section-underline"></div>
       </div>
       
-      <div class="settings-list">
-        <div class="setting-item">
+      <div class="settings-list collapsible" [class.open]="expandNotifications">
+        <div class="setting-item" (click)="smartVibrationOptionsOpen = !smartVibrationOptionsOpen">
           <div class="setting-left">
             <ion-icon name="vibrate-outline" class="setting-icon"></ion-icon>
             <span class="setting-label">{{ 'SETTINGS.SMART_VIBRATION' | translate }}</span>
           </div>
-          <ion-toggle [(ngModel)]="smartVibration" (ionChange)="toggleSmartVibration()"></ion-toggle>
+          <ion-toggle [(ngModel)]="smartVibration" (ionChange)="toggleSmartVibration()" (click)="$event.stopPropagation()"></ion-toggle>
+        </div>
+        <!-- Smart Vibration subpanel -->
+        <div class="subpanel" [class.open]="smartVibrationOptionsOpen">
+          <div class="sub-item">
+            <span>Pattern</span>
+            <ion-segment [(ngModel)]="selectedVibrationPattern">
+              <ion-segment-button value="gentle"><ion-label>Gentle</ion-label></ion-segment-button>
+              <ion-segment-button value="default"><ion-label>Default</ion-label></ion-segment-button>
+              <ion-segment-button value="strong"><ion-label>Strong</ion-label></ion-segment-button>
+            </ion-segment>
+          </div>
+          <div class="sub-item">
+            <span>Duration</span>
+            <ion-range min="50" max="500" step="10" [(ngModel)]="vibrationDuration">
+              <ion-label slot="start">50ms</ion-label>
+              <ion-label slot="end">500ms</ion-label>
+            </ion-range>
+          </div>
         </div>
 
         <div class="setting-item" (click)="alertSounds()">
@@ -195,12 +213,12 @@
 
     
     <div class="form-row">
-      <div class="section-header">
+      <div class="section-header" (click)="toggleSection('localization')">
         <span>{{ 'SETTINGS.LOCALIZATION' | translate }}</span>
         <div class="section-underline"></div>
       </div>
       
-      <div class="settings-list">
+      <div class="settings-list collapsible" [class.open]="expandLocalization">
         <div class="setting-item" (click)="appLanguage()">
           <div class="setting-left">
             <ion-icon name="language-outline" class="setting-icon"></ion-icon>
@@ -250,12 +268,12 @@
 
     
     <div class="form-row">
-      <div class="section-header">
+      <div class="section-header" (click)="toggleSection('legal')">
         <span>{{ 'SETTINGS.LEGAL_SUPPORT' | translate }}</span>
         <div class="section-underline"></div>
       </div>
       
-      <div class="settings-list">
+      <div class="settings-list collapsible" [class.open]="expandLegalSupport">
         <div class="setting-item" (click)="termsOfService()">
           <div class="setting-left">
             <ion-icon name="document-text-outline" class="setting-icon"></ion-icon>

@@ -33,6 +33,11 @@ export class ReportsPage implements OnInit, OnDestroy {
     isBlocked: false
   };
 
+  // Time and Date functionality
+  customDateTime: Date | null = null;
+  isCustomTimeEnabled = false;
+  currentDateTime: Date = new Date();
+
   incidentTypes = [
     { value: 'crime-theft', label: 'Crime / Theft', icon: 'shield-outline' },
     { value: 'accident', label: 'Accident', icon: 'car-outline' },
@@ -66,6 +71,12 @@ export class ReportsPage implements OnInit, OnDestroy {
     this.loadRateLimitStatus();
     this.loadLastKnownLocation();
     this.checkGPSAccuracy();
+    this.updateCurrentDateTime();
+    
+    // Update current time every minute
+    setInterval(() => {
+      this.updateCurrentDateTime();
+    }, 60000);
   }
 
   ngOnDestroy() {
@@ -124,6 +135,9 @@ export class ReportsPage implements OnInit, OnDestroy {
       await this.updateLocationAddress();
       await this.saveLastKnownLocation();
       this.initializeMap();
+      
+      // Start real-time location tracking for reports
+      this.startRealTimeLocationTracking();
     } catch (error) {
       console.error('Error getting location:', error);
       this.isOffline = true;
@@ -153,6 +167,18 @@ export class ReportsPage implements OnInit, OnDestroy {
       }
       this.initializeMap();
     }
+  }
+
+  private startRealTimeLocationTracking() {
+    // Subscribe to real-time location updates
+    this.locationService.currentLocation$.subscribe(location => {
+      if (location && !this.isLocationEditMode) {
+        this.currentLocation = location;
+        this.selectedLocation = location;
+        this.updateMapLocation();
+        this.updateLocationAddress();
+      }
+    });
   }
 
   async refreshLocation() {
@@ -451,7 +477,9 @@ export class ReportsPage implements OnInit, OnDestroy {
         },
         anonymous: formData.anonymous,
         media: mediaFiles,
-        isSilent: false
+        isSilent: false,
+        // Include custom time/date if set
+        customDateTime: this.isCustomTimeEnabled ? this.customDateTime : null
       };
 
       await this.reportService.submitReport(reportFormData);
@@ -460,6 +488,9 @@ export class ReportsPage implements OnInit, OnDestroy {
       this.reportForm.reset();
       this.selectedLocation = this.currentLocation;
       this.selectedIncidentType = '';
+      // Reset time settings
+      this.customDateTime = null;
+      this.isCustomTimeEnabled = false;
 
     } catch (error) {
       console.error('Error submitting report:', error);
@@ -744,6 +775,119 @@ export class ReportsPage implements OnInit, OnDestroy {
     } catch (error) {
       console.error('Error resetting to current location:', error);
       this.notificationService.error('Error', 'Failed to get current location', 'OK', 3000);
+    }
+  }
+
+  // Time and Date methods
+  updateCurrentDateTime() {
+    this.currentDateTime = new Date();
+  }
+
+  getDisplayDateTime(): Date {
+    return this.isCustomTimeEnabled && this.customDateTime ? this.customDateTime : this.currentDateTime;
+  }
+
+  formatDateTime(date: Date): string {
+    return date.toLocaleString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  }
+
+  formatTimeOnly(date: Date): string {
+    return date.toLocaleString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  }
+
+  formatDateOnly(date: Date): string {
+    return date.toLocaleString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  }
+
+  async openDateTimePicker() {
+    const alert = await this.alertController.create({
+      header: 'Set Date & Time',
+      message: 'Choose the date and time for this incident',
+      inputs: [
+        {
+          name: 'date',
+          type: 'date',
+          value: this.getDisplayDateTime().toISOString().split('T')[0],
+          min: '2020-01-01',
+          max: new Date().toISOString().split('T')[0]
+        },
+        {
+          name: 'time',
+          type: 'time',
+          value: this.getDisplayDateTime().toTimeString().slice(0, 5)
+        }
+      ],
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'Set Current Time',
+          handler: () => {
+            this.resetToCurrentTime();
+          }
+        },
+        {
+          text: 'Set Custom Time',
+          handler: (data) => {
+            this.setCustomDateTime(data.date, data.time);
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  resetToCurrentTime() {
+    this.customDateTime = null;
+    this.isCustomTimeEnabled = false;
+    this.updateCurrentDateTime();
+  }
+
+  setCustomDateTime(dateString: string, timeString: string) {
+    try {
+      const [year, month, day] = dateString.split('-').map(Number);
+      const [hours, minutes] = timeString.split(':').map(Number);
+      
+      this.customDateTime = new Date(year, month - 1, day, hours, minutes);
+      this.isCustomTimeEnabled = true;
+      
+      this.notificationService.success(
+        'Time Set', 
+        `Incident time set to ${this.formatDateTime(this.customDateTime)}`, 
+        'OK', 
+        2000
+      );
+    } catch (error) {
+      console.error('Error setting custom date/time:', error);
+      this.notificationService.error('Error', 'Invalid date or time format', 'OK', 3000);
+    }
+  }
+
+  toggleCustomTime() {
+    if (this.isCustomTimeEnabled) {
+      this.resetToCurrentTime();
+    } else {
+      this.openDateTimePicker();
     }
   }
 }

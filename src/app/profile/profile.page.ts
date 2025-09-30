@@ -50,7 +50,7 @@ export class ProfilePage implements OnInit {
 
   ngOnInit() {
     console.log('ProfilePage: ngOnInit called');
-    this.loadUserProfile();
+    // Load happens on ionViewWillEnter to avoid duplicate calls
     
     // Expose debug methods to global scope for testing
     (window as any).profileDebug = {
@@ -65,6 +65,16 @@ export class ProfilePage implements OnInit {
     console.log('ProfilePage: ionViewWillEnter called');
     // Reload profile data when entering the page
     this.loadUserProfile();
+  }
+
+  // Pull-to-refresh handler
+  async handleRefresh(event: any) {
+    try {
+      await this.loadUserProfile();
+    } finally {
+      // Finish refresher promptly for snappy UX
+      setTimeout(() => event.target.complete(), 400);
+    }
   }
 
   // Debug method to check user data - you can call this from browser console
@@ -87,7 +97,17 @@ export class ProfilePage implements OnInit {
   // Method to manually refresh profile data
   async refreshProfile() {
     console.log('Manually refreshing profile...');
-    await this.loadUserProfile();
+    // Brief loader for manual refresh only
+    const loading = await this.loadingController.create({
+      message: 'Refreshing profile...'
+    });
+    await loading.present();
+    try {
+      await this.loadUserProfile();
+    } finally {
+      // Ensure dismiss quickly to avoid long blocking loader
+      setTimeout(() => loading.dismiss(), 400);
+    }
   }
 
   // Method to check if profile data is properly loaded
@@ -107,11 +127,6 @@ export class ProfilePage implements OnInit {
   }
 
   async loadUserProfile() {
-    const loading = await this.loadingController.create({
-      message: 'Loading profile...'
-    });
-    await loading.present();
-
     try {
       console.log('=== PROFILE LOADING START ===');
       
@@ -219,20 +234,18 @@ export class ProfilePage implements OnInit {
           console.log('Emergency contacts count:', this.emergencyContacts.length);
           console.log('=== END USER DATA PROCESSING ===');
           
-          this.showToast('Profile loaded successfully', 'success');
+          // Optional toast disabled by default
         } else {
           console.log('No user data found in Firestore');
-          this.showToast('No user data found. Please complete your profile.', 'warning');
+          // Optional toast disabled by default
         }
       } else {
         console.log('No current user found');
-        this.showToast('No user logged in', 'danger');
+        // Optional toast disabled by default
       }
     } catch (error) {
       console.error('Error in loadUserProfile:', error);
-      this.showToast('Failed to load profile', 'danger');
-    } finally {
-      await loading.dismiss();
+      // Optional toast disabled by default
     }
   }
 
@@ -279,11 +292,11 @@ export class ProfilePage implements OnInit {
 
           await this.userService.updateUserData(currentUser.uid, updateData);
           this.isEditing = false;
-          this.showToast('Profile updated successfully', 'success');
+          // Notification disabled per request
         }
       } catch (error) {
         console.error('Error updating profile:', error);
-        this.showToast('Failed to update profile', 'danger');
+        // Notification disabled per request
       } finally {
         await loading.dismiss();
       }
@@ -303,7 +316,7 @@ export class ProfilePage implements OnInit {
         // Compress the image to reduce base64 size
         const compressedImage = await this.compressImage(image.dataUrl);
         this.profileImage = compressedImage;
-        this.showToast('Image selected successfully', 'success');
+        // Notification disabled per request
       }
     } catch (error: any) {
       // Handle user cancellation gracefully
@@ -313,7 +326,7 @@ export class ProfilePage implements OnInit {
       }
       
       console.error('Error selecting image:', error);
-      this.showToast('Failed to select image', 'danger');
+      // Notification disabled per request
     }
   }
 
@@ -409,7 +422,7 @@ export class ProfilePage implements OnInit {
               };
               this.emergencyContacts.push(newContact);
             } else {
-              this.showToast('Please fill in all fields', 'warning');
+              // Notification disabled per request
             }
           }
         }
@@ -461,7 +474,7 @@ export class ProfilePage implements OnInit {
                 };
               }
             } else {
-              this.showToast('Please fill in all fields', 'warning');
+              // Notification disabled per request
             }
           }
         }
@@ -516,9 +529,10 @@ export class ProfilePage implements OnInit {
   private async showToast(message: string, color: 'success' | 'danger' | 'warning' = 'success') {
     const toast = await this.toastController.create({
       message,
-      duration: 3000,
+      duration: 2200,
       color,
-      position: 'bottom'
+      position: 'top',
+      cssClass: 'toast-top'
     });
     await toast.present();
   }

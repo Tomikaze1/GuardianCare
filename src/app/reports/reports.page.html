@@ -78,6 +78,62 @@
     </div>
 
     <div class="section-header">
+      <span>Incident Time & Date</span>
+      <div class="section-underline"></div>
+    </div>
+
+    <div class="form-row">
+      <div class="input-box time-date-box">
+        <div class="time-date-header">
+          <ion-icon name="time-outline" class="time-icon"></ion-icon>
+          <span class="time-title">When did this happen?</span>
+          <button type="button" class="edit-time-btn" (click)="toggleCustomTime()" [class.custom-active]="isCustomTimeEnabled">
+            <ion-icon [name]="isCustomTimeEnabled ? 'checkmark-circle' : 'create-outline'" class="edit-icon"></ion-icon>
+            <span>{{ isCustomTimeEnabled ? 'Custom Time Set' : 'Edit Time' }}</span>
+          </button>
+        </div>
+        
+        <div class="time-date-display">
+          <div class="current-time-display" [class.custom-time]="isCustomTimeEnabled">
+            <div class="time-main">
+              <ion-icon [name]="isCustomTimeEnabled ? 'calendar' : 'time'" class="display-icon"></ion-icon>
+              <div class="time-content">
+                <div class="time-text">{{ formatTimeOnly(getDisplayDateTime()) }}</div>
+                <div class="date-text">{{ formatDateOnly(getDisplayDateTime()) }}</div>
+              </div>
+            </div>
+            
+            <div class="time-status">
+              <ion-chip [color]="isCustomTimeEnabled ? 'warning' : 'success'" size="small">
+                <ion-icon [name]="isCustomTimeEnabled ? 'calendar-outline' : 'checkmark-circle-outline'"></ion-icon>
+                <ion-label>{{ isCustomTimeEnabled ? 'Custom Time' : 'Current Time' }}</ion-label>
+              </ion-chip>
+            </div>
+          </div>
+          
+          <div class="time-actions" *ngIf="isCustomTimeEnabled">
+            <ion-button
+              fill="clear"
+              size="small"
+              (click)="openDateTimePicker()"
+              class="action-btn edit-btn">
+              <ion-icon name="create-outline" slot="start"></ion-icon>
+              Change Time
+            </ion-button>
+            <ion-button
+              fill="clear"
+              size="small"
+              (click)="resetToCurrentTime()"
+              class="action-btn reset-btn">
+              <ion-icon name="refresh-outline" slot="start"></ion-icon>
+              Use Current Time
+            </ion-button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-header">
       <span>{{ 'REPORTS.MEDIA_UPLOAD' | translate }}</span>
       <div class="section-underline"></div>
     </div>

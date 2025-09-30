@@ -37,6 +37,35 @@
   pointer-events: auto;
 }
 
+.tracking-status {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(76, 175, 80, 0.9);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 1001;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.tracking-icon {
+  font-size: 14px;
+  animation: pulse 2s infinite;
+}
+
+.tracking-text {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 #panic-button {
   width: 70px;
   height: 70px;

@@ -1,4 +1,12 @@
 <ion-content class="profile-content" fullscreen>
+  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
+    <ion-refresher-content
+      pullingIcon="arrow-down-circle-outline"
+      pullingText="Pull to refresh"
+      refreshingSpinner="lines"
+      refreshingText="Refreshing...">
+    </ion-refresher-content>
+  </ion-refresher>
   <div class="logo-container">
     <div class="logo-wrapper">
       <div class="custom-logo">
