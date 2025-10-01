@@ -6,9 +6,9 @@ ion-tab-bar {
   z-index: 99;
   box-shadow: 0 -4px 16px rgba(197, 165, 176, 0.2);
   border-top: 1px solid rgba(197, 165, 176, 0.3);
-  padding: 8px 12px;
+  padding: 6px 12px;
   margin: 0;
-  height: 65px;
+  height: 56px;
   -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
 
@@ -29,10 +29,14 @@ ion-tab-bar {
     background: transparent;
     position: relative;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    min-width: 70px;
-    border-radius: 16px;
-    margin: 0 4px;
+    min-width: 60px;
+    max-width: 80px;
+    border-radius: 14px;
+    margin: 0 6px;
     overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     &::before {
       content: '';
@@ -48,9 +52,9 @@ ion-tab-bar {
     }
 
     ion-icon {
-      font-size: 1.3rem;
+      font-size: 1.6rem;
       color: rgba(255, 255, 255, 0.7);
-      margin-bottom: 4px;
+      margin: 0;
       transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
       transform: scale(1) translateY(0);
       filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
@@ -59,17 +63,7 @@ ion-tab-bar {
     }
 
     ion-label {
-      font-size: 0.7rem;
-      font-weight: 600;
-      font-family: 'Plus Jakarta Sans', Arial, sans-serif;
-      color: rgba(255, 255, 255, 0.7);
-      margin-top: 2px;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      transform: scale(1) translateY(0);
-      position: relative;
-      z-index: 2;
+      display: none;
     }
 
     &.tab-selected {
@@ -83,25 +77,18 @@ ion-tab-bar {
       
       ion-icon {
         color: #ffffff;
-        transform: scale(1.1) translateY(-1px);
-        filter: drop-shadow(0 3px 6px rgba(255, 255, 255, 0.3));
+        transform: scale(1.15) translateY(0);
+        filter: drop-shadow(0 3px 8px rgba(255, 255, 255, 0.4));
         animation: iconFloat 2s ease-in-out infinite;
-      }
-      
-      ion-label {
-        color: #ffffff;
-        transform: scale(1.05) translateY(-1px);
-        font-weight: 700;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
       }
       
       &::after {
         content: '';
         position: absolute;
-        bottom: -1px;
+        bottom: 2px;
         left: 50%;
         transform: translateX(-50%);
-        width: 16px;
+        width: 24px;
         height: 3px;
         background: linear-gradient(90deg, #ffffff 0%, rgba(255, 255, 255, 0.8) 100%);
         border-radius: 2px;
@@ -120,15 +107,9 @@ ion-tab-bar {
       }
       
       ion-icon {
-        transform: scale(1.05) translateY(-1px);
-        color: rgba(255, 255, 255, 0.9);
-        filter: drop-shadow(0 2px 4px rgba(255, 255, 255, 0.3));
-      }
-      
-      ion-label {
-        transform: scale(1.02) translateY(-1px);
-        color: rgba(255, 255, 255, 0.9);
-        font-weight: 600;
+        transform: scale(1.08) translateY(0);
+        color: rgba(255, 255, 255, 0.95);
+        filter: drop-shadow(0 2px 6px rgba(255, 255, 255, 0.3));
       }
     }
 
@@ -146,12 +127,6 @@ ion-tab-bar {
         transform: scale(1) translateY(0);
         color: rgba(255, 255, 255, 0.7);
         filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-      }
-      
-      ion-label {
-        transform: scale(1) translateY(0);
-        color: rgba(255, 255, 255, 0.7);
-        font-weight: 600;
       }
     }
 
@@ -188,10 +163,10 @@ ion-router-outlet > * {
 // Animation Keyframes
 @keyframes iconFloat {
   0%, 100% {
-    transform: scale(1.1) translateY(-1px);
+    transform: scale(1.15) translateY(0);
   }
   50% {
-    transform: scale(1.1) translateY(-2px);
+    transform: scale(1.15) translateY(-2px);
   }
 }
 
@@ -264,12 +239,6 @@ ion-tab-button[tab="settings"]:not(.tab-selected) {
     transform: scale(1) translateY(0) !important;
     color: rgba(255, 255, 255, 0.7) !important;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1)) !important;
-  }
-  
-  ion-label {
-    transform: scale(1) translateY(0) !important;
-    color: rgba(255, 255, 255, 0.7) !important;
-    font-weight: 600 !important;
   }
   
   &::after {

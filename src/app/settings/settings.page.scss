@@ -3,7 +3,7 @@
   min-height: 100vh;
   font-family: 'DM Sans', 'Plus Jakarta Sans', Arial, sans-serif;
   padding: 0;
-  padding-bottom: calc(env(safe-area-inset-bottom) + 150px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 100px);
 }
 
 // Logo/Title Section
@@ -136,7 +136,7 @@
   padding: 0 20px 20px 20px;
   gap: 0;
   /* Extra bottom space so last items aren't hidden by the tab bar */
-  padding-bottom: 80px;
+  padding-bottom: 60px;
 }
 
 .form-row {

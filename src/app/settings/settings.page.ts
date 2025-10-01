@@ -125,22 +125,47 @@ export class SettingsPage implements OnInit, OnDestroy {
 
   // Collapsible helpers
   toggleSection(section: 'account' | 'location' | 'notifications' | 'localization' | 'legal') {
+    // Store the current state of the clicked section
+    const isCurrentlyExpanded = this.getSectionState(section);
+    
+    // Close all sections first
+    this.expandAccountSecurity = false;
+    this.expandLocationAlerts = false;
+    this.expandNotifications = false;
+    this.expandLocalization = false;
+    this.expandLegalSupport = false;
+    
+    // If the clicked section was closed, open it (if it was open, keep it closed)
+    if (!isCurrentlyExpanded) {
+      switch (section) {
+        case 'account':
+          this.expandAccountSecurity = true;
+          break;
+        case 'location':
+          this.expandLocationAlerts = true;
+          break;
+        case 'notifications':
+          this.expandNotifications = true;
+          break;
+        case 'localization':
+          this.expandLocalization = true;
+          break;
+        case 'legal':
+          this.expandLegalSupport = true;
+          break;
+      }
+    }
+  }
+
+  // Helper method to get the current state of a section
+  private getSectionState(section: 'account' | 'location' | 'notifications' | 'localization' | 'legal'): boolean {
     switch (section) {
-      case 'account':
-        this.expandAccountSecurity = !this.expandAccountSecurity;
-        break;
-      case 'location':
-        this.expandLocationAlerts = !this.expandLocationAlerts;
-        break;
-      case 'notifications':
-        this.expandNotifications = !this.expandNotifications;
-        break;
-      case 'localization':
-        this.expandLocalization = !this.expandLocalization;
-        break;
-      case 'legal':
-        this.expandLegalSupport = !this.expandLegalSupport;
-        break;
+      case 'account': return this.expandAccountSecurity;
+      case 'location': return this.expandLocationAlerts;
+      case 'notifications': return this.expandNotifications;
+      case 'localization': return this.expandLocalization;
+      case 'legal': return this.expandLegalSupport;
+      default: return false;
     }
   }
 
