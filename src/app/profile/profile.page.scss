@@ -467,6 +467,29 @@ ion-toast.toast-top {
       margin-right: 8px;
     }
   }
+
+  .logout-btn {
+    font-size: 1.04rem;
+    font-weight: 700;
+    border-radius: 12px;
+    box-shadow: 0 2px 14px rgba(239, 68, 68, 0.2);
+    
+    ion-icon {
+      font-size: 1.13rem;
+      margin-right: 8px;
+    }
+  }
+
+  .refresh-profile-btn {
+    font-size: 1.04rem;
+    font-weight: 600;
+    border-radius: 12px;
+    
+    ion-icon {
+      font-size: 1.13rem;
+      margin-right: 8px;
+    }
+  }
   
   .edit-actions {
     display: flex;

@@ -99,8 +99,8 @@
   font-size: 1.08rem;
   font-weight: 800;
   color: #1a202c;
-  margin-top: 14px;
-  margin-bottom: 4px;
+  margin-top: 16px;
+  margin-bottom: 6px;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -136,12 +136,12 @@
   padding: 0 20px 20px 20px;
   gap: 0;
   /* Extra bottom space so last items aren't hidden by the tab bar */
-  padding-bottom: 40px;
+  padding-bottom: 80px;
 }
 
 .form-row {
   width: 100%;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 // About Card
@@ -150,7 +150,7 @@
   border: 1px solid #0b1220;
   border-radius: 16px;
   padding: 14px;
-  margin-bottom: 6px;
+  margin-bottom: 0;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
   transition: all 0.3s ease;
   
@@ -221,9 +221,9 @@
     margin-bottom: 0;
   }
   &.collapsible.open {
-    max-height: 800px;
+    max-height: 1000px;
     opacity: 1;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
   }
   
   .setting-item {
@@ -341,111 +341,6 @@
   }
 }
 
-
-// Button Row
-.button-row {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 14px;
-  
-  .logout-btn {
-    position: relative;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    font-weight: 600;
-    font-size: 0.95rem;
-    letter-spacing: 0.05em;
-    border-radius: 12px;
-    cursor: pointer;
-    border: none;
-    overflow: hidden;
-    flex: 1;
-    padding: 0;
-    transition: transform 0.2s ease;
-
-    span {
-      position: relative;
-      z-index: 10;
-      transition: color 0.4s;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0.6em 1em 0.6em 0.9em;
-      width: 100%;
-      font-weight: 600;
-      letter-spacing: 0.2px;
-    }
-
-    ion-icon {
-      width: 1.1em;
-      height: 1.1em;
-      margin-right: 0.45em;
-      transition: transform 0.3s ease;
-      color: white;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 50%;
-      padding: 0.25em;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    &::before,
-    &::after {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
-    }
-
-    &::before {
-      content: "";
-      background: rgba(255, 255, 255, 0.2);
-      width: 120%;
-      left: -10%;
-      transform: skew(30deg);
-      transition: transform 0.4s cubic-bezier(0.3, 1, 0.8, 1);
-    }
-
-    &:hover::before {
-      transform: translate3d(100%, 0, 0);
-    }
-
-    &:hover {
-      ion-icon {
-        transform: translateX(3px);
-      }
-    }
-
-    &:active {
-      transform: scale(0.95);
-    }
-
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-
-      &:hover::before {
-        transform: skew(30deg);
-      }
-    }
-  }
-  
-  .logout-btn {
-    background: linear-gradient(to right, #ef4444, #dc2626);
-  }
-  
-  // Logout only row - center the button
-  &.logout-only-row {
-    justify-content: center;
-    
-    .logout-btn {
-      flex: 0 0 auto;
-      min-width: 200px;
-    }
-  }
-}
 
 // Animations
 @keyframes textShimmer {

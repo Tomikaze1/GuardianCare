@@ -4,9 +4,12 @@ import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { AlertController, LoadingController, ToastController } from '@ionic/angular';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, Subscription } from 'rxjs';
+import { Router } from '@angular/router';
+import { AngularFireAuth } from '@angular/fire/compat/auth';
 
 import { AuthService } from '../services/auth.service';
 import { UserService } from '../services/user.service';
+import { NotificationService } from '../shared/services/notification.service';
 
 interface EmergencyContact {
   id: string;
@@ -39,7 +42,10 @@ export class ProfilePage implements OnInit {
     private alertController: AlertController,
     private loadingController: LoadingController,
     private toastController: ToastController,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private router: Router,
+    private afAuth: AngularFireAuth,
+    private notificationService: NotificationService
   ) {
     this.profileForm = this.fb.group({
       displayName: ['', [Validators.required, Validators.minLength(2)]],
@@ -537,5 +543,27 @@ export class ProfilePage implements OnInit {
       cssClass: 'toast-top'
     });
     await toast.present();
+  }
+
+  async logOut(): Promise<void> {
+    try {
+      const loading = await this.loadingController.create({
+        message: 'Logging out...',
+        spinner: 'crescent',
+        duration: 5000
+      });
+      await loading.present();
+
+      console.log('Starting logout process');
+      await this.afAuth.signOut();
+      await loading.dismiss();
+      
+      console.log('Logout successful, redirecting to login');
+      this.notificationService.success('Success!', 'Logged out successfully!', 'OK', 2000);
+      this.router.navigate(['/auth/login']);
+    } catch (error) {
+      console.error('Logout error:', error);
+      this.notificationService.error('Error', 'Failed to logout. Please try again.', 'OK', 3000);
+    }
   }
 }

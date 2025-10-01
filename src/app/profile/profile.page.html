@@ -176,6 +176,17 @@
           {{ 'PROFILE.EDIT_PROFILE' | translate }}
         </ion-button>
 
+        <ion-button 
+          *ngIf="!isEditing"
+          expand="block" 
+          fill="solid" 
+          color="danger"
+          (click)="logOut()"
+          class="logout-btn">
+          <ion-icon name="log-out-outline" slot="start"></ion-icon>
+          {{ 'PROFILE.LOGOUT' | translate }}
+        </ion-button>
+
         <div *ngIf="isEditing" class="edit-actions">
           <ion-button 
             expand="block" 

@@ -156,6 +156,7 @@
     "EDIT_PROFILE": "Edit Profile",
     "REFRESH_PROFILE": "Refresh Profile",
     "CANCEL": "Cancel",
-    "SAVE_CHANGES": "Save Changes"
+    "SAVE_CHANGES": "Save Changes",
+    "LOGOUT": "Logout"
   }
 }
