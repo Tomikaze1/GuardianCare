@@ -305,6 +305,19 @@
       </div>
     </div>
 
+    <!-- Reset Defaults Button -->
+    <div class="form-row">
+      <div class="settings-list">
+        <div class="setting-item" (click)="resetToDefaults()">
+          <div class="setting-left">
+            <ion-icon name="refresh-outline" class="setting-icon"></ion-icon>
+            <span class="setting-label">{{ 'SETTINGS.RESET_DEFAULTS' | translate }}</span>
+          </div>
+          <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+        </div>
+      </div>
+    </div>
+
     
     <div class="form-row">
       <div class="section-header">
@@ -419,19 +432,9 @@
       </div>
     </div>
     
+    <!-- Logout Button Only -->
     <div class="form-row">
-      <div class="section-header">
-        <span>{{ 'SETTINGS.ACCOUNT' | translate }}</span>
-        <div class="section-underline"></div>
-      </div>
-      
-      <div class="button-row">
-        <button class="reset-btn" (click)="resetToDefaults()">
-          <span>
-            <ion-icon name="refresh-outline"></ion-icon>
-            {{ 'SETTINGS.RESET_DEFAULTS' | translate }}
-          </span>
-        </button>
+      <div class="button-row logout-only-row">
         <button class="logout-btn" (click)="logOut()">
           <span>
             <ion-icon name="log-out-outline"></ion-icon>

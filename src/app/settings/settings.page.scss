@@ -341,13 +341,13 @@
   }
 }
 
+
 // Button Row
 .button-row {
   display: flex;
   gap: 8px;
   margin-bottom: 14px;
   
-  .reset-btn,
   .logout-btn {
     position: relative;
     font-family: 'Plus Jakarta Sans', sans-serif;
@@ -432,12 +432,18 @@
     }
   }
   
-  .reset-btn {
-    background: linear-gradient(to right, #6b7280, #4b5563);
-  }
-  
   .logout-btn {
     background: linear-gradient(to right, #ef4444, #dc2626);
+  }
+  
+  // Logout only row - center the button
+  &.logout-only-row {
+    justify-content: center;
+    
+    .logout-btn {
+      flex: 0 0 auto;
+      min-width: 200px;
+    }
   }
 }
 
