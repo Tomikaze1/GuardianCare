@@ -1,6 +1,6 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { ToastController, AlertController, LoadingController } from '@ionic/angular';
+import { ToastController, AlertController, LoadingController, IonContent } from '@ionic/angular';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { Router } from '@angular/router';
 import { UserService } from '../services/user.service';
@@ -23,6 +23,7 @@ export class SettingsPage implements OnInit, OnDestroy {
   userProfile: any = null;
   userReports: Report[] = [];
   private subscriptions: Subscription[] = [];
+  @ViewChild(IonContent, { static: false }) content?: IonContent;
   
   // Account & Security
   twoFactorEnabled = false;
@@ -117,6 +118,11 @@ export class SettingsPage implements OnInit, OnDestroy {
     
     // Check GPS status on page load
     this.checkGPSStatus();
+  }
+
+  ionViewWillEnter() {
+    // Scroll to top whenever entering this tab
+    this.content?.scrollToTop(0);
   }
 
   ngOnDestroy() {

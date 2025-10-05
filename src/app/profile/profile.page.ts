@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { IonContent } from '@ionic/angular';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { AlertController, LoadingController, ToastController } from '@ionic/angular';
@@ -34,6 +35,7 @@ export class ProfilePage implements OnInit {
   editingContactId: string | null = null;
 
   private userSubscription: Subscription = new Subscription();
+  @ViewChild(IonContent, { static: false }) content?: IonContent;
 
   constructor(
     private fb: FormBuilder,
@@ -69,6 +71,8 @@ export class ProfilePage implements OnInit {
 
   ionViewWillEnter() {
     console.log('ProfilePage: ionViewWillEnter called');
+    // Ensure view starts at the top when entering
+    this.content?.scrollToTop(0);
     // Reload profile data when entering the page
     this.loadUserProfile();
   }

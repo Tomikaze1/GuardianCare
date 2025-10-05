@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
-import { AlertController, LoadingController, ToastController } from '@ionic/angular';
+import { AlertController, LoadingController, ToastController, IonContent } from '@ionic/angular';
 import { TranslateService } from '@ngx-translate/core';
 import { LocationService } from '../services/location.service';
 import { ZoneDangerEngineService, DangerZone } from '../services/zone-danger-engine.service';
@@ -38,6 +38,7 @@ export class HomePage implements OnInit, OnDestroy {
   private trackingInterval = 3000; // 3 seconds for real-time updates
   batteryOptimizationMode = false;
   private trackingMode: 'high' | 'medium' | 'low' = 'medium';
+  @ViewChild(IonContent, { static: false }) content?: IonContent;
 
   constructor(
     private locationService: LocationService,
@@ -59,6 +60,8 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   ionViewWillEnter() {
+    // Ensure content starts at the top whenever this tab becomes active
+    this.content?.scrollToTop(0);
     this.zoneEngine.initializeZones();
     this.loadUiModePreference();
   }

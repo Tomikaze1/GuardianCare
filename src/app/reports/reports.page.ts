@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { IonContent } from '@ionic/angular';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AlertController, LoadingController } from '@ionic/angular';
 import { Camera, CameraResultType, CameraSource, Photo } from '@capacitor/camera';
@@ -32,6 +33,7 @@ export class ReportsPage implements OnInit, OnDestroy {
     timeUntilReset: '',
     isBlocked: false
   };
+  @ViewChild(IonContent, { static: false }) content?: IonContent;
 
   // Time and Date functionality
   customDateTime: Date | null = null;
@@ -77,6 +79,11 @@ export class ReportsPage implements OnInit, OnDestroy {
     setInterval(() => {
       this.updateCurrentDateTime();
     }, 60000);
+  }
+
+  ionViewWillEnter() {
+    // Always start at top when entering this tab
+    this.content?.scrollToTop(0);
   }
 
   ngOnDestroy() {
