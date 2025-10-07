@@ -1341,6 +1341,12 @@ export class HomePage implements OnInit, OnDestroy {
     
     console.log(`Zone ${zone.name} - Color: ${color}, Opacity: ${opacity}`);
 
+    // Compute zone center from provided polygon coordinates
+    const lngSum = zone.coordinates.reduce((sum, coord) => sum + coord[0], 0);
+    const latSum = zone.coordinates.reduce((sum, coord) => sum + coord[1], 0);
+    const centerLng = lngSum / zone.coordinates.length;
+    const centerLat = latSum / zone.coordinates.length;
+
     this.map!.addSource(sourceId, {
       type: 'geojson',
       data: {
@@ -1351,37 +1357,53 @@ export class HomePage implements OnInit, OnDestroy {
           incidents: zone.incidents
         },
         geometry: {
-          type: 'Polygon',
-          coordinates: [zone.coordinates]
+          type: 'Point',
+          coordinates: [centerLng, centerLat]
         }
       }
     });
 
-    this.map!.addLayer({
-      id: layerId,
-      type: 'fill',
-      source: sourceId,
-      paint: {
-        'fill-color': color,
-        'fill-opacity': opacity
-      }
-    });
+    const baseRadius = this.getZoneRadius(zone.level);
 
     this.map!.addLayer({
-      id: `${layerId}-border`,
-      type: 'line',
+      id: layerId,
+      type: 'circle',
       source: sourceId,
       paint: {
-        'line-color': color,
-        'line-width': 2,
-        'line-opacity': 0.8
+        'circle-color': color,
+        'circle-opacity': opacity,
+        // Scale radius with zoom to keep a consistent look
+        'circle-radius': [
+          'interpolate', ['linear'], ['zoom'],
+          10, Math.max(10, Math.round(baseRadius * 0.5)),
+          12, baseRadius,
+          14, Math.round(baseRadius * 1.4),
+          16, Math.round(baseRadius * 2.0)
+        ],
+        'circle-stroke-color': color,
+        'circle-stroke-opacity': 0.9,
+        'circle-stroke-width': 2
       }
     });
 
     this.zoneLayers.push(layerId);
-    this.zoneLayers.push(`${layerId}-border`);
     
     console.log(`Successfully added zone: ${zone.name}. Total zone layers: ${this.zoneLayers.length}`);
+  }
+
+  private getZoneRadius(level: string): number {
+    switch (level) {
+      case 'Danger':
+        return 60; // pixels at zoom 12
+      case 'Caution':
+        return 50;
+      case 'Neutral':
+        return 40;
+      case 'Safe':
+        return 35;
+      default:
+        return 40;
+    }
   }
 
   private getZoneOpacity(level: string): number {

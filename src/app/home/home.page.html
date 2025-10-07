@@ -11,41 +11,13 @@
         <ion-label>{{ 'HOME.ACTIONS.PANIC' | translate }}</ion-label>
         <ion-note slot="end" class="menu-note">{{ 'HOME.ACTIONS.PANIC_NOTE' | translate }}</ion-note>
       </ion-item>
-      <ion-item class="menu-item primary" button (click)="refreshLocation()" [disabled]="isRefreshingLocation">
-        <ion-icon name="refresh" slot="start"></ion-icon>
-        <ion-label>{{ 'HOME.ACTIONS.REFRESH' | translate }}</ion-label>
-        <ion-spinner *ngIf="isRefreshingLocation" name="lines" slot="end"></ion-spinner>
-        <ion-note *ngIf="!isRefreshingLocation" slot="end" class="menu-note">{{ 'HOME.ACTIONS.REFRESH_NOTE' | translate }}</ion-note>
-      </ion-item>
       <ion-item class="menu-item accent" button (click)="toggleHeatmap()">
         <ion-icon name="flame" slot="start"></ion-icon>
         <ion-label>{{ 'HOME.ACTIONS.HEATMAP' | translate }}</ion-label>
         <ion-badge slot="end" color="warning" *ngIf="isHeatmapVisible">On</ion-badge>
         <ion-note slot="end" class="menu-note" *ngIf="!isHeatmapVisible">{{ 'HOME.ACTIONS.HEATMAP_NOTE' | translate }}</ion-note>
       </ion-item>
-      <ion-item class="menu-item success" button (click)="toggleBatteryOptimization()">
-        <ion-icon name="battery-half" slot="start"></ion-icon>
-        <ion-label>Battery Optimization</ion-label>
-        <ion-badge slot="end" color="success" *ngIf="batteryOptimizationMode">ON</ion-badge>
-        <ion-note slot="end" class="menu-note" *ngIf="!batteryOptimizationMode">Save battery</ion-note>
-      </ion-item>
-
-      <div class="menu-section">{{ 'HOME.ACTIONS.TESTING' | translate }}</div>
-      <ion-item class="menu-item info" button (click)="testIncidentAlerts()">
-        <ion-icon name="bug" slot="start"></ion-icon>
-        <ion-label>{{ 'HOME.ACTIONS.TEST_INCIDENTS' | translate }}</ion-label>
-        <ion-note slot="end" class="menu-note">{{ 'HOME.ACTIONS.SIMULATE' | translate }}</ion-note>
-      </ion-item>
-      <ion-item class="menu-item danger" button (click)="testRedZoneEntry()">
-        <ion-icon name="warning" slot="start"></ion-icon>
-        <ion-label>{{ 'HOME.ACTIONS.TEST_RED_ZONE' | translate }}</ion-label>
-        <ion-note slot="end" class="menu-note">{{ 'HOME.ACTIONS.SIMULATE' | translate }}</ion-note>
-      </ion-item>
-      <ion-item class="menu-item success" button (click)="testTimeBasedZoneChanges()">
-        <ion-icon name="time" slot="start"></ion-icon>
-        <ion-label>{{ 'HOME.ACTIONS.TEST_TIME_ZONES' | translate }}</ion-label>
-        <ion-note slot="end" class="menu-note">{{ 'HOME.ACTIONS.SIMULATE' | translate }}</ion-note>
-      </ion-item>
+      
     </ion-list>
   </ion-content>
   
@@ -94,11 +66,6 @@
   </div>
 
   <div class="floating-ui" *ngIf="uiMode === 'buttons'">
-    <!-- Real-time tracking status indicator -->
-    <div class="tracking-status" *ngIf="isRealTimeTracking">
-      <ion-icon name="radio" class="tracking-icon"></ion-icon>
-      <span class="tracking-text">Live Tracking</span>
-    </div>
     <ion-button 
       id="panic-button" 
       (click)="triggerPanicButton()" 
@@ -108,42 +75,10 @@
     </ion-button>
 
     <ion-button 
-      id="refresh-location" 
-      (click)="refreshLocation()" 
-      [disabled]="isRefreshingLocation"
-      color="primary">
-      <ion-icon name="refresh" [class.spin]="isRefreshingLocation"></ion-icon>
-    </ion-button>
-
-    <ion-button 
       id="heatmap-toggle" 
       (click)="toggleHeatmap()" 
       [color]="isHeatmapVisible ? 'warning' : 'primary'">
       <ion-icon name="flame"></ion-icon>
-    </ion-button>
-
-    <ion-button 
-      id="test-incidents" 
-      (click)="testIncidentAlerts()" 
-      color="secondary"
-      class="test-button">
-      <ion-icon name="bug"></ion-icon>
-    </ion-button>
-
-    <ion-button 
-      id="test-red-zone" 
-      (click)="testRedZoneEntry()" 
-      color="danger"
-      class="test-button">
-      <ion-icon name="warning"></ion-icon>
-    </ion-button>
-
-    <ion-button 
-      id="test-time-zones" 
-      (click)="testTimeBasedZoneChanges()" 
-      color="tertiary"
-      class="test-button">
-      <ion-icon name="time"></ion-icon>
     </ion-button>
   </div>
 
