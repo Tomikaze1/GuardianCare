@@ -46,22 +46,23 @@
   <div id="map"></div>
   
   <div class="heatmap-legend" *ngIf="isHeatmapVisible">
-    <div class="legend-title">Zone Levels</div>
+    <div class="legend-title">Validated Reports</div>
+    <div class="legend-subtitle">Based on admin-validated user reports</div>
     <div class="legend-item">
       <div class="legend-color safe"></div>
-      <span class="legend-label">Safe</span>
+      <span class="legend-label">Low Risk</span>
     </div>
     <div class="legend-item">
       <div class="legend-color neutral"></div>
-      <span class="legend-label">Neutral</span>
+      <span class="legend-label">Moderate Risk</span>
     </div>
     <div class="legend-item">
       <div class="legend-color caution"></div>
-      <span class="legend-label">Caution</span>
+      <span class="legend-label">High Risk</span>
     </div>
     <div class="legend-item">
       <div class="legend-color danger"></div>
-      <span class="legend-label">Danger</span>
+      <span class="legend-label">Critical Risk</span>
     </div>
   </div>
 

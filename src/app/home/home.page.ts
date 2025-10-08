@@ -20,6 +20,8 @@ export class HomePage implements OnInit, OnDestroy {
   currentLocation: { lat: number; lng: number } | null = null;
   zones: DangerZone[] = [];
   zoneLayers: string[] = [];
+  reportMarkers: mapboxgl.Marker[] = []; // For individual report markers
+  validatedReports: any[] = []; // Store validated reports directly
   isHeatmapVisible = false;
   isPanicActive = false;
   inDangerZone = false;
@@ -70,6 +72,9 @@ export class HomePage implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.subscriptions.forEach(sub => sub.unsubscribe());
     this.stopRealTimeTracking();
+    // Remove report markers
+    this.reportMarkers.forEach(marker => marker.remove());
+    this.reportMarkers = [];
     if (this.map) {
       this.map.remove();
     }
@@ -611,7 +616,8 @@ export class HomePage implements OnInit, OnDestroy {
     if (!this.currentLocation) return;
     (mapboxgl as any).accessToken = 'pk.eyJ1IjoidG9taWthemUxIiwiYSI6ImNtY25rM3NxazB2ZG8ybHFxeHVoZWthd28ifQ.Vnf9pMEQAryEI2rMJeMQGQ';
     
-    const mapStyle = this.isHeatmapVisible ? 'mapbox://styles/mapbox/dark-v10' : 'mapbox://styles/mapbox/streets-v11';
+    // Normal colorful map, will switch to light-v11 when heatmap is toggled
+    const mapStyle = 'mapbox://styles/mapbox/streets-v11';
     
     this.map = new mapboxgl.Map({
       container: 'map',
@@ -902,349 +908,46 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   loadZones() {
-    console.log('Loading zones...');
+    console.log('Loading validated reports for heatmap...');
     this.zoneEngine.zones$.subscribe({
       next: (zones) => {
-        console.log('Zones loaded from service:', zones);
+        console.log('Validated report zones loaded from service:', zones);
         
-        if (!zones || zones.length === 0) {
-          console.log('No zones from service, adding sample zones');
-          this.zones = this.getSampleZones();
-        } else {
-          this.zones = zones;
+        // Store zones for backward compatibility
+        this.zones = zones || [];
+        
+        // Extract validated reports from zones for marker display
+        this.validatedReports = zones.map(zone => ({
+          id: zone.id,
+          type: zone.name,
+          location: {
+            lat: zone.coordinates[0][1], // Get center lat
+            lng: zone.coordinates[0][0]  // Get center lng
+          },
+          riskLevel: Math.round(zone.currentSeverity / 2), // Convert 0-10 to 0-5
+          level: zone.level,
+          description: zone.incidents[0]?.description || 'Validated incident report',
+          timestamp: zone.incidents[0]?.timestamp || new Date(),
+          locationAddress: zone.name
+        }));
+        
+        console.log('Extracted validated reports for markers:', this.validatedReports.length);
+        
+        // Update markers when heatmap is visible
+        if (this.isHeatmapVisible && this.map) {
+          this.updateReportMarkers();
+          this.updateHeatmapLayer();
         }
-        
-        console.log('Final zones array:', this.zones);
-        
       },
       error: (error) => {
         console.error('Error loading zones:', error);
+        this.zones = [];
+        this.validatedReports = [];
       }
     });
   }
 
-  private getSampleZones(): DangerZone[] {
-    return [
-      {
-        id: 'guadalupe-danger-zone',
-        name: 'Guadalupe Danger Zone',
-        coordinates: [
-          [123.895, 10.315], 
-          [123.905, 10.315], 
-          [123.905, 10.325], 
-          [123.895, 10.325], 
-          [123.895, 10.315]  
-        ],
-        level: 'Danger',
-        currentSeverity: 0.9,
-        incidents: [
-          {
-            id: '1',
-            timestamp: new Date(),
-            severity: 9,
-            type: 'assault'
-          }
-        ],
-        timeSlots: [
-          {
-            startHour: 0,
-            endHour: 24,
-            baseSeverity: 9,
-            crimeMultiplier: 1.5,
-            description: 'High crime area - 24/7 monitoring'
-          }
-        ],
-        crimeFrequency: {
-          daily: 8,
-          weekly: 45,
-          monthly: 180,
-          peakHours: [22, 23, 0, 1, 2],
-          peakDays: [5, 6] 
-        },
-        timeBasedRisk: {
-          morning: 0.6,
-          afternoon: 0.7,
-          evening: 0.8,
-          night: 0.9,
-          weekend: 0.9,
-          weekday: 0.7
-        },
-        alertSettings: {
-          enablePushNotifications: true,
-          enableVibration: true,
-          enableSound: true,
-          soundType: 'siren',
-          vibrationPattern: [200, 100, 200, 100, 200],
-          alertThreshold: 0.6
-        }
-      },
-      {
-        id: 'mabolo-caution-zone',
-        name: 'Mabolo Caution Zone',
-        coordinates: [
-          [123.910, 10.320], 
-          [123.920, 10.320], 
-          [123.920, 10.330], 
-          [123.910, 10.330], 
-          [123.910, 10.320]  
-        ],
-        level: 'Caution',
-        currentSeverity: 0.7,
-        incidents: [
-          {
-            id: '2',
-            timestamp: new Date(),
-            severity: 7,
-            type: 'theft'
-          }
-        ],
-        timeSlots: [
-          {
-            startHour: 0,
-            endHour: 24,
-            baseSeverity: 7,
-            crimeMultiplier: 1.2,
-            description: 'Moderate risk area - exercise caution'
-          }
-        ],
-        crimeFrequency: {
-          daily: 4,
-          weekly: 25,
-          monthly: 100,
-          peakHours: [18, 19, 20, 21],
-          peakDays: [4, 5] 
-        },
-        timeBasedRisk: {
-          morning: 0.4,
-          afternoon: 0.5,
-          evening: 0.7,
-          night: 0.8,
-          weekend: 0.8,
-          weekday: 0.6
-        },
-        alertSettings: {
-          enablePushNotifications: true,
-          enableVibration: true,
-          enableSound: true,
-          soundType: 'beep',
-          vibrationPattern: [200, 200],
-          alertThreshold: 0.7
-        }
-      },
-      {
-        id: 'lahug-neutral-zone',
-        name: 'Lahug Neutral Zone',
-        coordinates: [
-          [123.880, 10.325], 
-          [123.890, 10.325], 
-          [123.890, 10.335], 
-          [123.880, 10.335], 
-          [123.880, 10.325]  
-        ],
-        level: 'Neutral',
-        currentSeverity: 0.4,
-        incidents: [
-          {
-            id: '3',
-            timestamp: new Date(),
-            severity: 4,
-            type: 'vandalism'
-          }
-        ],
-        timeSlots: [
-          {
-            startHour: 0,
-            endHour: 24,
-            baseSeverity: 4,
-            crimeMultiplier: 1.0,
-            description: 'Low risk area - normal vigilance'
-          }
-        ],
-        crimeFrequency: {
-          daily: 2,
-          weekly: 12,
-          monthly: 50,
-          peakHours: [20, 21, 22],
-          peakDays: [5, 6] 
-        },
-        timeBasedRisk: {
-          morning: 0.2,
-          afternoon: 0.3,
-          evening: 0.4,
-          night: 0.5,
-          weekend: 0.5,
-          weekday: 0.3
-        },
-        alertSettings: {
-          enablePushNotifications: false,
-          enableVibration: false,
-          enableSound: false,
-          soundType: 'chime',
-          vibrationPattern: [100],
-          alertThreshold: 0.8
-        }
-      },
-      {
-        id: 'ayala-safe-zone',
-        name: 'Ayala Center Cebu Safe Zone',
-        coordinates: [
-          [123.925, 10.305], 
-          [123.935, 10.305], 
-          [123.935, 10.315], 
-          [123.925, 10.315], 
-          [123.925, 10.305]  
-        ],
-        level: 'Safe',
-        currentSeverity: 0.1,
-        incidents: [
-          {
-            id: '4',
-            timestamp: new Date(),
-            severity: 1,
-            type: 'other'
-          }
-        ],
-        timeSlots: [
-          {
-            startHour: 0,
-            endHour: 24,
-            baseSeverity: 1,
-            crimeMultiplier: 0.5,
-            description: 'Safe area - minimal risk'
-          }
-        ],
-        crimeFrequency: {
-          daily: 0,
-          weekly: 1,
-          monthly: 5,
-          peakHours: [],
-          peakDays: []
-        },
-        timeBasedRisk: {
-          morning: 0.1,
-          afternoon: 0.1,
-          evening: 0.2,
-          night: 0.3,
-          weekend: 0.2,
-          weekday: 0.1
-        },
-        alertSettings: {
-          enablePushNotifications: false,
-          enableVibration: false,
-          enableSound: false,
-          soundType: 'chime',
-          vibrationPattern: [50],
-          alertThreshold: 0.9
-        }
-      },
-      {
-        id: 'sm-city-safe-zone',
-        name: 'SM City Cebu Safe Zone',
-        coordinates: [
-          [123.870, 10.300], 
-          [123.880, 10.300], 
-          [123.880, 10.310], 
-          [123.870, 10.310], 
-          [123.870, 10.300]  
-        ],
-        level: 'Safe',
-        currentSeverity: 0.1,
-        incidents: [
-          {
-            id: '5',
-            timestamp: new Date(),
-            severity: 1,
-            type: 'other'
-          }
-        ],
-        timeSlots: [
-          {
-            startHour: 0,
-            endHour: 24,
-            baseSeverity: 1,
-            crimeMultiplier: 0.5,
-            description: 'Safe area - minimal risk'
-          }
-        ],
-        crimeFrequency: {
-          daily: 0,
-          weekly: 1,
-          monthly: 3,
-          peakHours: [],
-          peakDays: []
-        },
-        timeBasedRisk: {
-          morning: 0.1,
-          afternoon: 0.1,
-          evening: 0.2,
-          night: 0.3,
-          weekend: 0.2,
-          weekday: 0.1
-        },
-        alertSettings: {
-          enablePushNotifications: false,
-          enableVibration: false,
-          enableSound: false,
-          soundType: 'chime',
-          vibrationPattern: [50],
-          alertThreshold: 0.9
-        }
-      },
-      {
-        id: 'talamban-safe-zone',
-        name: 'Talamban Safe Zone',
-        coordinates: [
-          [123.840, 10.340], 
-          [123.850, 10.340], 
-          [123.850, 10.350], 
-          [123.840, 10.350], 
-          [123.840, 10.340]  
-        ],
-        level: 'Safe',
-        currentSeverity: 0.1,
-        incidents: [
-          {
-            id: '6',
-            timestamp: new Date(),
-            severity: 1,
-            type: 'other'
-          }
-        ],
-        timeSlots: [
-          {
-            startHour: 0,
-            endHour: 24,
-            baseSeverity: 1,
-            crimeMultiplier: 0.5,
-            description: 'Safe area - minimal risk'
-          }
-        ],
-        crimeFrequency: {
-          daily: 0,
-          weekly: 1,
-          monthly: 2,
-          peakHours: [],
-          peakDays: []
-        },
-        timeBasedRisk: {
-          morning: 0.1,
-          afternoon: 0.1,
-          evening: 0.2,
-          night: 0.3,
-          weekend: 0.2,
-          weekday: 0.1
-        },
-        alertSettings: {
-          enablePushNotifications: false,
-          enableVibration: false,
-          enableSound: false,
-          soundType: 'chime',
-          vibrationPattern: [50],
-          alertThreshold: 0.9
-        }
-      }
-    ];
-  }
+  // Removed hardcoded sample zones - now using validated reports from admin
 
   updateHeatmap() {
     if (!this.map) {
@@ -1252,189 +955,199 @@ export class HomePage implements OnInit, OnDestroy {
       return;
     }
 
-    console.log('Updating heatmap with zones:', this.zones?.length || 0);
+    console.log('Updating heatmap with validated reports:', this.validatedReports?.length || 0);
 
-    
     if (this.isHeatmapVisible) {
-      this.addBaseSafeLayer();
+      // Add report markers (like admin)
+      this.updateReportMarkers();
       
-      if (this.zones && this.zones.length > 0) {
-        const sortedZones = [...this.zones].sort((a, b) => {
-          const severityOrder = { 'Danger': 4, 'Caution': 3, 'Neutral': 2, 'Safe': 1 };
-          return (severityOrder[b.level as keyof typeof severityOrder] || 0) - (severityOrder[a.level as keyof typeof severityOrder] || 0);
-        });
-
-        console.log('Adding zones to map:', sortedZones.length);
-        sortedZones.forEach((zone, index) => {
-          console.log(`Adding zone ${index + 1}: ${zone.name} (${zone.level}) at coordinates:`, zone.coordinates);
-          this.addZoneLayer(zone, index);
-        });
-      }
+      // Add heatmap layer (like admin)
+      this.updateHeatmapLayer();
       
-      // Add real-time user location to heatmap
+      // Add real-time user location
       this.addRealTimeUserLocationToHeatmap();
     } else {
-      
-      this.removeDangerZones();
+      // Remove markers and layers
+      this.removeReportMarkers();
+      this.removeHeatmapLayer();
       this.removeRealTimeUserLocationFromHeatmap();
     }
 
     console.log('Heatmap updated successfully');
   }
 
-  private addBaseSafeLayer() {
-    const baseSourceId = 'philippines-base-safe';
-    const baseLayerId = 'philippines-safe-layer';
+  private updateReportMarkers() {
+    if (!this.map) return;
 
-    if (this.map!.getSource(baseSourceId)) {
-      this.map!.removeLayer(baseLayerId);
-      this.map!.removeSource(baseSourceId);
-    }
-    this.map!.addSource(baseSourceId, {
-      type: 'geojson',
-      data: {
-        type: 'FeatureCollection',
-        features: [{
+    // Remove existing markers
+    this.reportMarkers.forEach(marker => marker.remove());
+    this.reportMarkers = [];
+
+    // Add markers for each validated report (same as admin)
+    this.validatedReports.forEach(report => {
+      const lat = report.location?.lat;
+      const lng = report.location?.lng;
+      
+      if (lat === undefined || lng === undefined) return;
+
+      // Create custom marker element (same as admin)
+      const el = document.createElement('div');
+      el.className = 'custom-marker';
+      el.style.width = '30px';
+      el.style.height = '30px';
+      el.style.borderRadius = '50%';
+      el.style.cursor = 'pointer';
+      el.style.border = '3px solid white';
+      el.style.boxShadow = '0 2px 8px rgba(0,0,0,0.4)';
+      
+      // Color based on risk level (same as admin)
+      const color = this.getReportRiskColor(report.riskLevel || 1);
+      el.style.backgroundColor = color;
+
+      // Create popup (same as admin)
+      const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
+        <div style="padding: 10px; min-width: 200px;">
+          <h3 style="margin: 0 0 10px 0; color: #333; font-size: 16px;">
+            ${report.type || 'Incident'}
+          </h3>
+          <p style="margin: 5px 0; font-size: 13px; color: #666;">
+            <strong>Risk Level:</strong> ${report.riskLevel || 'N/A'}
+          </p>
+          <p style="margin: 5px 0; font-size: 13px; color: #666;">
+            <strong>Location:</strong> ${report.locationAddress || 'Unknown'}
+          </p>
+          <p style="margin: 5px 0; font-size: 13px; color: #666;">
+            <strong>Date:</strong> ${this.formatReportDate(report.timestamp)}
+          </p>
+          <p style="margin: 5px 0; font-size: 13px; color: #666;">
+            <strong>Description:</strong> ${report.description.substring(0, 100)}...
+          </p>
+          <div style="margin-top: 10px; padding: 5px; background: ${color}; color: white; border-radius: 4px; text-align: center; font-size: 12px; font-weight: bold;">
+            ${this.getReportRiskLabel(report.riskLevel || 1)}
+          </div>
+        </div>
+      `);
+
+      // Add marker to map
+      const marker = new mapboxgl.Marker(el)
+        .setLngLat([lng, lat])
+        .setPopup(popup)
+        .addTo(this.map!);
+
+      this.reportMarkers.push(marker);
+    });
+
+    console.log('📍 Added', this.reportMarkers.length, 'report markers to map');
+  }
+
+  private updateHeatmapLayer() {
+    if (!this.map) return;
+
+    const sourceId = 'validated-incidents';
+    const layerId = 'validated-heat';
+
+    // Create GeoJSON from validated reports
+    const geojson = {
+      type: 'FeatureCollection',
+      features: this.validatedReports
+        .filter(r => r.location?.lat && r.location?.lng)
+        .map(r => ({
           type: 'Feature',
-          properties: { level: 'Safe' },
+          properties: {
+            weight: r.riskLevel || 1
+          },
           geometry: {
-            type: 'Polygon',
-            coordinates: [[
-              [116.9, 4.5],
-              [126.6, 4.5],
-              [126.6, 21.1],
-              [116.9, 21.1],
-              [116.9, 4.5]
-            ]]
+            type: 'Point',
+            coordinates: [r.location.lng, r.location.lat]
           }
-        }]
-      }
-    });
+        }))
+    };
 
-    this.map!.addLayer({
-      id: baseLayerId,
-      type: 'fill',
-      source: baseSourceId,
-      paint: {
-        'fill-color': '#00ff00',
-        'fill-opacity': 0.3
-      }
-    });
-
-    this.zoneLayers.push(baseLayerId);
-  }
-
-  private addZoneLayer(zone: DangerZone, index: number) {
-    const sourceId = `zone-${zone.id}`;
-    const layerId = `zone-layer-${zone.id}`;
-
-    console.log(`Adding zone layer: ${zone.name} with sourceId: ${sourceId}, layerId: ${layerId}`);
-
-    if (this.map!.getSource(sourceId)) {
-      this.map!.removeLayer(`${layerId}-border`);
-      this.map!.removeLayer(layerId);
-      this.map!.removeSource(sourceId);
+    // Add or update source
+    const source = this.map.getSource(sourceId) as mapboxgl.GeoJSONSource;
+    if (source) {
+      source.setData(geojson as any);
+    } else {
+      this.map.addSource(sourceId, {
+        type: 'geojson',
+        data: geojson as any
+      });
     }
 
-    const color = this.getZoneColor(zone.level);
-    const opacity = this.getZoneOpacity(zone.level);
-    
-    console.log(`Zone ${zone.name} - Color: ${color}, Opacity: ${opacity}`);
-
-    // Compute zone center from provided polygon coordinates
-    const lngSum = zone.coordinates.reduce((sum, coord) => sum + coord[0], 0);
-    const latSum = zone.coordinates.reduce((sum, coord) => sum + coord[1], 0);
-    const centerLng = lngSum / zone.coordinates.length;
-    const centerLat = latSum / zone.coordinates.length;
-
-    this.map!.addSource(sourceId, {
-      type: 'geojson',
-      data: {
-        type: 'Feature',
-        properties: {
-          level: zone.level,
-          severity: zone.currentSeverity,
-          incidents: zone.incidents
-        },
-        geometry: {
-          type: 'Point',
-          coordinates: [centerLng, centerLat]
+    // Add heatmap layer if not exists (same style as admin)
+    if (!this.map.getLayer(layerId)) {
+      this.map.addLayer({
+        id: layerId,
+        type: 'heatmap',
+        source: sourceId,
+        maxzoom: 15,
+        paint: {
+          'heatmap-weight': ['interpolate', ['linear'], ['get', 'weight'], 1, 0.4, 2, 0.6, 3, 0.8, 4, 1.0, 5, 1.2],
+          'heatmap-color': [
+            'interpolate', ['linear'], ['heatmap-density'],
+            0.00, 'rgba(251,191,36,0.00)',
+            0.33, 'rgba(251,191,36,0.60)',
+            0.66, 'rgba(249,115,22,0.70)',
+            1.00, 'rgba(239,68,68,0.80)'
+          ],
+          'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 100, 6, 85, 10, 70, 15, 50],
+          'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 1.5, 8, 2.0, 15, 2.5],
+          'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], 0, 0.3, 10, 0.35, 15, 0.4]
         }
-      }
-    });
+      } as any);
+    }
+  }
 
-    const baseRadius = this.getZoneRadius(zone.level);
+  private removeReportMarkers() {
+    this.reportMarkers.forEach(marker => marker.remove());
+    this.reportMarkers = [];
+  }
 
-    this.map!.addLayer({
-      id: layerId,
-      type: 'circle',
-      source: sourceId,
-      paint: {
-        'circle-color': color,
-        'circle-opacity': opacity,
-        // Scale radius with zoom to keep a consistent look
-        'circle-radius': [
-          'interpolate', ['linear'], ['zoom'],
-          10, Math.max(10, Math.round(baseRadius * 0.5)),
-          12, baseRadius,
-          14, Math.round(baseRadius * 1.4),
-          16, Math.round(baseRadius * 2.0)
-        ],
-        'circle-stroke-color': color,
-        'circle-stroke-opacity': 0.9,
-        'circle-stroke-width': 2
-      }
-    });
-
-    this.zoneLayers.push(layerId);
+  private removeHeatmapLayer() {
+    if (!this.map) return;
     
-    console.log(`Successfully added zone: ${zone.name}. Total zone layers: ${this.zoneLayers.length}`);
-  }
-
-  private getZoneRadius(level: string): number {
-    switch (level) {
-      case 'Danger':
-        return 60; // pixels at zoom 12
-      case 'Caution':
-        return 50;
-      case 'Neutral':
-        return 40;
-      case 'Safe':
-        return 35;
-      default:
-        return 40;
+    const layerId = 'validated-heat';
+    const sourceId = 'validated-incidents';
+    
+    if (this.map.getLayer(layerId)) {
+      this.map.removeLayer(layerId);
+    }
+    if (this.map.getSource(sourceId)) {
+      this.map.removeSource(sourceId);
     }
   }
 
-  private getZoneOpacity(level: string): number {
+  private getReportRiskColor(level: number): string {
+    if (level <= 1) return '#fbbf24'; // Yellow (low)
+    if (level === 2) return '#f97316'; // Orange (medium)
+    if (level === 3) return '#ef4444'; // Red (high)
+    if (level >= 4) return '#ef4444'; // Red (critical)
+    return '#ef4444';
+  }
+
+  private getReportRiskLabel(level: number): string {
     switch (level) {
-      case 'Danger':
-        return 0.9;
-      case 'Caution':
-        return 0.8;
-      case 'Neutral':
-        return 0.7;
-      case 'Safe':
-        return 0.6;
-      default:
-        return 0.5;
+      case 1: return 'LOW RISK';
+      case 2: return 'MODERATE RISK';
+      case 3: return 'HIGH RISK';
+      case 4: return 'CRITICAL RISK';
+      case 5: return 'EXTREME RISK';
+      default: return 'UNKNOWN';
     }
   }
 
-  private getZoneColor(level: string): string {
-    switch (level) {
-      case 'Safe':
-        return '#00ff00';
-      case 'Neutral':
-        return '#ffff00';
-      case 'Caution':
-        return '#ffaa00';
-      case 'Danger':
-        return '#ff0000';
-      default:
-        return '#00ff00';
-    }
+  private formatReportDate(date: Date): string {
+    if (!date) return 'N/A';
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   }
+
+  // Old zone visualization methods removed - now using individual report markers like admin
 
   toggleHeatmap() {
     console.log('Toggle heatmap called, current state:', this.isHeatmapVisible);
@@ -1442,22 +1155,43 @@ export class HomePage implements OnInit, OnDestroy {
     this.isHeatmapVisible = !this.isHeatmapVisible;
     console.log('New heatmap state:', this.isHeatmapVisible);
     
+    if (!this.map) {
+      console.warn('Map not initialized');
+      return;
+    }
+    
     if (this.isHeatmapVisible) {
       console.log('Showing heatmap...');
-      if (this.map) {
-        this.map.setStyle('mapbox://styles/mapbox/dark-v10');
-        this.map.once('styledata', () => {
-          this.updateHeatmap();
-        });
-      }
+      // Switch to light-v11 style (same as admin) for heatmap visibility
+      this.map.setStyle('mapbox://styles/mapbox/light-v11');
+      
+      // Wait for style to fully load before adding layers
+      this.map.once('style.load', () => {
+        console.log('Light style loaded, adding heatmap layers...');
+        // Re-add user marker after style change
+        if (this.userMarker && this.currentLocation) {
+          this.userMarker.setLngLat([this.currentLocation.lng, this.currentLocation.lat]);
+        }
+        // Add heatmap layers
+        this.updateHeatmap();
+      });
     } else {
       console.log('Hiding heatmap...');
-      if (this.map) {
-        this.map.setStyle('mapbox://styles/mapbox/streets-v11');
-        this.map.once('styledata', () => {
-          this.updateHeatmap();
-        });
-      }
+      // Remove heatmap layers before switching style
+      this.removeReportMarkers();
+      this.removeHeatmapLayer();
+      
+      // Switch back to colorful streets map
+      this.map.setStyle('mapbox://styles/mapbox/streets-v11');
+      
+      // Wait for style to fully load
+      this.map.once('style.load', () => {
+        console.log('Streets style loaded, restoring user marker...');
+        // Re-add user marker after style change
+        if (this.userMarker && this.currentLocation) {
+          this.userMarker.setLngLat([this.currentLocation.lng, this.currentLocation.lat]);
+        }
+      });
     }
   }
 

@@ -42,7 +42,7 @@ export interface Report {
   media: string[];
   riskLevel: number;
   isSilent: boolean;
-  status: 'Pending' | 'In Progress' | 'Resolved' | 'Closed';
+  status: 'Pending' | 'In Progress' | 'Resolved' | 'Closed' | 'Validated';
   createdAt?: any;
   updatedAt?: any;
   timezone?: string;
@@ -737,8 +737,7 @@ export class ReportService {
         return new Observable<Report[]>(observer => {
           const q = query(
             collection(getFirestore(), this.collectionName), 
-            where('userId', '==', user.uid), 
-            orderBy('createdAt', 'desc')
+            where('userId', '==', user.uid)
           );
           
           const unsubscribe = onSnapshot(q, 
@@ -848,5 +847,31 @@ export class ReportService {
       timeUntilReset,
       isBlocked: rateLimitInfo?.isBlocked || false
     };
+  }
+
+  getValidatedReports(): Observable<Report[]> {
+    return new Observable<Report[]>(observer => {
+      const q = query(
+        collection(getFirestore(), this.collectionName), 
+        where('status', '==', 'Validated')
+      );
+      
+      const unsubscribe = onSnapshot(q, 
+        snapshot => {
+          const reports = snapshot.docs.map(doc => ({ 
+            id: doc.id, 
+            ...doc.data() 
+          } as Report));
+          console.log('📊 Validated reports loaded:', reports.length);
+          observer.next(reports);
+        },
+        error => {
+          console.error('Error fetching validated reports:', error);
+          observer.next([]);
+        }
+      );
+      
+      return unsubscribe;
+    });
   }
 }

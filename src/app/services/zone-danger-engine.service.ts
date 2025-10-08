@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { FirebaseService } from './firebase.service';
+import { ReportService } from './report.service';
 import { BehaviorSubject, Observable, interval } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 
@@ -78,7 +79,10 @@ export class ZoneDangerEngineService {
   private alertHistory: Set<string> = new Set();
   private isInitialized = false;
 
-  constructor(private firebaseService: FirebaseService) {
+  constructor(
+    private firebaseService: FirebaseService,
+    private reportService: ReportService
+  ) {
     // Don't start periodic updates in constructor to avoid injection context issues
     // They will be started when initializeZones() is called
   }
@@ -94,15 +98,129 @@ export class ZoneDangerEngineService {
       return;
     }
 
-    // Load fallback zones immediately to avoid any injection context issues
-    this.loadFallbackZones();
+    console.log('ZoneDangerEngineService: Loading validated reports for heatmap...');
     
-    // Try to load from Firebase with a delay, but don't fail if injection context is not available
+    // Load validated reports from the report service
     setTimeout(() => {
-      this.loadZonesWithRetry();
+      this.loadValidatedReportsAsZones();
       this.startPeriodicUpdates();
       this.isInitialized = true;
     }, 1000);
+  }
+
+  private loadValidatedReportsAsZones() {
+    try {
+      // Subscribe to validated reports and convert them to heatmap zones
+      this.reportService.getValidatedReports().subscribe({
+        next: (validatedReports) => {
+          console.log('ZoneDangerEngineService: Validated reports loaded:', validatedReports.length);
+          
+          if (validatedReports && validatedReports.length > 0) {
+            // Convert validated reports to danger zones for heatmap
+            const reportZones: DangerZone[] = validatedReports.map(report => {
+              return this.convertReportToZone(report);
+            });
+            
+            console.log('ZoneDangerEngineService: Converted reports to zones:', reportZones.length);
+            this.zones.next(reportZones);
+            this.updateAllZones();
+          } else {
+            console.log('ZoneDangerEngineService: No validated reports found, showing empty heatmap');
+            this.zones.next([]);
+          }
+        },
+        error: (error) => {
+          console.error('ZoneDangerEngineService: Error loading validated reports:', error);
+          this.zones.next([]);
+        }
+      });
+    } catch (error) {
+      console.error('ZoneDangerEngineService: Error in loadValidatedReportsAsZones:', error);
+      this.zones.next([]);
+    }
+  }
+
+  private convertReportToZone(report: any): DangerZone {
+    // Map risk level to severity (1-5 to 0-10)
+    const currentSeverity = (report.riskLevel / 5) * 10;
+    
+    // Determine danger level based on risk level
+    let level: 'Safe' | 'Neutral' | 'Caution' | 'Danger';
+    if (report.riskLevel <= 1) {
+      level = 'Safe';
+    } else if (report.riskLevel <= 2) {
+      level = 'Neutral';
+    } else if (report.riskLevel <= 3) {
+      level = 'Caution';
+    } else {
+      level = 'Danger';
+    }
+    
+    // Create a small area around the report location (0.001 degrees ≈ 111 meters)
+    const radius = 0.002;
+    const lat = report.location.lat;
+    const lng = report.location.lng;
+    
+    return {
+      id: report.id || `report-${Date.now()}`,
+      name: report.location.simplifiedAddress || report.locationAddress || 'Reported Incident',
+      level: level,
+      coordinates: [
+        [lng - radius, lat - radius],
+        [lng + radius, lat - radius],
+        [lng + radius, lat + radius],
+        [lng - radius, lat + radius],
+        [lng - radius, lat - radius]
+      ],
+      timeSlots: [],
+      incidents: [{
+        id: report.id || `incident-${Date.now()}`,
+        timestamp: report.createdAt?.toDate ? report.createdAt.toDate() : new Date(report.createdAt),
+        severity: report.riskLevel * 2, // Convert 1-5 to 2-10
+        type: this.mapReportTypeToIncidentType(report.type),
+        description: report.description
+      }],
+      currentSeverity: currentSeverity,
+      crimeFrequency: {
+        daily: 1,
+        weekly: 1,
+        monthly: 1,
+        peakHours: [],
+        peakDays: []
+      },
+      timeBasedRisk: {
+        morning: currentSeverity / 10,
+        afternoon: currentSeverity / 10,
+        evening: currentSeverity / 10,
+        night: currentSeverity / 10,
+        weekend: currentSeverity / 10,
+        weekday: currentSeverity / 10
+      },
+      alertSettings: {
+        enablePushNotifications: report.riskLevel >= 3,
+        enableVibration: report.riskLevel >= 3,
+        enableSound: report.riskLevel >= 4,
+        soundType: report.riskLevel >= 4 ? 'siren' : 'beep',
+        vibrationPattern: report.riskLevel >= 4 ? [200, 100, 200, 100, 200] : [200, 200],
+        alertThreshold: currentSeverity * 0.8
+      }
+    };
+  }
+
+  private mapReportTypeToIncidentType(reportType: string): 'theft' | 'assault' | 'vandalism' | 'harassment' | 'other' {
+    const typeMap: { [key: string]: 'theft' | 'assault' | 'vandalism' | 'harassment' | 'other' } = {
+      'crime-theft': 'theft',
+      'theft-property': 'theft',
+      'vehicle-theft': 'theft',
+      'burglary': 'theft',
+      'assault-minor': 'assault',
+      'assault-severe': 'assault',
+      'armed-robbery': 'assault',
+      'harassment-verbal': 'harassment',
+      'vandalism': 'vandalism'
+    };
+    
+    return typeMap[reportType] || 'other';
   }
 
   private loadZonesWithRetry(retryCount = 0, maxRetries = 3) {
@@ -198,102 +316,9 @@ export class ZoneDangerEngineService {
   }
 
   private loadFallbackZones() {
-    console.log('ZoneDangerEngineService: Loading fallback zones...');
-    const fallbackZones: DangerZone[] = [
-      {
-        id: 'guadalupe-danger-zone',
-        name: 'Guadalupe Danger Zone',
-        level: 'Danger',
-        coordinates: [[123.895, 10.315], [123.905, 10.315], [123.905, 10.325], [123.895, 10.325], [123.895, 10.315]],
-        timeSlots: [],
-        incidents: [],
-        currentSeverity: 9,
-        crimeFrequency: { daily: 8, weekly: 45, monthly: 180, peakHours: [22, 23, 0, 1, 2], peakDays: [5, 6] },
-        timeBasedRisk: { morning: 0.6, afternoon: 0.7, evening: 0.8, night: 0.9, weekend: 0.9, weekday: 0.7 },
-        alertSettings: { enablePushNotifications: true, enableVibration: true, enableSound: true, soundType: 'siren', vibrationPattern: [200, 100, 200, 100, 200], alertThreshold: 6 }
-      },
-      {
-        id: 'colon-time-based-zone',
-        name: 'Colon Area',
-        level: 'Neutral',
-        coordinates: [[123.900, 10.300], [123.910, 10.300], [123.910, 10.310], [123.900, 10.310], [123.900, 10.300]],
-        timeSlots: [
-          { startHour: 6, endHour: 11, baseSeverity: 3, crimeMultiplier: 0.5, description: 'Morning - Neutral' },
-          { startHour: 12, endHour: 17, baseSeverity: 6, crimeMultiplier: 0.8, description: 'Afternoon - Caution' },
-          { startHour: 18, endHour: 23, baseSeverity: 8, crimeMultiplier: 1.2, description: 'Evening - Danger' },
-          { startHour: 0, endHour: 5, baseSeverity: 9, crimeMultiplier: 1.5, description: 'Night - High Danger' }
-        ],
-        incidents: [],
-        currentSeverity: 3,
-        crimeFrequency: { daily: 3, weekly: 20, monthly: 80, peakHours: [19, 20, 21, 22, 23], peakDays: [4, 5, 6] },
-        timeBasedRisk: { morning: 0.3, afternoon: 0.6, evening: 0.8, night: 0.9, weekend: 0.8, weekday: 0.6 },
-        alertSettings: { enablePushNotifications: true, enableVibration: true, enableSound: true, soundType: 'beep', vibrationPattern: [200, 200, 200], alertThreshold: 5 }
-      },
-      {
-        id: 'mabolo-caution-zone',
-        name: 'Mabolo Caution Zone',
-        level: 'Caution',
-        coordinates: [[123.910, 10.320], [123.920, 10.320], [123.920, 10.330], [123.910, 10.330], [123.910, 10.320]],
-        timeSlots: [],
-        incidents: [],
-        currentSeverity: 7,
-        crimeFrequency: { daily: 4, weekly: 25, monthly: 100, peakHours: [18, 19, 20, 21], peakDays: [4, 5] },
-        timeBasedRisk: { morning: 0.4, afternoon: 0.5, evening: 0.7, night: 0.8, weekend: 0.8, weekday: 0.6 },
-        alertSettings: { enablePushNotifications: true, enableVibration: true, enableSound: true, soundType: 'beep', vibrationPattern: [200, 200], alertThreshold: 7 }
-      },
-      {
-        id: 'lahug-neutral-zone',
-        name: 'Lahug Neutral Zone',
-        level: 'Neutral',
-        coordinates: [[123.880, 10.325], [123.890, 10.325], [123.890, 10.335], [123.880, 10.335], [123.880, 10.325]],
-        timeSlots: [],
-        incidents: [],
-        currentSeverity: 4,
-        crimeFrequency: { daily: 2, weekly: 12, monthly: 50, peakHours: [20, 21, 22], peakDays: [5, 6] },
-        timeBasedRisk: { morning: 0.2, afternoon: 0.3, evening: 0.4, night: 0.5, weekend: 0.5, weekday: 0.3 },
-        alertSettings: { enablePushNotifications: false, enableVibration: false, enableSound: false, soundType: 'chime', vibrationPattern: [100], alertThreshold: 8 }
-      },
-      {
-        id: 'ayala-safe-zone',
-        name: 'Ayala Center Cebu Safe Zone',
-        level: 'Safe',
-        coordinates: [[123.925, 10.305], [123.935, 10.305], [123.935, 10.315], [123.925, 10.315], [123.925, 10.305]],
-        timeSlots: [],
-        incidents: [],
-        currentSeverity: 1,
-        crimeFrequency: { daily: 0, weekly: 1, monthly: 5, peakHours: [], peakDays: [] },
-        timeBasedRisk: { morning: 0.1, afternoon: 0.1, evening: 0.2, night: 0.3, weekend: 0.2, weekday: 0.1 },
-        alertSettings: { enablePushNotifications: false, enableVibration: false, enableSound: false, soundType: 'chime', vibrationPattern: [50], alertThreshold: 9 }
-      },
-      {
-        id: 'sm-city-safe-zone',
-        name: 'SM City Cebu Safe Zone',
-        level: 'Safe',
-        coordinates: [[123.870, 10.300], [123.880, 10.300], [123.880, 10.310], [123.870, 10.310], [123.870, 10.300]],
-        timeSlots: [],
-        incidents: [],
-        currentSeverity: 1,
-        crimeFrequency: { daily: 0, weekly: 1, monthly: 5, peakHours: [], peakDays: [] },
-        timeBasedRisk: { morning: 0.1, afternoon: 0.1, evening: 0.2, night: 0.3, weekend: 0.2, weekday: 0.1 },
-        alertSettings: { enablePushNotifications: false, enableVibration: false, enableSound: false, soundType: 'chime', vibrationPattern: [50], alertThreshold: 9 }
-      },
-      {
-        id: 'talamban-safe-zone',
-        name: 'Talamban Safe Zone',
-        level: 'Safe',
-        coordinates: [[123.840, 10.340], [123.850, 10.340], [123.850, 10.350], [123.840, 10.350], [123.840, 10.340]],
-        timeSlots: [],
-        incidents: [],
-        currentSeverity: 1,
-        crimeFrequency: { daily: 0, weekly: 1, monthly: 2, peakHours: [], peakDays: [] },
-        timeBasedRisk: { morning: 0.1, afternoon: 0.1, evening: 0.2, night: 0.3, weekend: 0.2, weekday: 0.1 },
-        alertSettings: { enablePushNotifications: false, enableVibration: false, enableSound: false, soundType: 'chime', vibrationPattern: [50], alertThreshold: 9 }
-      }
-    ];
-    
-    console.log('ZoneDangerEngineService: Loaded fallback zones:', fallbackZones.length);
-    this.zones.next(fallbackZones);
-    console.log('ZoneDangerEngineService: Fallback zones loaded successfully');
+    console.log('ZoneDangerEngineService: No fallback zones - using only validated reports from admin');
+    // No hardcoded zones anymore - heatmap is based purely on validated user reports
+    this.zones.next([]);
   }
 
   public processIncident(location: { lat: number; lng: number }, severity: 'low' | 'medium' | 'high', type: 'theft' | 'assault' | 'vandalism' | 'harassment' | 'other' = 'other', description?: string) {
@@ -1025,18 +1050,8 @@ export class ZoneDangerEngineService {
   }
 
   private async syncToFirestore(zones: DangerZone[]) {
-    const firestore = this.firebaseService.getFirestoreInstance();
-    
-    for (const zone of zones) {
-      try {
-        await firestore.collection('dangerZones').doc(zone.id).update({
-          level: zone.level,
-          currentSeverity: zone.currentSeverity,
-          incidents: zone.incidents
-        });
-      } catch (error) {
-        console.error(`Error updating zone ${zone.id}:`, error);
-      }
-    }
+    // No longer syncing zones to Firestore - zones are now read-only from validated reports
+    // This prevents injection context errors and is not needed for the new system
+    console.log('Skipping Firestore sync - zones are derived from validated reports');
   }
 }

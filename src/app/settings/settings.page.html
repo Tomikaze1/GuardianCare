@@ -157,7 +157,7 @@
       <div class="settings-list collapsible" [class.open]="expandNotifications">
         <div class="setting-item" (click)="smartVibrationOptionsOpen = !smartVibrationOptionsOpen">
           <div class="setting-left">
-            <ion-icon name="vibrate-outline" class="setting-icon"></ion-icon>
+            <ion-icon name="phone-portrait-outline" class="setting-icon"></ion-icon>
             <span class="setting-label">{{ 'SETTINGS.SMART_VIBRATION' | translate }}</span>
           </div>
           <ion-toggle [(ngModel)]="smartVibration" (ionChange)="toggleSmartVibration()" (click)="$event.stopPropagation()"></ion-toggle>

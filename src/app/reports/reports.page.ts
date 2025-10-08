@@ -27,6 +27,8 @@ export class ReportsPage implements OnInit, OnDestroy {
   gpsAccuracy: { accuracy: number; status: string } | null = null;
   isLocationEditMode = false;
   isLocationManuallyEdited = false;
+  private mapInitRetryCount = 0;
+  private maxMapInitRetries = 10;
   editableMarker: mapboxgl.Marker | null = null;
   private handleMapClick: (e: mapboxgl.MapMouseEvent) => void = () => {};
   rateLimitStatus = {
@@ -87,9 +89,19 @@ export class ReportsPage implements OnInit, OnDestroy {
     this.content?.scrollToTop(0);
   }
 
+  ionViewDidEnter() {
+    // Reinitialize map when view is fully rendered
+    if (this.selectedLocation && !this.map) {
+      setTimeout(() => {
+        this.initializeMap();
+      }, 100);
+    }
+  }
+
   ngOnDestroy() {
     if (this.map) {
       this.map.remove();
+      this.map = null;
     }
   }
 
@@ -187,7 +199,10 @@ export class ReportsPage implements OnInit, OnDestroy {
         // Only update selected location if user hasn't manually edited it
         if (!this.isLocationEditMode && !this.isLocationManuallyEdited) {
           this.selectedLocation = location;
-          this.updateMapLocation();
+          // Only update map if it's initialized
+          if (this.map) {
+            this.updateMapLocation();
+          }
           this.updateLocationAddress();
           console.log('📍 GPS location auto-updated:', location);
         } else if (this.isLocationManuallyEdited) {
@@ -205,7 +220,10 @@ export class ReportsPage implements OnInit, OnDestroy {
       // Only update selected location if user hasn't manually chosen a different location
       if (!this.isLocationManuallyEdited) {
         this.selectedLocation = this.currentLocation;
-        this.updateMapLocation();
+        // Only update map if it's initialized
+        if (this.map) {
+          this.updateMapLocation();
+        }
         await this.updateLocationAddress();
         this.notificationService.success('Location Updated', 'Your exact device location has been refreshed with maximum precision!', 'OK', 2000);
       } else {
@@ -259,22 +277,63 @@ export class ReportsPage implements OnInit, OnDestroy {
   private initializeMap() {
     if (!this.selectedLocation) return;
     
+    // Check if container exists and has dimensions
+    const container = document.getElementById('reports-map');
+    if (!container) {
+      this.mapInitRetryCount++;
+      if (this.mapInitRetryCount < this.maxMapInitRetries) {
+        console.warn(`Map container not found, retry ${this.mapInitRetryCount}/${this.maxMapInitRetries}...`);
+        setTimeout(() => this.initializeMap(), 500);
+      } else {
+        console.error('Max map initialization retries reached. Giving up.');
+      }
+      return;
+    }
+    
+    const rect = container.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) {
+      this.mapInitRetryCount++;
+      if (this.mapInitRetryCount < this.maxMapInitRetries) {
+        console.warn(`Map container has zero size, retry ${this.mapInitRetryCount}/${this.maxMapInitRetries}...`);
+        setTimeout(() => this.initializeMap(), 500);
+      } else {
+        console.error('Max map initialization retries reached. Giving up.');
+      }
+      return;
+    }
+    
+    // Prevent multiple initialization attempts
+    if (this.map) {
+      console.log('Map already initialized, skipping...');
+      return;
+    }
+    
+    // Reset retry counter on successful initialization
+    this.mapInitRetryCount = 0;
+    
     // Set Mapbox access token
     (mapboxgl as any).accessToken = 'pk.eyJ1IjoidG9taWthemUxIiwiYSI6ImNtY25rM3NxazB2ZG8ybHFxeHVoZWthd28ifQ.Vnf9pMEQAryEI2rMJeMQGQ';
     
-    // Remove existing map if it exists
-    if (this.map) {
-      this.map.remove();
-    }
+    // Map is already null at this point, no need to remove
     
-    this.map = new mapboxgl.Map({
-      container: 'reports-map',
-      style: 'mapbox://styles/mapbox/streets-v11',
-      center: [this.selectedLocation.lng, this.selectedLocation.lat],
-      zoom: 18, // Increased zoom for more precise location
-      interactive: true,
-      attributionControl: false
-    });
+    // Clear container content
+    container.innerHTML = '';
+    
+    try {
+      this.map = new mapboxgl.Map({
+        container: 'reports-map',
+        style: 'mapbox://styles/mapbox/streets-v11',
+        center: [this.selectedLocation.lng, this.selectedLocation.lat],
+        zoom: 18,
+        interactive: true,
+        attributionControl: false
+      });
+      
+      console.log('📍 Map initialized successfully');
+    } catch (error) {
+      console.error('Error initializing map:', error);
+      return;
+    }
 
     // Add marker for current location with higher precision
     const marker = new mapboxgl.Marker({
@@ -309,9 +368,14 @@ export class ReportsPage implements OnInit, OnDestroy {
   }
 
   private updateMapLocation() {
-    if (this.map && this.selectedLocation) {
+    if (!this.map || !this.selectedLocation) {
+      console.warn('Map or location not available for update');
+      return;
+    }
+    
+    try {
       this.map.setCenter([this.selectedLocation.lng, this.selectedLocation.lat]);
-      this.map.setZoom(18); // Maintain high zoom level
+      this.map.setZoom(18);
       
       // Update marker
       const markers = document.querySelectorAll('.mapboxgl-marker');
@@ -319,7 +383,7 @@ export class ReportsPage implements OnInit, OnDestroy {
       
       const marker = new mapboxgl.Marker({
         color: this.isOffline ? '#ff6b35' : '#4CAF50',
-        scale: 1.5 // Larger marker for better visibility
+        scale: 1.5
       })
         .setLngLat([this.selectedLocation.lng, this.selectedLocation.lat])
         .addTo(this.map);
@@ -337,6 +401,8 @@ export class ReportsPage implements OnInit, OnDestroy {
       `);
 
       marker.setPopup(popup);
+    } catch (error) {
+      console.error('Error updating map location:', error);
     }
   }
 
