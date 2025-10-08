@@ -139,6 +139,7 @@ export class AuthService {
           email: user.email,
           displayName: user.displayName,
           photoURL: user.photoURL,
+          emergencyContact: '',
           createdAt: serverTimestamp(),
         });
         console.log('AuthService: User created in Firestore');

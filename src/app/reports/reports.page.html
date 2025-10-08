@@ -212,17 +212,11 @@
               fill="clear"
               size="small"
               (click)="toggleLocationEditMode()"
-              class="action-btn edit-btn">
-              <ion-icon name="create-outline" slot="start"></ion-icon>
-              {{ isLocationEditMode ? 'Done Editing' : 'Edit Location' }}
-            </ion-button>
-            <ion-button
-              fill="clear"
-              size="small"
-              (click)="resetToCurrentLocation()"
-              class="action-btn current-btn">
-              <ion-icon name="locate-outline" slot="start"></ion-icon>
-              Use Current Location
+              [class.action-btn]="true"
+              [class.edit-btn]="!isLocationEditMode"
+              [class.current-btn]="isLocationEditMode">
+              <ion-icon [name]="isLocationEditMode ? 'checkmark-circle-outline' : 'create-outline'" slot="start"></ion-icon>
+              {{ isLocationEditMode ? 'Confirm Location' : 'Edit Location' }}
             </ion-button>
           </div>
         </div>
@@ -234,10 +228,61 @@
       </div>
     </div>
 
-    <div class="form-row anon-row">
-      <div class="input-box anon-box">
-        <ion-label>{{ 'REPORTS.SEND_ANON' | translate }}</ion-label>
-        <ion-toggle color="primary" formControlName="anonymous"></ion-toggle>
+    <div class="section-header">
+      <span>Reporter Identity</span>
+      <div class="section-underline"></div>
+    </div>
+
+    <div class="form-row">
+      <div class="input-box time-date-box">
+        <div class="time-date-header">
+          <ion-icon [name]="reportForm.get('anonymous')?.value ? 'eye-off-outline' : 'person-outline'" class="time-icon"></ion-icon>
+          <span class="time-title">Who is reporting this incident?</span>
+          <button type="button" class="edit-time-btn" (click)="toggleAnonymous()" [class.custom-active]="reportForm.get('anonymous')?.value">
+            <ion-icon [name]="reportForm.get('anonymous')?.value ? 'eye-off' : 'person'" class="edit-icon"></ion-icon>
+            <span>{{ reportForm.get('anonymous')?.value ? 'Anonymous' : 'Show Identity' }}</span>
+          </button>
+        </div>
+        
+        <div class="time-date-display">
+          <div class="current-time-display" [class.custom-time]="reportForm.get('anonymous')?.value">
+            <div class="time-main">
+              <ion-icon [name]="reportForm.get('anonymous')?.value ? 'shield-outline' : 'person-circle-outline'" class="display-icon"></ion-icon>
+              <div class="time-content">
+                <div class="time-text">{{ reportForm.get('anonymous')?.value ? 'Anonymous Reporter' : 'Identified Reporter' }}</div>
+                <div class="date-text">{{ reportForm.get('anonymous')?.value ? 'Your identity will be kept private' : 'Your name and contact will be included' }}</div>
+              </div>
+            </div>
+            
+            <div class="time-status">
+              <ion-chip [color]="reportForm.get('anonymous')?.value ? 'warning' : 'success'" size="small">
+                <ion-icon [name]="reportForm.get('anonymous')?.value ? 'eye-off-outline' : 'checkmark-circle-outline'"></ion-icon>
+                <ion-label>{{ reportForm.get('anonymous')?.value ? 'Anonymous' : 'Public' }}</ion-label>
+              </ion-chip>
+            </div>
+          </div>
+          
+          <div class="time-actions">
+            <ion-button
+              fill="clear"
+              size="small"
+              (click)="setAnonymous(false)"
+              class="action-btn"
+              [class.current-btn]="!reportForm.get('anonymous')?.value">
+              <ion-icon name="person-outline" slot="start"></ion-icon>
+              Show My Identity
+            </ion-button>
+            <ion-button
+              fill="clear"
+              size="small"
+              (click)="setAnonymous(true)"
+              class="action-btn"
+              [class.edit-btn]="reportForm.get('anonymous')?.value">
+              <ion-icon name="eye-off-outline" slot="start"></ion-icon>
+              Stay Anonymous
+            </ion-button>
+          </div>
+        </div>
       </div>
     </div>
 

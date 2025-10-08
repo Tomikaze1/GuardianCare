@@ -26,6 +26,7 @@ export class ReportsPage implements OnInit, OnDestroy {
   lastKnownLocation: { lat: number; lng: number } | null = null;
   gpsAccuracy: { accuracy: number; status: string } | null = null;
   isLocationEditMode = false;
+  isLocationManuallyEdited = false;
   editableMarker: mapboxgl.Marker | null = null;
   private handleMapClick: (e: mapboxgl.MapMouseEvent) => void = () => {};
   rateLimitStatus = {
@@ -61,7 +62,7 @@ export class ReportsPage implements OnInit, OnDestroy {
     this.reportForm = this.formBuilder.group({
       type: ['', Validators.required],
       description: ['', [Validators.required, Validators.minLength(5)]],
-      severity: ['medium', Validators.required],
+      severity: ['medium'], // Default value, not required since there's no UI for it
       media: [[]],
       anonymous: [false]
     });
@@ -179,11 +180,19 @@ export class ReportsPage implements OnInit, OnDestroy {
   private startRealTimeLocationTracking() {
     // Subscribe to real-time location updates
     this.locationService.currentLocation$.subscribe(location => {
-      if (location && !this.isLocationEditMode) {
+      if (location) {
+        // Always update current location for reference
         this.currentLocation = location;
-        this.selectedLocation = location;
-        this.updateMapLocation();
-        this.updateLocationAddress();
+        
+        // Only update selected location if user hasn't manually edited it
+        if (!this.isLocationEditMode && !this.isLocationManuallyEdited) {
+          this.selectedLocation = location;
+          this.updateMapLocation();
+          this.updateLocationAddress();
+          console.log('📍 GPS location auto-updated:', location);
+        } else if (this.isLocationManuallyEdited) {
+          console.log('📍 GPS update ignored - user has selected a custom location');
+        }
       }
     });
   }
@@ -192,12 +201,21 @@ export class ReportsPage implements OnInit, OnDestroy {
     try {
       // Use the exact device location method for the most accurate results
       this.currentLocation = await this.locationService.getDeviceExactLocation();
-      this.selectedLocation = this.currentLocation;
+      
+      // Only update selected location if user hasn't manually chosen a different location
+      if (!this.isLocationManuallyEdited) {
+        this.selectedLocation = this.currentLocation;
+        this.updateMapLocation();
+        await this.updateLocationAddress();
+        this.notificationService.success('Location Updated', 'Your exact device location has been refreshed with maximum precision!', 'OK', 2000);
+      } else {
+        // Just update current location in background, keep selected location
+        this.notificationService.info('GPS Updated', 'Device GPS refreshed. Your custom report location is still set.', 'OK', 2000);
+      }
+      
       this.isOffline = false;
-      await this.updateLocationAddress();
       await this.saveLastKnownLocation();
-      this.updateMapLocation();
-      this.notificationService.success('Location Updated', 'Your exact device location has been refreshed with maximum precision!', 'OK', 2000);
+      console.log('📍 GPS refreshed. Manual edit active:', this.isLocationManuallyEdited);
     } catch (error) {
       console.error('Error refreshing location:', error);
       this.isOffline = true;
@@ -432,18 +450,39 @@ export class ReportsPage implements OnInit, OnDestroy {
   }
 
   async onSubmit() {
+    // Check incident type selection
     if (!this.selectedIncidentType) {
       await this.showAlert('Error', 'Please select an incident type.');
       return;
     }
 
-    if (this.reportForm.invalid) {
-      await this.showAlert('Error', 'Please fill in all required fields correctly.');
+    // Check location
+    if (!this.selectedLocation) {
+      await this.showAlert('Error', 'Please select a location on the map.');
       return;
     }
 
-    if (!this.selectedLocation) {
-      await this.showAlert('Error', 'Please select a location on the map.');
+    // Detailed form validation with helpful error messages
+    if (this.reportForm.invalid) {
+      const errors: string[] = [];
+      
+      if (this.reportForm.get('type')?.invalid) {
+        errors.push('Incident type is required');
+      }
+      if (this.reportForm.get('description')?.invalid) {
+        const descControl = this.reportForm.get('description');
+        if (descControl?.hasError('required')) {
+          errors.push('Description is required');
+        } else if (descControl?.hasError('minlength')) {
+          errors.push('Description must be at least 5 characters');
+        }
+      }
+      
+      const errorMessage = errors.length > 0 
+        ? errors.join('. ') + '.' 
+        : 'Please fill in all required fields correctly.';
+      
+      await this.showAlert('Error', errorMessage);
       return;
     }
 
@@ -453,6 +492,15 @@ export class ReportsPage implements OnInit, OnDestroy {
     await loading.present();
 
     try {
+      // Ensure location address is up-to-date before submission
+      if (this.selectedLocation) {
+        await this.updateLocationAddress();
+        console.log('📍 Submitting report with location:', this.selectedLocation);
+        console.log('📍 Location address:', this.locationAddress);
+        console.log('📍 Location was manually edited:', this.isLocationManuallyEdited);
+        console.log('📍 This exact location will be displayed in admin panel');
+      }
+      
       const formData = this.reportForm.value;
       
       // Convert media files to File objects for Cloudinary upload
@@ -495,6 +543,7 @@ export class ReportsPage implements OnInit, OnDestroy {
       this.reportForm.reset();
       this.selectedLocation = this.currentLocation;
       this.selectedIncidentType = '';
+      this.isLocationManuallyEdited = false;
       // Reset time settings
       this.customDateTime = null;
       this.isCustomTimeEnabled = false;
@@ -643,10 +692,27 @@ export class ReportsPage implements OnInit, OnDestroy {
     
     if (this.isLocationEditMode) {
       this.enableLocationEditing();
-      this.notificationService.info('Edit Mode', 'Tap anywhere on the map to set the report location', 'OK', 3000);
+      this.notificationService.info('Edit Mode Active', 'Tap anywhere on the map or drag the marker to pin your desired location. GPS auto-updates are paused.', 'OK', 3500);
     } else {
       this.disableLocationEditing();
-      this.notificationService.success('Location Set', 'Report location has been updated', 'OK', 2000);
+      const locationSummary = this.locationAddress || `${this.selectedLocation?.lat.toFixed(6)}, ${this.selectedLocation?.lng.toFixed(6)}`;
+      
+      if (this.isLocationManuallyEdited) {
+        this.notificationService.success(
+          'Custom Location Locked', 
+          `Report location is set to: ${locationSummary}. This location will NOT be changed by GPS updates.`, 
+          'OK', 
+          4000
+        );
+      } else {
+        this.notificationService.success(
+          'Location Confirmed', 
+          `Using current GPS location: ${locationSummary}`, 
+          'OK', 
+          3000
+        );
+      }
+      console.log('✅ Final report location set:', this.selectedLocation, 'Address:', this.locationAddress, 'Manual edit:', this.isLocationManuallyEdited);
     }
   }
 
@@ -681,20 +747,24 @@ export class ReportsPage implements OnInit, OnDestroy {
     this.editableMarker.setPopup(popup);
 
     // Handle marker drag end
-    this.editableMarker.on('dragend', () => {
+    this.editableMarker.on('dragend', async () => {
       const lngLat = this.editableMarker!.getLngLat();
       this.selectedLocation = { lat: lngLat.lat, lng: lngLat.lng };
-      this.updateLocationAddress();
+      this.isLocationManuallyEdited = true;
+      await this.updateLocationAddress();
       this.updateEditableMarkerPopup();
+      console.log('📍 Report location manually edited:', this.selectedLocation, 'Address:', this.locationAddress);
     });
 
     // Handle map clicks to move marker
-    this.handleMapClick = (e: mapboxgl.MapMouseEvent) => {
+    this.handleMapClick = async (e: mapboxgl.MapMouseEvent) => {
       const lngLat = e.lngLat;
       this.selectedLocation = { lat: lngLat.lat, lng: lngLat.lng };
+      this.isLocationManuallyEdited = true;
       this.editableMarker!.setLngLat([lngLat.lng, lngLat.lat]);
-      this.updateLocationAddress();
+      await this.updateLocationAddress();
       this.updateEditableMarkerPopup();
+      console.log('📍 Report location manually edited:', this.selectedLocation, 'Address:', this.locationAddress);
     };
     
     this.map.on('click', this.handleMapClick);
@@ -768,6 +838,7 @@ export class ReportsPage implements OnInit, OnDestroy {
       // Get fresh current location
       this.currentLocation = await this.locationService.getDeviceExactLocation();
       this.selectedLocation = this.currentLocation;
+      this.isLocationManuallyEdited = false; // Reset manual edit flag
       this.isOffline = false;
       await this.updateLocationAddress();
       await this.saveLastKnownLocation();
@@ -778,7 +849,8 @@ export class ReportsPage implements OnInit, OnDestroy {
         this.updateEditableMarkerPopup();
       }
       
-      this.notificationService.success('Location Reset', 'Using your current device location', 'OK', 2000);
+      this.notificationService.success('Location Reset', 'Using your current device GPS location', 'OK', 2000);
+      console.log('📍 Location reset to current GPS:', this.selectedLocation);
     } catch (error) {
       console.error('Error resetting to current location:', error);
       this.notificationService.error('Error', 'Failed to get current location', 'OK', 3000);
@@ -896,5 +968,26 @@ export class ReportsPage implements OnInit, OnDestroy {
     } else {
       this.openDateTimePicker();
     }
+  }
+
+  // Anonymous toggle methods
+  toggleAnonymous() {
+    const currentValue = this.reportForm.get('anonymous')?.value;
+    this.reportForm.patchValue({ anonymous: !currentValue });
+  }
+
+  setAnonymous(value: boolean) {
+    this.reportForm.patchValue({ anonymous: value });
+    
+    const message = value 
+      ? 'Your identity will be kept private and not shared in the report.'
+      : 'Your name and contact information will be included in the report.';
+    
+    this.notificationService.info(
+      value ? 'Anonymous Mode' : 'Public Mode',
+      message,
+      'OK',
+      2000
+    );
   }
 }

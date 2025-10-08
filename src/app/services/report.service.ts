@@ -9,7 +9,7 @@ import { Haptics } from '@capacitor/haptics';
 
 // Native Firebase imports
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, serverTimestamp, getDoc } from 'firebase/firestore';
 import { User } from 'firebase/auth';
 import { environment } from '../../environments/environment';
 
@@ -33,8 +33,8 @@ export interface Report {
   location: {
     lat: number;
     lng: number;
-    simplifiedAddress?: string; // Short location description
-    fullAddress?: string; // Full address for reference
+    simplifiedAddress?: string;
+    fullAddress?: string;
   };
   locationAddress: string;
   anonymous: boolean;
@@ -45,13 +45,15 @@ export interface Report {
   status: 'Pending' | 'In Progress' | 'Resolved' | 'Closed';
   createdAt?: any;
   updatedAt?: any;
-  // Enhanced fields
-  timezone?: string; // User's timezone
+  timezone?: string;
   zoneDangerLevel?: 'Safe' | 'Neutral' | 'Caution' | 'Danger';
-  zoneName?: string; // Name of the danger zone if applicable
+  zoneName?: string;
   timeOfDay?: 'Morning' | 'Afternoon' | 'Evening' | 'Night';
-  dayOfWeek?: string; // Day of the week
-  localTime?: string; // Formatted local time
+  dayOfWeek?: string;
+  localTime?: string;
+  reporterName?: string;
+  reporterEmail?: string;
+  emergencyContact?: string;
 }
 
 export interface QueuedReport {
@@ -73,7 +75,6 @@ export class ReportService {
   private queueProcessing = false;
   private queueSubject = new BehaviorSubject<QueuedReport[]>([]);
 
-  // Cloudinary configuration
   private readonly cloudinaryConfig = {
     cloudName: 'dbxtrosvd',
     apiKey: '455876314373661',
@@ -88,7 +89,6 @@ export class ReportService {
   ) {
     console.log('🔧 ReportService initialized with native Firebase SDK');
     
-    // Initialize Firebase if not already initialized
     try {
       initializeApp(environment.firebaseConfig);
       console.log('✅ Firebase initialized successfully');
@@ -100,14 +100,10 @@ export class ReportService {
     this.loadQueuedReports();
   }
 
-  /**
-   * Test Cloudinary connection using browser-compatible method
-   */
   async testStorageConnection(): Promise<boolean> {
     try {
       console.log('Testing Cloudinary connection...');
       
-      // Create a simple test request to Cloudinary
       const response = await fetch(`https://res.cloudinary.com/${this.cloudinaryConfig.cloudName}/image/upload/v1/sample.jpg`);
       
       if (response.ok) {
@@ -123,9 +119,6 @@ export class ReportService {
     }
   }
 
-  /**
-   * Convert file to base64 string (for Cloudinary upload)
-   */
   private async fileToBase64(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -135,12 +128,6 @@ export class ReportService {
     });
   }
 
-  /**
-   * 📸 Upload Media to Cloudinary (FREE - 25GB Storage!)
-   * Uploads images/audio files to Cloudinary using browser-compatible API
-   * FREE tier: 25GB storage, 25GB bandwidth/month
-   * Works on both web and mobile browsers
-   */
   async uploadMedia(files: File[]): Promise<string[]> {
     try {
       console.log('🚀 Uploading media files to Cloudinary (FREE tier)...');
@@ -153,12 +140,10 @@ export class ReportService {
         console.log(`📤 Uploading file ${index + 1}/${files.length}: ${file.name} (${file.size} bytes)`);
         
         try {
-          // Create FormData for Cloudinary upload
           const formData = new FormData();
           formData.append('file', file);
           formData.append('upload_preset', this.cloudinaryConfig.uploadPreset);
           
-          // Upload to Cloudinary using fetch API
           const response = await fetch(
             `https://api.cloudinary.com/v1_1/${this.cloudinaryConfig.cloudName}/auto/upload`,
             {
@@ -179,7 +164,6 @@ export class ReportService {
           return result.secure_url;
         } catch (uploadError) {
           console.error(`❌ Failed to upload ${file.name} to Cloudinary:`, uploadError);
-          // Fallback to base64 for this specific file
           console.log(`🔄 Converting ${file.name} to base64 as fallback...`);
           return await this.fileToBase64(file);
         }
@@ -194,7 +178,6 @@ export class ReportService {
       console.error('❌ Error uploading media to Cloudinary:', error);
       console.log('🔄 Falling back to base64 storage for all files...');
       
-      // Fallback to base64 if Cloudinary fails
       try {
         const base64Promises = files.map(async (file, index) => {
           console.log(`📤 Converting file ${index + 1}/${files.length} to base64: ${file.name}`);
@@ -213,10 +196,6 @@ export class ReportService {
     }
   }
 
-  /**
-   * 📍 Reverse Geocoding Support
-   * Converts GPS coordinates to readable address using Nominatim
-   */
   async getReadableAddress(lat: number, lng: number): Promise<string> {
     try {
       const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&zoom=18`;
@@ -239,34 +218,24 @@ export class ReportService {
     }
   }
 
-  /**
-   * 🚦 Auto Risk Level Assignment
-   * Based on incident type, assigns risk level 1-5
-   */
   getRiskLevel(type: string): number {
     const riskLevels: { [key: string]: number } = {
-      // Public incident types (shown to users)
       'lost-item': 1,
       'suspicious-activity': 2,
       'crime-theft': 3,
       'emergency': 4,
       'life-threatening': 5,
-      // Level 1 - Low Risk (Minor incidents)
       'vandalism': 1,
       'noise-complaint': 1,
       'parking-violation': 1,
       'littering': 1,
       'trespassing-minor': 1,
-      
-      // Level 2 - Moderate Risk (Suspicious/Concerning)
       'suspicious-person': 2,
       'suspicious-vehicle': 2,
       'harassment-verbal': 2,
       'loitering': 2,
       'drug-activity-suspected': 2,
       'gang-activity-suspected': 2,
-      
-      // Level 3 - High Risk (Criminal activity)
       'assault-minor': 3,
       'theft-property': 3,
       'burglary': 3,
@@ -274,8 +243,6 @@ export class ReportService {
       'drug-dealing': 3,
       'weapon-possession': 3,
       'domestic-dispute': 3,
-      
-      // Level 4 - Critical Risk (Emergency situations)
       'assault-severe': 4,
       'armed-robbery': 4,
       'fire-outbreak': 4,
@@ -285,8 +252,6 @@ export class ReportService {
       'bomb-threat': 4,
       'active-shooter': 4,
       'terrorism-suspected': 4,
-      
-      // Level 5 - Extreme Risk (Life-threatening emergencies)
       'mass-casualty': 5,
       'terrorism-confirmed': 5,
       'biological-threat': 5,
@@ -301,10 +266,6 @@ export class ReportService {
     return riskLevels[type.toLowerCase()] || 2;
   }
 
-  /**
-   * 🔕 Silent Panic Mode Submission
-   * Handles silent submissions with haptic feedback
-   */
   private async handleSilentSubmission(): Promise<void> {
     try {
       await Haptics.vibrate({ duration: 1000 });
@@ -315,10 +276,6 @@ export class ReportService {
     }
   }
 
-  /**
-   * 🔁 Offline Queueing
-   * Queues reports when offline and processes when online
-   */
   private async queueReport(data: ReportFormData): Promise<void> {
     const queuedReport: QueuedReport = {
       id: this.generateId(),
@@ -357,22 +314,14 @@ export class ReportService {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
   }
 
-  /**
-   * Check if device is online
-   */
   private checkOnlineStatus(): boolean {
     return navigator.onLine;
   }
 
-  /**
-   * 🎯 Main Report Submission Method
-   * Handles the complete report submission process
-   */
   async submitReport(data: ReportFormData): Promise<void> {
     try {
       console.log('🚀 Starting report submission process...');
       
-      // Check rate limiting first
       const clientIP = this.rateLimitingService.getClientIPAddress();
       console.log('🔒 Checking rate limit for IP:', clientIP);
       
@@ -400,7 +349,6 @@ export class ReportService {
       
       console.log('✅ Rate limit check passed. Remaining reports:', rateLimitInfo?.remainingReports);
       
-      // Check network connectivity
       this.isOnline = this.checkOnlineStatus();
       console.log('📡 Network status:', this.isOnline ? 'Online' : 'Offline');
 
@@ -418,7 +366,6 @@ export class ReportService {
         return;
       }
 
-      // Get current user
       console.log('👤 Getting current user...');
       const user = await this.authService.getCurrentUser();
       console.log('👤 Current user:', user ? `UID: ${user.uid}` : 'No user found');
@@ -428,13 +375,40 @@ export class ReportService {
         throw new Error('User not authenticated. Please log in and try again.');
       }
 
-      // Handle silent mode
+      // Fetch user profile data for non-anonymous reports
+      let reporterName: string | undefined;
+      let reporterEmail: string | undefined;
+      let emergencyContact: string | undefined;
+
+      if (!data.anonymous) {
+        try {
+          const userProfileDoc = await getDoc(doc(getFirestore(), 'users', user.uid));
+          
+          if (userProfileDoc.exists()) {
+            const userProfile = userProfileDoc.data();
+            reporterName = userProfile['displayName'] || user.displayName || 'Unknown User';
+            reporterEmail = userProfile['email'] || user.email || 'No email';
+            emergencyContact = userProfile['emergencyContact'] || 'No emergency contact';
+            
+            console.log('👤 User profile loaded:', { reporterName, reporterEmail, emergencyContact });
+          } else {
+            reporterName = user.displayName || user.email || 'Unknown User';
+            reporterEmail = user.email || 'No email';
+            emergencyContact = 'No emergency contact';
+          }
+        } catch (error) {
+          console.error('❌ Error fetching user profile:', error);
+          reporterName = user.displayName || user.email || 'Unknown User';
+          reporterEmail = user.email || 'No email';
+          emergencyContact = 'No emergency contact';
+        }
+      }
+
       if (data.isSilent) {
         console.log('🔇 Silent mode enabled, triggering haptic feedback...');
         await this.handleSilentSubmission();
       }
 
-      // Upload media files
       let mediaUrls: string[] = [];
       if (data.media && data.media.length > 0) {
         console.log(`📸 Uploading ${data.media.length} media files...`);
@@ -444,7 +418,6 @@ export class ReportService {
         console.log('📸 No media files to upload');
       }
 
-      // Get readable address
       console.log('📍 Getting readable address...');
       const locationAddress = await this.getReadableAddress(
         data.location.lat,
@@ -452,14 +425,11 @@ export class ReportService {
       );
       console.log('📍 Address:', locationAddress);
 
-      // Determine risk level
       const riskLevel = this.getRiskLevel(data.type);
       console.log(`⚠️ Risk level for ${data.type}: ${riskLevel}`);
 
-      // Create report object with enhanced information
       console.log('📝 Creating report object...');
       
-      // Get enhanced location and time information
       const enhancedLocation = await this.getEnhancedLocationInfo(data.location.lat, data.location.lng);
       const timeInfo = data.customDateTime ? this.getTimeInformationFromDate(data.customDateTime) : this.getTimeInformation();
       const zoneInfo = await this.getZoneInformation(data.location.lat, data.location.lng);
@@ -475,13 +445,17 @@ export class ReportService {
         locationAddress,
         anonymous: data.anonymous,
         userId: user.uid,
+        ...(data.anonymous ? {} : {
+          reporterName,
+          reporterEmail,
+          emergencyContact
+        }),
         media: mediaUrls,
         riskLevel,
         isSilent: data.isSilent || false,
         status: 'Pending',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-        // Enhanced fields
         timezone: timeInfo.timezone,
         zoneDangerLevel: zoneInfo.dangerLevel,
         zoneName: zoneInfo.zoneName,
@@ -495,17 +469,17 @@ export class ReportService {
         description: report.description.substring(0, 50) + '...',
         location: report.location,
         userId: report.userId,
+        anonymous: report.anonymous,
+        reporterName: data.anonymous ? 'ANONYMOUS' : reporterName,
         mediaCount: report.media.length,
         riskLevel: report.riskLevel
       });
 
-      // Save to Firestore
       console.log('🔥 Saving to Firestore...');
       try {
         const docRef = await addDoc(collection(getFirestore(), this.collectionName), report);
         console.log('✅ Report submitted successfully! Document ID:', docRef.id);
         
-        // Record the successful submission for rate limiting
         await this.rateLimitingService.recordReportSubmission(clientIP).pipe(
           map(result => result)
         ).toPromise();
@@ -516,7 +490,6 @@ export class ReportService {
         throw new Error(`Failed to save report to database: ${firestoreError}`);
       }
 
-      // Show success notification (unless silent)
       if (!data.isSilent) {
         this.notificationService.success(
           'Report Submitted',
@@ -526,14 +499,12 @@ export class ReportService {
         );
       }
 
-      // Process any queued reports
       console.log('🔄 Processing queued reports...');
       await this.processQueuedReports();
 
     } catch (error) {
       console.error('❌ Error submitting report:', error);
       
-      // Provide more specific error messages
       let errorMessage = 'There was an error submitting your report. Please try again.';
       
       if (error instanceof Error) {
@@ -559,9 +530,6 @@ export class ReportService {
     }
   }
 
-  /**
-   * Process queued reports when back online
-   */
   private async processQueuedReports(): Promise<void> {
     if (this.queueProcessing) return;
     
@@ -584,7 +552,6 @@ export class ReportService {
 
         await this.submitReport(queuedReport.data);
         
-        // Remove from queue on success
         const updatedQueue = queue.filter(r => r.id !== queuedReport.id);
         this.saveQueuedReports(updatedQueue);
         this.queueSubject.next(updatedQueue);
@@ -592,7 +559,6 @@ export class ReportService {
       } catch (error) {
         console.error(`Error processing queued report ${queuedReport.id}:`, error);
         
-        // Increment retry count
         queuedReport.retryCount++;
         this.saveQueuedReports(queue);
         this.queueSubject.next(queue);
@@ -602,14 +568,10 @@ export class ReportService {
     this.queueProcessing = false;
   }
 
-  /**
-   * Initialize network monitoring
-   */
   private async initializeNetworkMonitoring(): Promise<void> {
     try {
       this.isOnline = this.checkOnlineStatus();
 
-      // Listen for online/offline events
       window.addEventListener('online', () => {
         this.isOnline = true;
         console.log('Network connection restored');
@@ -625,32 +587,21 @@ export class ReportService {
     }
   }
 
-  /**
-   * Load queued reports on service initialization
-   */
   private loadQueuedReports(): void {
     const queue = this.getQueuedReports();
     this.queueSubject.next(queue);
   }
 
-  /**
-   * Get queued reports observable
-   */
   getQueuedReports$(): Observable<QueuedReport[]> {
     return this.queueSubject.asObservable();
   }
 
-  /**
-   * Get enhanced location information with simplified address
-   */
   private async getEnhancedLocationInfo(lat: number, lng: number): Promise<{
     simplifiedAddress: string;
     fullAddress: string;
   }> {
     try {
       const fullAddress = await this.getReadableAddress(lat, lng);
-      
-      // Create simplified address (e.g., "Downtown Cebu" instead of full street address)
       const simplifiedAddress = this.simplifyAddress(fullAddress);
       
       return {
@@ -666,32 +617,22 @@ export class ReportService {
     }
   }
 
-  /**
-   * Simplify address to show only area/district name
-   */
   private simplifyAddress(fullAddress: string): string {
     if (!fullAddress || fullAddress === 'Location not available') {
       return 'Unknown Location';
     }
 
-    // Extract area/district from full address
-    // This is a simple implementation - you can enhance based on your location patterns
     const addressParts = fullAddress.split(',');
     
     if (addressParts.length >= 2) {
-      // Return the second part (usually area/district)
       return addressParts[1].trim();
     } else if (addressParts.length === 1) {
-      // Return the first part if only one part
       return addressParts[0].trim();
     }
     
     return 'Unknown Location';
   }
 
-  /**
-   * Get time information including timezone and time of day
-   */
   private getTimeInformation(): {
     timezone: string;
     timeOfDay: 'Morning' | 'Afternoon' | 'Evening' | 'Night';
@@ -702,9 +643,6 @@ export class ReportService {
     return this.getTimeInformationFromDate(now);
   }
 
-  /**
-   * Get time information from a specific date
-   */
   private getTimeInformationFromDate(date: Date): {
     timezone: string;
     timeOfDay: 'Morning' | 'Afternoon' | 'Evening' | 'Night';
@@ -713,7 +651,6 @@ export class ReportService {
   } {
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     
-    // Determine time of day
     const hour = date.getHours();
     let timeOfDay: 'Morning' | 'Afternoon' | 'Evening' | 'Night';
     
@@ -727,10 +664,8 @@ export class ReportService {
       timeOfDay = 'Night';
     }
     
-    // Get day of week
     const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' });
     
-    // Get formatted local time
     const localTime = date.toLocaleString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
@@ -746,20 +681,11 @@ export class ReportService {
     };
   }
 
-  /**
-   * Get zone danger information based on location
-   */
   private async getZoneInformation(lat: number, lng: number): Promise<{
     dangerLevel: 'Safe' | 'Neutral' | 'Caution' | 'Danger';
     zoneName: string;
   }> {
     try {
-      // This would integrate with your ZoneDangerEngineService
-      // For now, we'll provide a simple implementation
-      // You can enhance this to actually check against your danger zones
-      
-      // Simple logic based on coordinates (this is just an example)
-      // In a real implementation, you'd check against your zone database
       const zoneName = this.getZoneNameFromCoordinates(lat, lng);
       const dangerLevel = this.getDangerLevelFromZone(zoneName);
       
@@ -776,14 +702,7 @@ export class ReportService {
     }
   }
 
-  /**
-   * Get zone name based on coordinates (simplified implementation)
-   */
   private getZoneNameFromCoordinates(lat: number, lng: number): string {
-    // This is a simplified implementation
-    // In a real app, you'd check against your zone database
-    
-    // Example zones for Cebu area (you can expand this)
     if (lat >= 10.3 && lat <= 10.35 && lng >= 123.9 && lng <= 123.95) {
       return 'Downtown Cebu';
     } else if (lat >= 10.31 && lat <= 10.33 && lng >= 123.89 && lng <= 123.91) {
@@ -795,13 +714,7 @@ export class ReportService {
     }
   }
 
-  /**
-   * Get danger level based on zone name (simplified implementation)
-   */
   private getDangerLevelFromZone(zoneName: string): 'Safe' | 'Neutral' | 'Caution' | 'Danger' {
-    // This is a simplified implementation
-    // In a real app, you'd get this from your zone danger engine
-    
     const dangerZones = ['Downtown Cebu', 'Lahug Area'];
     const cautionZones = ['Mabolo District'];
     
@@ -814,9 +727,6 @@ export class ReportService {
     }
   }
 
-  /**
-   * Get all reports for current user
-   */
   getUserReports(): Observable<Report[]> {
     return from(this.authService.getCurrentUser()).pipe(
       switchMap(user => {
@@ -851,9 +761,6 @@ export class ReportService {
     );
   }
 
-  /**
-   * Get report by ID
-   */
   getReportById(id: string): Observable<Report | null> {
     return new Observable<Report | null>(observer => {
       const docRef = doc(getFirestore(), this.collectionName, id);
@@ -876,9 +783,6 @@ export class ReportService {
     });
   }
 
-  /**
-   * Update report status
-   */
   async updateReportStatus(id: string, status: Report['status']): Promise<void> {
     try {
       await updateDoc(doc(getFirestore(), this.collectionName, id), {
@@ -891,9 +795,6 @@ export class ReportService {
     }
   }
 
-  /**
-   * Delete report
-   */
   async deleteReport(id: string): Promise<void> {
     try {
       await deleteDoc(doc(getFirestore(), this.collectionName, id));
@@ -903,9 +804,6 @@ export class ReportService {
     }
   }
 
-  /**
-   * Get incident types with risk levels
-   */
   getIncidentTypes(): Array<{ value: string; label: string; riskLevel: number; icon: string }> {
     return [
       { value: 'lost-item', label: 'Lost Item', riskLevel: 1, icon: 'search-outline' },
@@ -916,11 +814,6 @@ export class ReportService {
     ];
   }
 
-
-
-  /**
-   * Get risk level description
-   */
   getRiskLevelDescription(level: number): string {
     const descriptions = {
       1: 'Low Risk - Minor incident',
@@ -932,25 +825,17 @@ export class ReportService {
     return descriptions[level as keyof typeof descriptions] || 'Unknown Risk Level';
   }
 
-
-
-  /**
-   * Get risk level color
-   */
   getRiskLevelColor(level: number): string {
     const colors = {
-      1: '#28a745', // Green
-      2: '#ffc107', // Yellow
-      3: '#fd7e14', // Orange
-      4: '#dc3545', // Red
-      5: '#6f42c1'  // Purple
+      1: '#28a745',
+      2: '#ffc107',
+      3: '#fd7e14',
+      4: '#dc3545',
+      5: '#6f42c1'
     };
     return colors[level as keyof typeof colors] || '#6c757d';
   }
 
-  /**
-   * Get current rate limit status for the client
-   */
   async getRateLimitStatus(): Promise<{ remainingReports: number; timeUntilReset: string; isBlocked: boolean }> {
     const clientIP = this.rateLimitingService.getClientIPAddress();
     const rateLimitInfo = await this.rateLimitingService.checkRateLimit(clientIP).pipe(
@@ -964,4 +849,4 @@ export class ReportService {
       isBlocked: rateLimitInfo?.isBlocked || false
     };
   }
-} 
+}

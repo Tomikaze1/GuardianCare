@@ -578,22 +578,23 @@
   
   .location-actions {
     display: flex;
+    justify-content: center;
     gap: 12px;
     margin-top: 16px;
     padding-top: 16px;
     border-top: 2px solid #f1f5f9;
     
     .action-btn {
-      flex: 1;
-      font-size: 0.9rem;
+      font-size: 1rem;
       font-weight: 600;
-      --padding-start: 16px;
-      --padding-end: 16px;
+      --padding-start: 24px;
+      --padding-end: 24px;
       --padding-top: 12px;
       --padding-bottom: 12px;
       --border-radius: 12px;
       border: 1px solid #e2e8f0;
       transition: all 0.3s ease;
+      min-width: 180px;
       
       ion-icon {
         margin-right: 6px;
@@ -632,6 +633,7 @@
         --color: white;
         --background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         border-color: #10b981;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
         
         ion-icon {
           color: white;
@@ -639,8 +641,29 @@
         
         &:hover {
           --background: linear-gradient(135deg, #059669 0%, #047857 100%);
-          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+          box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+          transform: translateY(-2px);
         }
+      }
+    }
+  }
+  
+  .location-info {
+    display: flex;
+    justify-content: center;
+    margin-top: 12px;
+    padding: 12px;
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    border-radius: 12px;
+    border: 1px solid #a7f3d0;
+    
+    ion-chip {
+      font-size: 0.85rem;
+      font-weight: 600;
+      
+      ion-icon {
+        font-size: 1rem;
+        margin-right: 6px;
       }
     }
   }
