@@ -8,6 +8,7 @@ export interface DangerZone {
   id: string;
   name: string;
   level: 'Safe' | 'Neutral' | 'Caution' | 'Danger';
+  riskLevel?: number; // Numeric risk level (1-5) from admin validation
   coordinates: [number, number][]; 
   timeSlots: TimeSlot[];
   incidents: ZoneIncident[];
@@ -141,16 +142,20 @@ export class ZoneDangerEngineService {
   }
 
   private convertReportToZone(report: any): DangerZone {
+    // Get the risk level set by admin (this is the numeric 1-5 level)
+    // Ensure it's a number by using Number() to convert strings like "2" to 2
+    const riskLevel = Number(report.level || report.riskLevel || 1);
+    
     // Map risk level to severity (1-5 to 0-10)
-    const currentSeverity = (report.riskLevel / 5) * 10;
+    const currentSeverity = (riskLevel / 5) * 10;
     
     // Determine danger level based on risk level
     let level: 'Safe' | 'Neutral' | 'Caution' | 'Danger';
-    if (report.riskLevel <= 1) {
+    if (riskLevel <= 1) {
       level = 'Safe';
-    } else if (report.riskLevel <= 2) {
+    } else if (riskLevel <= 2) {
       level = 'Neutral';
-    } else if (report.riskLevel <= 3) {
+    } else if (riskLevel <= 3) {
       level = 'Caution';
     } else {
       level = 'Danger';
@@ -165,6 +170,7 @@ export class ZoneDangerEngineService {
       id: report.id || `report-${Date.now()}`,
       name: report.location.simplifiedAddress || report.locationAddress || 'Reported Incident',
       level: level,
+      riskLevel: riskLevel, // Store the numeric risk level for heatmap
       coordinates: [
         [lng - radius, lat - radius],
         [lng + radius, lat - radius],
@@ -176,7 +182,7 @@ export class ZoneDangerEngineService {
       incidents: [{
         id: report.id || `incident-${Date.now()}`,
         timestamp: report.createdAt?.toDate ? report.createdAt.toDate() : new Date(report.createdAt),
-        severity: report.riskLevel * 2, // Convert 1-5 to 2-10
+        severity: riskLevel * 2, // Convert 1-5 to 2-10
         type: this.mapReportTypeToIncidentType(report.type),
         description: report.description
       }],
@@ -197,11 +203,11 @@ export class ZoneDangerEngineService {
         weekday: currentSeverity / 10
       },
       alertSettings: {
-        enablePushNotifications: report.riskLevel >= 3,
-        enableVibration: report.riskLevel >= 3,
-        enableSound: report.riskLevel >= 4,
-        soundType: report.riskLevel >= 4 ? 'siren' : 'beep',
-        vibrationPattern: report.riskLevel >= 4 ? [200, 100, 200, 100, 200] : [200, 200],
+        enablePushNotifications: riskLevel >= 3,
+        enableVibration: riskLevel >= 3,
+        enableSound: riskLevel >= 4,
+        soundType: riskLevel >= 4 ? 'siren' : 'beep',
+        vibrationPattern: riskLevel >= 4 ? [200, 100, 200, 100, 200] : [200, 200],
         alertThreshold: currentSeverity * 0.8
       }
     };

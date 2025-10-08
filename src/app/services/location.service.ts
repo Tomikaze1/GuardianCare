@@ -5,6 +5,9 @@ export interface Location {
   lat: number;
   lng: number;
   address?: string;
+  heading?: number; // Direction of movement in degrees (0-360)
+  speed?: number; // Speed in m/s
+  accuracy?: number; // Accuracy in meters
 }
 
 @Injectable({
@@ -184,7 +187,10 @@ export class LocationService {
 
             const location: Location = {
               lat: position.coords.latitude,
-              lng: position.coords.longitude
+              lng: position.coords.longitude,
+              heading: position.coords.heading !== null ? position.coords.heading : undefined,
+              speed: position.coords.speed !== null ? position.coords.speed : undefined,
+              accuracy: position.coords.accuracy
             };
             
             this.currentLocationSubject.next(location);
@@ -204,8 +210,8 @@ export class LocationService {
           },
           {
             enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 1000 // Allow 1 second cache for real-time updates
+            timeout: 30000, // 30 seconds - increased to prevent timeout errors
+            maximumAge: 5000 // Allow 5 second cache for real-time updates
           }
         );
       };

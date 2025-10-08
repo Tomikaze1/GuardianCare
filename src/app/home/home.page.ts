@@ -208,7 +208,7 @@ export class HomePage implements OnInit, OnDestroy {
     console.log('Real-time tracking stopped');
   }
 
-  updateUserMarker(location: { lat: number; lng: number }) {
+  updateUserMarker(location: { lat: number; lng: number; heading?: number }) {
     if (this.userMarker && this.map) {
       // Smoothly animate marker movement
       this.userMarker.setLngLat([location.lng, location.lat]);
@@ -218,8 +218,35 @@ export class HomePage implements OnInit, OnDestroy {
         this.updateRealTimeUserLocationInHeatmap(location);
       }
       
-      // Optionally, smoothly pan the map to follow the user
-      // this.map.panTo([location.lng, location.lat]);
+      // Waze-like following camera with smooth animation
+      const currentZoom = this.map.getZoom();
+      const currentBearing = this.map.getBearing();
+      
+      // Use heading if available, otherwise keep current bearing
+      const targetBearing = location.heading !== undefined && location.heading !== null 
+        ? location.heading 
+        : currentBearing;
+      
+      const animationOptions = {
+        center: [location.lng, location.lat] as [number, number],
+        zoom: Math.max(currentZoom, 17), // Keep close zoom for navigation
+        pitch: 45, // Simple subtle tilt like Waze
+        bearing: targetBearing, // Rotate map based on heading
+        duration: 1000, // Smooth 1 second animation
+        essential: true // Animation not affected by prefers-reduced-motion
+      };
+      
+      this.map.easeTo(animationOptions);
+      
+      // Rotate the arrow marker to match heading (arrow always points in direction of travel)
+      if (location.heading !== undefined && location.heading !== null) {
+        const markerElement = this.userMarker.getElement();
+        if (markerElement) {
+          // Since map rotates with bearing, arrow should point north (up) in local coordinate system
+          // The map rotation will make it point in the right direction
+          markerElement.style.transform = `rotate(0deg)`;
+        }
+      }
     }
   }
 
@@ -616,66 +643,54 @@ export class HomePage implements OnInit, OnDestroy {
     if (!this.currentLocation) return;
     (mapboxgl as any).accessToken = 'pk.eyJ1IjoidG9taWthemUxIiwiYSI6ImNtY25rM3NxazB2ZG8ybHFxeHVoZWthd28ifQ.Vnf9pMEQAryEI2rMJeMQGQ';
     
-    // Normal colorful map, will switch to light-v11 when heatmap is toggled
-    const mapStyle = 'mapbox://styles/mapbox/streets-v11';
+    // Use light style to match admin (prevents WebGL context issues from style switching)
+    const mapStyle = 'mapbox://styles/mapbox/light-v11';
     
+    // Simple Waze-like navigation view - clean and easy to read
     this.map = new mapboxgl.Map({
       container: 'map',
       style: mapStyle,
       center: [this.currentLocation.lng, this.currentLocation.lat],
-      zoom: 12,
+      zoom: 17, // Closer zoom for navigation
+      pitch: 45, // Subtle 3D tilt like Waze (simpler than 60°)
+      bearing: 0, // Will rotate based on heading when moving
       interactive: true,
       trackResize: true,
       attributionControl: false
     });
 
-    // Create a custom live marker element
+    // Create a simple Waze-like blue navigation arrow marker
     const markerElement = document.createElement('div');
-    markerElement.className = 'live-user-marker';
+    markerElement.className = 'navigation-arrow-marker';
     markerElement.innerHTML = `
-      <div class="marker-pulse"></div>
-      <div class="marker-icon">📍</div>
+      <svg width="32" height="32" viewBox="0 0 32 32" class="arrow-svg">
+        <!-- Simple blue arrow pointing up -->
+        <path d="M16 4 L24 18 L20 18 L20 28 L12 28 L12 18 L8 18 Z" 
+              fill="#3B82F6" 
+              stroke="#FFFFFF" 
+              stroke-width="2"
+              class="arrow-shape"/>
+      </svg>
     `;
 
-    // Add custom CSS for the live marker
+    // Add custom CSS for the navigation arrow - simple and clean
     const style = document.createElement('style');
     style.textContent = `
-      .live-user-marker {
+      .navigation-arrow-marker {
         position: relative;
-        width: 30px;
-        height: 30px;
+        width: 32px;
+        height: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
+        filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5));
+        transition: transform 0.3s ease-out;
       }
-      .marker-pulse {
-        position: absolute;
-        width: 40px;
-        height: 40px;
-        border: 3px solid #4CAF50;
-        border-radius: 50%;
-        animation: pulse 2s infinite;
-        opacity: 0.7;
+      .arrow-svg {
+        display: block;
       }
-      .marker-icon {
-        position: relative;
-        z-index: 1;
-        font-size: 20px;
-        filter: drop-shadow(0 0 3px rgba(0,0,0,0.3));
-      }
-      @keyframes pulse {
-        0% {
-          transform: scale(0.8);
-          opacity: 0.7;
-        }
-        50% {
-          transform: scale(1.2);
-          opacity: 0.3;
-        }
-        100% {
-          transform: scale(0.8);
-          opacity: 0.7;
-        }
+      .arrow-shape {
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
       }
     `;
     document.head.appendChild(style);
@@ -685,7 +700,11 @@ export class HomePage implements OnInit, OnDestroy {
       .addTo(this.map);
 
     this.map.on('load', () => {
-      console.log('Map loaded in HomePage');
+      console.log('Map loaded in HomePage - Simple Waze-like navigation');
+      
+      // Keep it simple - just streets, no 3D buildings
+      // Clean Waze-like experience with flat streets and navigation arrow
+      
       setTimeout(() => {
         this.map!.addControl(new mapboxgl.NavigationControl(), 'top-right');
         console.log('NavigationControl added.');
@@ -917,19 +936,22 @@ export class HomePage implements OnInit, OnDestroy {
         this.zones = zones || [];
         
         // Extract validated reports from zones for marker display
-        this.validatedReports = zones.map(zone => ({
-          id: zone.id,
-          type: zone.name,
-          location: {
-            lat: zone.coordinates[0][1], // Get center lat
-            lng: zone.coordinates[0][0]  // Get center lng
-          },
-          riskLevel: Math.round(zone.currentSeverity / 2), // Convert 0-10 to 0-5
-          level: zone.level,
-          description: zone.incidents[0]?.description || 'Validated incident report',
-          timestamp: zone.incidents[0]?.timestamp || new Date(),
-          locationAddress: zone.name
-        }));
+        this.validatedReports = zones
+          .filter(zone => zone.riskLevel !== null && zone.riskLevel !== undefined) // Only include zones with valid risk levels
+          .map(zone => ({
+            id: zone.id,
+            type: zone.name,
+            location: {
+              lat: zone.coordinates[0][1], // Get center lat
+              lng: zone.coordinates[0][0]  // Get center lng
+            },
+            riskLevel: zone.riskLevel, // Use the numeric riskLevel field from zone
+            level: zone.riskLevel,      // Also store in level for compatibility
+            description: zone.incidents[0]?.description || 'Validated incident report',
+            timestamp: zone.incidents[0]?.timestamp || new Date(),
+            locationAddress: zone.name,
+            createdAt: zone.incidents[0]?.timestamp || new Date()
+          }));
         
         console.log('Extracted validated reports for markers:', this.validatedReports.length);
         
@@ -956,7 +978,7 @@ export class HomePage implements OnInit, OnDestroy {
     }
 
     console.log('Updating heatmap with validated reports:', this.validatedReports?.length || 0);
-
+    
     if (this.isHeatmapVisible) {
       // Add report markers (like admin)
       this.updateReportMarkers();
@@ -989,6 +1011,14 @@ export class HomePage implements OnInit, OnDestroy {
       const lng = report.location?.lng;
       
       if (lat === undefined || lng === undefined) return;
+      
+      // Skip reports without valid risk level
+      const hasRiskLevel = (report.riskLevel !== null && report.riskLevel !== undefined) || 
+                           (report.level !== null && report.level !== undefined);
+      if (!hasRiskLevel) {
+        console.warn('Skipping report without risk level:', report.id);
+        return;
+      }
 
       // Create custom marker element (same as admin)
       const el = document.createElement('div');
@@ -1000,8 +1030,8 @@ export class HomePage implements OnInit, OnDestroy {
       el.style.border = '3px solid white';
       el.style.boxShadow = '0 2px 8px rgba(0,0,0,0.4)';
       
-      // Color based on risk level (same as admin)
-      const color = this.getReportRiskColor(report.riskLevel || 1);
+      // Color based on risk level (same as admin - use riskLevel OR level)
+      const color = this.getReportRiskColor(report.riskLevel || report.level || 1);
       el.style.backgroundColor = color;
 
       // Create popup (same as admin)
@@ -1011,7 +1041,7 @@ export class HomePage implements OnInit, OnDestroy {
             ${report.type || 'Incident'}
           </h3>
           <p style="margin: 5px 0; font-size: 13px; color: #666;">
-            <strong>Risk Level:</strong> ${report.riskLevel || 'N/A'}
+            <strong>Risk Level:</strong> ${report.riskLevel || report.level || 'N/A'}
           </p>
           <p style="margin: 5px 0; font-size: 13px; color: #666;">
             <strong>Location:</strong> ${report.locationAddress || 'Unknown'}
@@ -1023,7 +1053,7 @@ export class HomePage implements OnInit, OnDestroy {
             <strong>Description:</strong> ${report.description.substring(0, 100)}...
           </p>
           <div style="margin-top: 10px; padding: 5px; background: ${color}; color: white; border-radius: 4px; text-align: center; font-size: 12px; font-weight: bold;">
-            ${this.getReportRiskLabel(report.riskLevel || 1)}
+            ${this.getReportRiskLabel(report.riskLevel || report.level || 1)}
           </div>
         </div>
       `);
@@ -1050,17 +1080,27 @@ export class HomePage implements OnInit, OnDestroy {
     const geojson = {
       type: 'FeatureCollection',
       features: this.validatedReports
-        .filter(r => r.location?.lat && r.location?.lng)
-        .map(r => ({
-          type: 'Feature',
-          properties: {
-            weight: r.riskLevel || 1
-          },
-          geometry: {
-            type: 'Point',
-            coordinates: [r.location.lng, r.location.lat]
-          }
-        }))
+        .filter(r => {
+          // Only include reports with valid location and risk level
+          const hasLocation = r.location?.lat && r.location?.lng;
+          const hasRiskLevel = (r.riskLevel !== null && r.riskLevel !== undefined) || 
+                               (r.level !== null && r.level !== undefined);
+          return hasLocation && hasRiskLevel;
+        })
+        .map(r => {
+          // Get risk level, ensuring it's a valid number
+          const riskLevel = r.riskLevel ?? r.level ?? 1;
+          return {
+        type: 'Feature',
+        properties: {
+              weight: Number(riskLevel) // Ensure weight is always a number
+        },
+        geometry: {
+          type: 'Point',
+              coordinates: [r.location.lng, r.location.lat]
+            }
+          };
+        })
     };
 
     // Add or update source
@@ -1077,18 +1117,21 @@ export class HomePage implements OnInit, OnDestroy {
     // Add heatmap layer if not exists (same style as admin)
     if (!this.map.getLayer(layerId)) {
       this.map.addLayer({
-        id: layerId,
+      id: layerId,
         type: 'heatmap',
-        source: sourceId,
+      source: sourceId,
         maxzoom: 15,
-        paint: {
-          'heatmap-weight': ['interpolate', ['linear'], ['get', 'weight'], 1, 0.4, 2, 0.6, 3, 0.8, 4, 1.0, 5, 1.2],
+      paint: {
+          'heatmap-weight': ['interpolate', ['linear'], ['get', 'weight'], 1, 0.3, 2, 0.5, 3, 0.7, 4, 0.9, 5, 1.2],
+          // 5-level heatmap color gradient: green, yellow, orange, red, dark red (same as admin)
           'heatmap-color': [
             'interpolate', ['linear'], ['heatmap-density'],
-            0.00, 'rgba(251,191,36,0.00)',
-            0.33, 'rgba(251,191,36,0.60)',
-            0.66, 'rgba(249,115,22,0.70)',
-            1.00, 'rgba(239,68,68,0.80)'
+            0.00, 'rgba(16,185,129,0.00)',   // Transparent at edges
+            0.20, 'rgba(16,185,129,0.50)',   // Green (low)
+            0.40, 'rgba(251,191,36,0.60)',   // Yellow (moderate)
+            0.60, 'rgba(249,115,22,0.70)',   // Orange (high)
+            0.80, 'rgba(239,68,68,0.80)',    // Red (critical)
+            1.00, 'rgba(220,38,38,0.90)'     // Dark Red (extreme)
           ],
           'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 100, 6, 85, 10, 70, 15, 50],
           'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 1.5, 8, 2.0, 15, 2.5],
@@ -1118,20 +1161,26 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   private getReportRiskColor(level: number): string {
-    if (level <= 1) return '#fbbf24'; // Yellow (low)
-    if (level === 2) return '#f97316'; // Orange (medium)
-    if (level === 3) return '#ef4444'; // Red (high)
-    if (level >= 4) return '#ef4444'; // Red (critical)
-    return '#ef4444';
+    // Exact match with admin's getRiskColor logic
+    // 5-level color system based on validation levels
+    const numLevel = Number(level);
+    if (numLevel <= 1) return '#10b981'; // Green (low)
+    if (numLevel === 2) return '#fbbf24'; // Yellow (moderate)
+    if (numLevel === 3) return '#f97316'; // Orange (high)
+    if (numLevel === 4) return '#ef4444'; // Red (critical)
+    return '#dc2626'; // Dark Red (extreme)
   }
 
   private getReportRiskLabel(level: number): string {
-    switch (level) {
-      case 1: return 'LOW RISK';
-      case 2: return 'MODERATE RISK';
-      case 3: return 'HIGH RISK';
-      case 4: return 'CRITICAL RISK';
-      case 5: return 'EXTREME RISK';
+    // Match admin's getRiskLabel popup labels
+    // Convert to number to handle string values from Firebase
+    const numLevel = Number(level);
+    switch (numLevel) {
+      case 1: return 'LEVEL 1 - LOW';
+      case 2: return 'LEVEL 2 - MODERATE';
+      case 3: return 'LEVEL 3 - HIGH';
+      case 4: return 'LEVEL 4 - CRITICAL';
+      case 5: return 'LEVEL 5 - EXTREME';
       default: return 'UNKNOWN';
     }
   }
@@ -1160,38 +1209,14 @@ export class HomePage implements OnInit, OnDestroy {
       return;
     }
     
+    // Simply toggle visibility without switching styles (prevents WebGL context loss)
     if (this.isHeatmapVisible) {
       console.log('Showing heatmap...');
-      // Switch to light-v11 style (same as admin) for heatmap visibility
-      this.map.setStyle('mapbox://styles/mapbox/light-v11');
-      
-      // Wait for style to fully load before adding layers
-      this.map.once('style.load', () => {
-        console.log('Light style loaded, adding heatmap layers...');
-        // Re-add user marker after style change
-        if (this.userMarker && this.currentLocation) {
-          this.userMarker.setLngLat([this.currentLocation.lng, this.currentLocation.lat]);
-        }
-        // Add heatmap layers
-        this.updateHeatmap();
-      });
+      this.updateHeatmap();
     } else {
       console.log('Hiding heatmap...');
-      // Remove heatmap layers before switching style
       this.removeReportMarkers();
       this.removeHeatmapLayer();
-      
-      // Switch back to colorful streets map
-      this.map.setStyle('mapbox://styles/mapbox/streets-v11');
-      
-      // Wait for style to fully load
-      this.map.once('style.load', () => {
-        console.log('Streets style loaded, restoring user marker...');
-        // Re-add user marker after style change
-        if (this.userMarker && this.currentLocation) {
-          this.userMarker.setLngLat([this.currentLocation.lng, this.currentLocation.lat]);
-        }
-      });
     }
   }
 

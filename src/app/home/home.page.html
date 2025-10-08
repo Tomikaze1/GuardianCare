@@ -46,23 +46,31 @@
   <div id="map"></div>
   
   <div class="heatmap-legend" *ngIf="isHeatmapVisible">
-    <div class="legend-title">Validated Reports</div>
-    <div class="legend-subtitle">Based on admin-validated user reports</div>
-    <div class="legend-item">
-      <div class="legend-color safe"></div>
-      <span class="legend-label">Low Risk</span>
+    <div class="legend-header">
+      <span class="legend-icon">📊</span>
+      <span class="legend-title">Risk Levels</span>
     </div>
-    <div class="legend-item">
-      <div class="legend-color neutral"></div>
-      <span class="legend-label">Moderate Risk</span>
-    </div>
-    <div class="legend-item">
-      <div class="legend-color caution"></div>
-      <span class="legend-label">High Risk</span>
-    </div>
-    <div class="legend-item">
-      <div class="legend-color danger"></div>
-      <span class="legend-label">Critical Risk</span>
+    <div class="legend-grid">
+      <div class="legend-item">
+        <div class="legend-dot level1"></div>
+        <span class="legend-text">L1</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot level2"></div>
+        <span class="legend-text">L2</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot level3"></div>
+        <span class="legend-text">L3</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot level4"></div>
+        <span class="legend-text">L4</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot level5"></div>
+        <span class="legend-text">L5</span>
+      </div>
     </div>
   </div>
 
