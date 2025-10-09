@@ -4,9 +4,10 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AlertController, LoadingController } from '@ionic/angular';
 import { Camera, CameraResultType, CameraSource, Photo } from '@capacitor/camera';
 import { LocationService } from '../services/location.service';
-import { ReportService, ReportFormData } from '../services/report.service';
+import { ReportService, ReportFormData, Report } from '../services/report.service';
 import { NotificationService } from '../shared/services/notification.service';
 import * as mapboxgl from 'mapbox-gl';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-reports',
@@ -43,6 +44,11 @@ export class ReportsPage implements OnInit, OnDestroy {
   isCustomTimeEnabled = false;
   currentDateTime: Date = new Date();
 
+  // Report History
+  showHistory = false;
+  userReports: Report[] = [];
+  private reportsSubscription?: Subscription;
+
   incidentTypes = [
     { value: 'crime-theft', label: 'Crime / Theft', icon: 'shield-outline' },
     { value: 'accident', label: 'Accident', icon: 'car-outline' },
@@ -77,6 +83,7 @@ export class ReportsPage implements OnInit, OnDestroy {
     this.loadLastKnownLocation();
     this.checkGPSAccuracy();
     this.updateCurrentDateTime();
+    this.loadUserReports();
     
     // Update current time every minute
     setInterval(() => {
@@ -103,11 +110,13 @@ export class ReportsPage implements OnInit, OnDestroy {
       this.map.remove();
       this.map = null;
     }
+    if (this.reportsSubscription) {
+      this.reportsSubscription.unsubscribe();
+    }
   }
 
   private async checkCameraPermissions() {
     try {
-      
       const permissions = await Camera.checkPermissions();
       console.log('Camera permissions:', permissions);
       
@@ -119,8 +128,13 @@ export class ReportsPage implements OnInit, OnDestroy {
           5000
         );
       }
-    } catch (error) {
-      console.error('Error checking camera permissions:', error);
+    } catch (error: any) {
+      // Ignore "not implemented on web" errors
+      if (error?.message?.includes('Not implemented')) {
+        console.log('Camera permissions check not available on web platform');
+      } else {
+        console.error('Error checking camera permissions:', error);
+      }
     }
   }
 
@@ -128,7 +142,12 @@ export class ReportsPage implements OnInit, OnDestroy {
     try {
       const permissions = await Camera.requestPermissions();
       return permissions.camera === 'granted';
-    } catch (error) {
+    } catch (error: any) {
+      // Ignore "not implemented on web" errors - web doesn't need permission requests
+      if (error?.message?.includes('Not implemented')) {
+        console.log('Camera permission request not needed on web platform');
+        return true; // Return true for web since it doesn't need permissions
+      }
       console.error('Error requesting camera permissions:', error);
       return false;
     }
@@ -275,6 +294,12 @@ export class ReportsPage implements OnInit, OnDestroy {
   }
 
   private initializeMap() {
+    // Don't initialize map if we're in history view
+    if (this.showHistory) {
+      console.log('Skipping map initialization - in history view');
+      return;
+    }
+    
     if (!this.selectedLocation) return;
     
     // Check if container exists and has dimensions
@@ -282,8 +307,11 @@ export class ReportsPage implements OnInit, OnDestroy {
     if (!container) {
       this.mapInitRetryCount++;
       if (this.mapInitRetryCount < this.maxMapInitRetries) {
-        console.warn(`Map container not found, retry ${this.mapInitRetryCount}/${this.maxMapInitRetries}...`);
-        setTimeout(() => this.initializeMap(), 500);
+        // Only retry if NOT in history view
+        if (!this.showHistory) {
+          console.warn(`Map container not found, retry ${this.mapInitRetryCount}/${this.maxMapInitRetries}...`);
+          setTimeout(() => this.initializeMap(), 500);
+        }
       } else {
         console.error('Max map initialization retries reached. Giving up.');
       }
@@ -294,8 +322,11 @@ export class ReportsPage implements OnInit, OnDestroy {
     if (rect.width === 0 || rect.height === 0) {
       this.mapInitRetryCount++;
       if (this.mapInitRetryCount < this.maxMapInitRetries) {
-        console.warn(`Map container has zero size, retry ${this.mapInitRetryCount}/${this.maxMapInitRetries}...`);
-        setTimeout(() => this.initializeMap(), 500);
+        // Only retry if NOT in history view
+        if (!this.showHistory) {
+          console.warn(`Map container has zero size, retry ${this.mapInitRetryCount}/${this.maxMapInitRetries}...`);
+          setTimeout(() => this.initializeMap(), 500);
+        }
       } else {
         console.error('Max map initialization retries reached. Giving up.');
       }
@@ -435,7 +466,6 @@ export class ReportsPage implements OnInit, OnDestroy {
 
   async takePhoto() {
     try {
-      
       const hasPermission = await this.requestCameraPermissions();
       if (!hasPermission) {
         this.notificationService.error(
@@ -470,13 +500,16 @@ export class ReportsPage implements OnInit, OnDestroy {
         
         this.notificationService.success('Success!', 'Photo captured successfully!', 'OK', 2000);
       }
-    } catch (error) {
-      console.error('Error taking photo:', error);
-      if (error === 'User cancelled photos app') {
-        this.notificationService.info('Cancelled', 'Photo capture was cancelled', 'OK', 2000);
-      } else {
-        this.notificationService.error('Error!', 'Failed to take photo. Please check camera permissions.', 'OK', 3000);
+    } catch (error: any) {
+      // User cancelled - this is normal, don't show error
+      if (error?.message?.includes('User cancelled') || error === 'User cancelled photos app') {
+        console.log('User cancelled photo capture');
+        // Don't show any notification - user intentionally cancelled
+        return;
       }
+      
+      console.error('Error taking photo:', error);
+      this.notificationService.error('Error!', 'Failed to take photo. Please check camera permissions.', 'OK', 3000);
     }
   }
 
@@ -505,13 +538,16 @@ export class ReportsPage implements OnInit, OnDestroy {
         
         this.notificationService.success('Success!', 'Photo selected from gallery!', 'OK', 2000);
       }
-    } catch (error) {
-      console.error('Error selecting from gallery:', error);
-      if (error === 'User cancelled photos app') {
-        this.notificationService.info('Cancelled', 'Gallery selection was cancelled', 'OK', 2000);
-      } else {
-        this.notificationService.error('Error!', 'Failed to select from gallery. Please check permissions.', 'OK', 3000);
+    } catch (error: any) {
+      // User cancelled - this is normal, don't show error
+      if (error?.message?.includes('User cancelled') || error === 'User cancelled photos app') {
+        console.log('User cancelled gallery selection');
+        // Don't show any notification - user intentionally cancelled
+        return;
       }
+      
+      console.error('Error selecting from gallery:', error);
+      this.notificationService.error('Error!', 'Failed to select from gallery. Please check permissions.', 'OK', 3000);
     }
   }
 
@@ -638,6 +674,11 @@ export class ReportsPage implements OnInit, OnDestroy {
   selectIncidentType(type: string) {
     this.selectedIncidentType = type;
     this.reportForm.patchValue({ type: type });
+    
+    // Remove focus from button after selection to prevent border staying
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
   }
 
   onFileSelected(event: any) {
@@ -1055,5 +1096,140 @@ export class ReportsPage implements OnInit, OnDestroy {
       'OK',
       2000
     );
+  }
+
+  // Report History Methods
+  toggleHistory() {
+    this.showHistory = !this.showHistory;
+    if (this.showHistory) {
+      this.content?.scrollToTop(300);
+    }
+  }
+
+  loadUserReports() {
+    this.reportsSubscription = this.reportService.getUserReports().subscribe(
+      reports => {
+        // Sort by creation date, newest first
+        this.userReports = reports.sort((a, b) => {
+          const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt);
+          const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt);
+          return dateB.getTime() - dateA.getTime();
+        });
+        console.log('User reports loaded:', this.userReports.length);
+      },
+      error => {
+        console.error('Error loading user reports:', error);
+        this.notificationService.error('Error', 'Failed to load report history', 'OK', 3000);
+      }
+    );
+  }
+
+  getStatusColor(status: string): string {
+    const colors: { [key: string]: string } = {
+      'Pending': 'warning',
+      'In Progress': 'primary',
+      'Resolved': 'success',
+      'Closed': 'medium',
+      'Validated': 'success',
+      'Rejected': 'danger'
+    };
+    return colors[status] || 'medium';
+  }
+
+  getStatusIcon(status: string): string {
+    const icons: { [key: string]: string } = {
+      'Pending': 'time-outline',
+      'In Progress': 'reload-outline',
+      'Resolved': 'checkmark-done-outline',
+      'Closed': 'close-circle-outline',
+      'Validated': 'shield-checkmark-outline',
+      'Rejected': 'close-outline'
+    };
+    return icons[status] || 'help-outline';
+  }
+
+  getValidationStars(level?: number): string[] {
+    if (!level) return [];
+    return Array(5).fill(0).map((_, i) => i < level ? 'star' : 'star-outline');
+  }
+
+  formatReportDate(timestamp: any): string {
+    if (!timestamp) return 'Unknown date';
+    
+    try {
+      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return 'Unknown date';
+    }
+  }
+
+  getIncidentTypeLabel(type: string): string {
+    const typeObj = this.incidentTypes.find(t => t.value === type);
+    return typeObj?.label || type;
+  }
+
+  getIncidentTypeIcon(type: string): string {
+    const typeObj = this.incidentTypes.find(t => t.value === type);
+    return typeObj?.icon || 'alert-circle-outline';
+  }
+
+  async viewReportDetails(report: Report) {
+    // Build clean, readable message
+    let message = `📋 Report Information\n\n`;
+    message += `Type: ${this.getIncidentTypeLabel(report.type)}\n`;
+    message += `Status: ${report.status}\n`;
+    message += `Date: ${this.formatReportDate(report.createdAt)}\n\n`;
+    
+    message += `📍 Location\n`;
+    message += `${report.locationAddress || 'Unknown location'}\n\n`;
+    
+    message += `📝 Description\n`;
+    message += `${report.description}\n\n`;
+    
+    // Media info
+    if (report.media && report.media.length > 0) {
+      message += `📸 Media: ${report.media.length} photo(s) attached\n\n`;
+    } else {
+      message += `📸 Media: No photos attached\n\n`;
+    }
+    
+    // Validation info
+    if (report.validationLevel) {
+      message += `✅ Admin Validation\n`;
+      message += `Level: ${report.validationLevel}/5 ${'⭐'.repeat(report.validationLevel)}\n`;
+      message += `Validated: ${this.formatReportDate(report.validatedAt)}\n\n`;
+    } else if (report.status === 'Validated') {
+      message += `✅ Status: Validated by admin\n\n`;
+    }
+    
+    // Rejection info
+    if (report.isRejected && report.rejectionReason) {
+      message += `❌ Report Rejected\n`;
+      message += `Reason: ${report.rejectionReason}\n`;
+    }
+
+    const alert = await this.alertController.create({
+      header: 'Report Details',
+      message: message,
+      cssClass: 'report-details-alert',
+      buttons: [
+        {
+          text: 'Close',
+          role: 'cancel'
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  getReportCountByStatus(status: string): number {
+    return this.userReports.filter(r => r.status === status).length;
   }
 }

@@ -42,7 +42,7 @@ export interface Report {
   media: string[];
   riskLevel: number;
   isSilent: boolean;
-  status: 'Pending' | 'In Progress' | 'Resolved' | 'Closed' | 'Validated';
+  status: 'Pending' | 'In Progress' | 'Resolved' | 'Closed' | 'Validated' | 'Rejected';
   createdAt?: any;
   updatedAt?: any;
   timezone?: string;
@@ -54,6 +54,13 @@ export interface Report {
   reporterName?: string;
   reporterEmail?: string;
   emergencyContact?: string;
+  
+  // Admin validation fields
+  level?: number; // Admin's 1-5 star validation level (CRITICAL: admin saves to this field!)
+  validationLevel?: number; // 1-5 star rating from admin (legacy)
+  isRejected?: boolean; // True when report is rejected by admin
+  rejectionReason?: string; // Admin's reason for rejection
+  validatedAt?: any; // Timestamp when admin validated/rejected
 }
 
 export interface QueuedReport {

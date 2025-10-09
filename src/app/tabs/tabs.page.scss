@@ -1,257 +1,93 @@
+// Clean & Simple Tab Bar Design for GuardianCare
 ion-tab-bar {
-  --background: transparent;
-  background: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-blue) 100%);
+  --background: #ffffff;
   position: fixed;
-  left: 0; right: 0; bottom: 0;
+  left: 0; 
+  right: 0; 
+  bottom: 0;
   z-index: 99;
-  box-shadow: 0 -4px 16px rgba(197, 165, 176, 0.2);
-  border-top: 1px solid rgba(197, 165, 176, 0.3);
-  padding: 6px 12px;
-  margin: 0;
-  height: 56px;
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: 
-      radial-gradient(circle at 20% 50%, rgba(197, 165, 176, 0.1) 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, rgba(155, 122, 133, 0.1) 0%, transparent 50%);
-    pointer-events: none;
-  }
-
+  height: 60px;
+  padding: 0;
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.08);
+  border-top: 1px solid rgba(124, 58, 237, 0.08);
+  
   ion-tab-button {
-    background: transparent;
+    --background: transparent;
+    --background-focused: transparent;
+    --color: #94a3b8;
+    --color-selected: var(--primary-purple);
+    --padding-top: 8px;
+    --padding-bottom: 8px;
     position: relative;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    min-width: 60px;
-    max-width: 80px;
-    border-radius: 14px;
-    margin: 0 6px;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(135deg, rgba(197, 165, 176, 0.2) 0%, rgba(155, 122, 133, 0.2) 100%);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      border-radius: 16px;
-    }
-
+    font-family: 'DM Sans', sans-serif;
+    
     ion-icon {
-      font-size: 1.6rem;
-      color: rgba(255, 255, 255, 0.7);
-      margin: 0;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      transform: scale(1) translateY(0);
-      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-      position: relative;
-      z-index: 2;
+      font-size: 1.5rem;
+      margin-bottom: 4px;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
-
+    
     ion-label {
-      display: none;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      margin-top: 0;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
-
-    &.tab-selected {
-      background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-purple) 100%);
-      box-shadow: 0 6px 20px rgba(197, 165, 176, 0.3);
-      transform: translateY(-2px) scale(1.02);
-      
-      &::before {
-        opacity: 1;
-      }
-      
+    
+    // Default state - inactive tabs
+    &:not(.tab-selected) {
       ion-icon {
-        color: #ffffff;
-        transform: scale(1.15) translateY(0);
-        filter: drop-shadow(0 3px 8px rgba(255, 255, 255, 0.4));
-        animation: iconFloat 2s ease-in-out infinite;
+        color: #94a3b8;
       }
       
-      &::after {
+      ion-label {
+        color: #94a3b8;
+      }
+    }
+    
+    // Selected/Active state
+    &.tab-selected {
+      ion-icon {
+        color: var(--primary-purple);
+        transform: translateY(-2px);
+        filter: drop-shadow(0 2px 4px rgba(124, 58, 237, 0.2));
+      }
+      
+      ion-label {
+        color: var(--primary-purple);
+        font-weight: 700;
+      }
+      
+      // Bottom indicator line
+      &::before {
         content: '';
         position: absolute;
-        bottom: 2px;
+        top: 0;
         left: 50%;
         transform: translateX(-50%);
-        width: 24px;
+        width: 32px;
         height: 3px;
-        background: linear-gradient(90deg, #ffffff 0%, rgba(255, 255, 255, 0.8) 100%);
-        border-radius: 2px;
-        box-shadow: 0 2px 6px rgba(255, 255, 255, 0.4);
-        animation: indicatorGlow 2s ease-in-out infinite;
+        background: linear-gradient(90deg, var(--primary-purple), #a855f7);
+        border-radius: 0 0 2px 2px;
+        box-shadow: 0 2px 6px rgba(124, 58, 237, 0.3);
       }
     }
-
-    &:hover:not(.tab-selected) {
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.1) 100%);
-      transform: translateY(-1px) scale(1.02);
-      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
-      
-      &::before {
-        opacity: 1;
-      }
-      
-      ion-icon {
-        transform: scale(1.08) translateY(0);
-        color: rgba(255, 255, 255, 0.95);
-        filter: drop-shadow(0 2px 6px rgba(255, 255, 255, 0.3));
-      }
-    }
-
-    // Fix for stuck hover states on mobile
-    &:not(.tab-selected):not(:hover) {
-      background: transparent;
-      transform: translateY(0) scale(1);
-      box-shadow: none;
-      
-      &::before {
-        opacity: 0;
-      }
-      
-      ion-icon {
-        transform: scale(1) translateY(0);
-        color: rgba(255, 255, 255, 0.7);
-        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-      }
-    }
-
-    &:active {
-      transform: translateY(0) scale(0.98);
-      transition: all 0.1s ease;
+    
+    // Ripple effect on tap
+    &::part(native) {
+      overflow: visible;
     }
   }
 }
 
-// Enhanced Tab Button Animations
-.tab-button-animated {
-  animation: tabButtonEnter 0.3s ease-out;
-  
-  &:nth-child(1) { animation-delay: 0.1s; }
-  &:nth-child(2) { animation-delay: 0.2s; }
-  &:nth-child(3) { animation-delay: 0.3s; }
-}
-
-.animated-tab-bar {
-  animation: tabBarSlideUp 0.4s ease-out;
-}
-
-// Page Transition Animations
-ion-router-outlet {
-  position: relative;
-}
-
+// Page transitions
 ion-router-outlet > * {
   display: block;
-  animation: pageSlideIn 0.3s ease-out;
+  animation: pageTransition 0.25s ease-out;
 }
 
-// Animation Keyframes
-@keyframes iconFloat {
-  0%, 100% {
-    transform: scale(1.15) translateY(0);
-  }
-  50% {
-    transform: scale(1.15) translateY(-2px);
-  }
-}
-
-@keyframes indicatorGlow {
-  0%, 100% {
-    opacity: 1;
-    box-shadow: 0 2px 8px rgba(255, 255, 255, 0.4);
-  }
-  50% {
-    opacity: 0.8;
-    box-shadow: 0 2px 12px rgba(255, 255, 255, 0.6);
-  }
-}
-
-@keyframes tabButtonEnter {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes tabBarSlideUp {
-  from {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@keyframes pageSlideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-@keyframes pageSlideOut {
-  from {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(-100%);
-    opacity: 0;
-  }
-}
-
-// Force reset for stuck states - Emergency fix
-ion-tab-button[tab="settings"]:not(.tab-selected) {
-  background: transparent !important;
-  transform: translateY(0) scale(1) !important;
-  box-shadow: none !important;
-  
-  &::before {
-    opacity: 0 !important;
-  }
-  
-  ion-icon {
-    transform: scale(1) translateY(0) !important;
-    color: rgba(255, 255, 255, 0.7) !important;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1)) !important;
-  }
-  
-  &::after {
-    display: none !important;
-  }
-}
-
-// Page content animations
-ion-content {
-  animation: contentFadeIn 0.4s ease-out;
-}
-
-@keyframes contentFadeIn {
+@keyframes pageTransition {
   from {
     opacity: 0;
     transform: translateY(10px);

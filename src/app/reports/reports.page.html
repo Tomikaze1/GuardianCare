@@ -10,9 +10,136 @@
     <div class="app-title">{{ 'REPORTS.TITLE' | translate }}</div>
     <div class="app-subtitle">{{ 'REPORTS.SUBTITLE' | translate }}</div>
     <div class="title-underline"></div>
+    
+    <!-- Toggle History Button -->
+    <ion-button 
+      expand="block" 
+      fill="outline" 
+      (click)="toggleHistory()"
+      class="history-toggle-btn">
+      <ion-icon [name]="showHistory ? 'create-outline' : 'time-outline'" slot="start"></ion-icon>
+      {{ showHistory ? 'Create New Report' : 'View My Report History' }}
+    </ion-button>
   </div>
 
-  <form [formGroup]="reportForm" (ngSubmit)="onSubmit()" class="report-form">
+  <!-- Report History Section -->
+  <div class="report-history-section" *ngIf="showHistory">
+    <div class="section-header">
+      <span>My Report History</span>
+      <div class="section-underline"></div>
+    </div>
+
+    <div class="history-stats" *ngIf="userReports.length > 0">
+      <ion-chip color="primary">
+        <ion-icon name="documents-outline"></ion-icon>
+        <ion-label>Total: {{ userReports.length }}</ion-label>
+      </ion-chip>
+      <ion-chip color="warning">
+        <ion-icon name="time-outline"></ion-icon>
+        <ion-label>Pending: {{ getReportCountByStatus('Pending') }}</ion-label>
+      </ion-chip>
+      <ion-chip color="success">
+        <ion-icon name="checkmark-done-outline"></ion-icon>
+        <ion-label>Validated: {{ getReportCountByStatus('Validated') }}</ion-label>
+      </ion-chip>
+      <ion-chip color="danger">
+        <ion-icon name="close-outline"></ion-icon>
+        <ion-label>Rejected: {{ getReportCountByStatus('Rejected') }}</ion-label>
+      </ion-chip>
+    </div>
+
+    <div class="reports-list" *ngIf="userReports.length > 0">
+      <div class="report-card" *ngFor="let report of userReports">
+        <div class="report-header">
+          <div class="report-type">
+            <ion-icon [name]="getIncidentTypeIcon(report.type)"></ion-icon>
+            <span>{{ getIncidentTypeLabel(report.type) }}</span>
+          </div>
+          <ion-chip [color]="getStatusColor(report.status)" size="small">
+            <ion-icon [name]="getStatusIcon(report.status)"></ion-icon>
+            <ion-label>{{ report.status }}</ion-label>
+          </ion-chip>
+        </div>
+
+        <div class="report-date">
+          <ion-icon name="calendar-outline"></ion-icon>
+          <span>{{ formatReportDate(report.createdAt) }}</span>
+        </div>
+
+        <div class="report-location" *ngIf="report.locationAddress">
+          <ion-icon name="location-outline"></ion-icon>
+          <span>{{ report.locationAddress }}</span>
+        </div>
+
+        <div class="report-description">
+          <p>{{ report.description }}</p>
+        </div>
+
+        <!-- Media Preview -->
+        <div class="report-media" *ngIf="report.media && report.media.length > 0">
+          <div class="media-preview-grid">
+            <img 
+              *ngFor="let mediaUrl of report.media.slice(0, 3)" 
+              [src]="mediaUrl" 
+              alt="Report media"
+              class="media-thumbnail">
+            <div class="media-count" *ngIf="report.media.length > 3">
+              +{{ report.media.length - 3 }} more
+            </div>
+          </div>
+        </div>
+
+        <!-- Validation Level -->
+        <div class="report-validation" *ngIf="report.validationLevel">
+          <div class="validation-header">
+            <ion-icon name="shield-checkmark-outline"></ion-icon>
+            <span>Admin Validation Rating</span>
+          </div>
+          <div class="validation-stars">
+            <ion-icon 
+              *ngFor="let star of getValidationStars(report.validationLevel)" 
+              [name]="star" 
+              class="star-icon"
+              [class.filled]="star === 'star'"></ion-icon>
+            <span class="validation-score">Level {{ report.validationLevel }}/5</span>
+          </div>
+          <div class="validation-date" *ngIf="report.validatedAt">
+            <small>Validated on {{ formatReportDate(report.validatedAt) }}</small>
+          </div>
+        </div>
+
+        <!-- Rejection Info -->
+        <div class="report-rejection" *ngIf="report.isRejected">
+          <ion-chip color="danger" class="rejection-chip">
+            <ion-icon name="alert-circle-outline"></ion-icon>
+            <ion-label>Rejected</ion-label>
+          </ion-chip>
+          <div class="rejection-reason" *ngIf="report.rejectionReason">
+            <strong>Reason:</strong> {{ report.rejectionReason }}
+          </div>
+        </div>
+
+        <ion-button 
+          expand="block" 
+          fill="clear" 
+          size="small"
+          (click)="viewReportDetails(report)"
+          class="view-details-btn">
+          <ion-icon name="information-circle-outline" slot="start"></ion-icon>
+          View Full Details
+        </ion-button>
+      </div>
+    </div>
+
+    <div class="no-reports" *ngIf="userReports.length === 0">
+      <ion-icon name="document-text-outline"></ion-icon>
+      <h3>No Reports Yet</h3>
+      <p>You haven't submitted any reports. Create your first report to get started.</p>
+    </div>
+  </div>
+
+  <!-- Report Form (only shown when showHistory is false) -->
+  <form [formGroup]="reportForm" (ngSubmit)="onSubmit()" class="report-form" *ngIf="!showHistory">
     <div class="section-header">
       <span>{{ 'REPORTS.INCIDENT_DETAILS' | translate }}</span>
       <div class="section-underline"></div>

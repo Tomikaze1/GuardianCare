@@ -32,6 +32,8 @@ interface ZoneIncident {
   severity: number;
   type: 'theft' | 'assault' | 'vandalism' | 'harassment' | 'other';
   description?: string;
+  level?: number; // Admin's 1-5 star validation level
+  riskLevel?: number; // Auto-calculated risk level from incident type
 }
 
 interface CrimeFrequency {
@@ -143,8 +145,21 @@ export class ZoneDangerEngineService {
 
   private convertReportToZone(report: any): DangerZone {
     // Get the risk level set by admin (this is the numeric 1-5 level)
-    // Ensure it's a number by using Number() to convert strings like "2" to 2
-    const riskLevel = Number(report.level || report.riskLevel || 1);
+    // Priority: level (admin validation) > riskLevel (auto-calculated)
+    const adminLevel = report.level; // Admin's validation (1-5 stars)
+    const autoRiskLevel = report.riskLevel; // Auto-calculated from incident type
+    const riskLevel = Number(adminLevel || autoRiskLevel || 1);
+    
+    // Debug logging to verify correct level is being used
+    console.log(`🔍 convertReportToZone: ${report.locationAddress || report.location?.simplifiedAddress || 'Unknown'}`, {
+      reportId: report.id,
+      adminLevel: adminLevel,
+      autoRiskLevel: autoRiskLevel,
+      finalRiskLevel: riskLevel,
+      type: report.type,
+      status: report.status,
+      fullReport: report
+    });
     
     // Map risk level to severity (1-5 to 0-10)
     const currentSeverity = (riskLevel / 5) * 10;
