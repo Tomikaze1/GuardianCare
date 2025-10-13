@@ -1,337 +1,514 @@
 
 <ion-content class="settings-content">
   
-  <div class="logo-container">
-    <div class="logo-wrapper">
-      <div class="custom-logo">
-        <ion-icon name="shield" class="shield-icon"></ion-icon>
-        <ion-icon name="settings" class="settings-icon"></ion-icon>
+  <!-- Modern Header Section -->
+  <div class="settings-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <ion-icon name="settings-outline"></ion-icon>
       </div>
-      <div class="logo-glow"></div>
+      <div class="header-text">
+        <h1 class="header-title">{{ 'SETTINGS.TITLE' | translate }}</h1>
+        <p class="header-subtitle">{{ 'SETTINGS.SUBTITLE' | translate }}</p>
+      </div>
     </div>
-    <div class="app-title">{{ 'SETTINGS.TITLE' | translate }}</div>
-    <div class="app-subtitle">{{ 'SETTINGS.SUBTITLE' | translate }}</div>
-    <div class="title-underline"></div>
+    <div class="header-accent"></div>
   </div>
 
-  <!-- User Profile Section -->
+  <!-- Enhanced User Profile Section -->
   <div class="profile-section" *ngIf="userProfile">
     <div class="profile-card">
       <div class="profile-header">
         <div class="profile-avatar">
-          <ion-icon name="person-circle" class="avatar-icon"></ion-icon>
+          <div class="avatar-circle">
+            <ion-icon name="person-outline"></ion-icon>
+          </div>
+          <div class="avatar-status"></div>
         </div>
         <div class="profile-info">
           <h2 class="profile-name">{{ getUserDisplayName() }}</h2>
-          <p class="profile-role">{{ userRole }}</p>
+          <div class="profile-badge">
+            <ion-icon name="checkmark-circle" class="badge-icon"></ion-icon>
+            <span class="badge-text">{{ userRole }}</span>
+          </div>
+        </div>
+        <div class="profile-actions">
+          <ion-button fill="clear" size="small" class="edit-profile-btn">
+            <ion-icon name="create-outline"></ion-icon>
+          </ion-button>
         </div>
       </div>
       
-      <div class="profile-details">
-        <div class="detail-item">
-          <ion-icon name="mail-outline" class="detail-icon"></ion-icon>
-          <span class="detail-label">Email:</span>
-          <span class="detail-value">{{ getUserEmail() }}</span>
+      <div class="profile-stats">
+        <div class="stat-item">
+          <div class="stat-icon">
+            <ion-icon name="mail-outline"></ion-icon>
+          </div>
+          <div class="stat-content">
+            <span class="stat-label">Email</span>
+            <span class="stat-value">{{ getUserEmail() }}</span>
+          </div>
         </div>
         
-        <div class="detail-item">
-          <ion-icon name="call-outline" class="detail-icon"></ion-icon>
-          <span class="detail-label">Phone:</span>
-          <span class="detail-value">{{ getUserPhone() }}</span>
+        <div class="stat-item">
+          <div class="stat-icon">
+            <ion-icon name="call-outline"></ion-icon>
+          </div>
+          <div class="stat-content">
+            <span class="stat-label">Phone</span>
+            <span class="stat-value">{{ getUserPhone() }}</span>
+          </div>
         </div>
         
-        <div class="detail-item">
-          <ion-icon name="person-add-outline" class="detail-icon"></ion-icon>
-          <span class="detail-label">Emergency Contact:</span>
-          <span class="detail-value">{{ getEmergencyContact() }}</span>
+        <div class="stat-item">
+          <div class="stat-icon">
+            <ion-icon name="shield-checkmark-outline"></ion-icon>
+          </div>
+          <div class="stat-content">
+            <span class="stat-label">Emergency Contact</span>
+            <span class="stat-value">{{ getEmergencyContact() }}</span>
+          </div>
         </div>
         
-        <div class="detail-item">
-          <ion-icon name="document-text-outline" class="detail-icon"></ion-icon>
-          <span class="detail-label">Reports Submitted:</span>
-          <span class="detail-value">{{ userReports.length }}</span>
+        <div class="stat-item">
+          <div class="stat-icon">
+            <ion-icon name="document-text-outline"></ion-icon>
+          </div>
+          <div class="stat-content">
+            <span class="stat-label">Reports</span>
+            <span class="stat-value">{{ userReports.length }}</span>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="settings-form">
+  <!-- Settings Categories -->
+  <div class="settings-container">
     
-    <div class="form-row">
-      <div class="section-header" (click)="toggleSection('account')">
-        <span>{{ 'SETTINGS.ACCOUNT_SECURITY' | translate }}</span>
-        <ion-icon name="chevron-forward-outline" class="section-toggle-icon" [class.open]="expandAccountSecurity"></ion-icon>
-        <div class="section-underline"></div>
+    <!-- Account & Security Section -->
+    <div class="settings-category">
+      <div class="category-header" (click)="toggleSection('account')">
+        <div class="category-icon">
+          <ion-icon name="shield-checkmark-outline"></ion-icon>
+        </div>
+        <div class="category-info">
+          <div class="category-title-wrapper">
+            <h3 class="category-title">
+              {{ 'SETTINGS.ACCOUNT_SECURITY' | translate }}
+            </h3>
+            <ion-icon name="chevron-down-outline" class="category-arrow" [class.rotated]="expandAccountSecurity"></ion-icon>
+          </div>
+          <div class="category-underline"></div>
+          <p class="category-description">Manage your account security and authentication</p>
+        </div>
       </div>
       
-      <div class="settings-list collapsible" [class.open]="expandAccountSecurity">
-        <div class="setting-item" (click)="changePassword()">
-          <div class="setting-left">
-            <ion-icon name="key-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">{{ 'SETTINGS.CHANGE_PASSWORD' | translate }}</span>
+      <div class="category-content" [class.expanded]="expandAccountSecurity">
+        <div class="setting-card" (click)="changePassword()">
+          <div class="setting-icon-wrapper">
+            <ion-icon name="key-outline"></ion-icon>
           </div>
-          <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+          <div class="setting-content">
+            <h4 class="setting-title">{{ 'SETTINGS.CHANGE_PASSWORD' | translate }}</h4>
+            <p class="setting-description">Update your account password</p>
+          </div>
+          <div class="setting-action">
+            <ion-icon name="chevron-forward-outline"></ion-icon>
+          </div>
         </div>
 
-        <div class="setting-item" (click)="updateEmail()">
-          <div class="setting-left">
-            <ion-icon name="mail-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">{{ 'SETTINGS.UPDATE_EMAIL' | translate }}</span>
+        <div class="setting-card" (click)="updateEmail()">
+          <div class="setting-icon-wrapper">
+            <ion-icon name="mail-outline"></ion-icon>
           </div>
-          <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+          <div class="setting-content">
+            <h4 class="setting-title">{{ 'SETTINGS.UPDATE_EMAIL' | translate }}</h4>
+            <p class="setting-description">Change your email address</p>
+          </div>
+          <div class="setting-action">
+            <ion-icon name="chevron-forward-outline"></ion-icon>
+          </div>
         </div>
 
-        <div class="setting-item" (click)="linkedDevices()">
-          <div class="setting-left">
-            <ion-icon name="watch-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">{{ 'SETTINGS.LINKED_DEVICES' | translate }}</span>
-            <span class="setting-subtitle">{{ 'SETTINGS.LINKED_DEVICES_HINT' | translate }}</span>
+        <div class="setting-card" (click)="linkedDevices()">
+          <div class="setting-icon-wrapper">
+            <ion-icon name="phone-portrait-outline"></ion-icon>
           </div>
-          <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+          <div class="setting-content">
+            <h4 class="setting-title">{{ 'SETTINGS.LINKED_DEVICES' | translate }}</h4>
+            <p class="setting-description">{{ 'SETTINGS.LINKED_DEVICES_HINT' | translate }}</p>
+          </div>
+          <div class="setting-action">
+            <ion-icon name="chevron-forward-outline"></ion-icon>
+          </div>
         </div>
 
-        <div class="setting-item" (click)="twoFactorAuth()">
-          <div class="setting-left">
-            <ion-icon name="shield-checkmark-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">{{ 'SETTINGS.TWO_FACTOR_AUTH' | translate }}</span>
+        <div class="setting-card toggle-card">
+          <div class="setting-icon-wrapper">
+            <ion-icon name="shield-checkmark-outline"></ion-icon>
           </div>
-          <ion-toggle [(ngModel)]="twoFactorEnabled" (ionChange)="toggleTwoFactor()"></ion-toggle>
+          <div class="setting-content">
+            <h4 class="setting-title">{{ 'SETTINGS.TWO_FACTOR_AUTH' | translate }}</h4>
+            <p class="setting-description">Add an extra layer of security</p>
+          </div>
+          <div class="setting-toggle">
+            <ion-toggle [(ngModel)]="twoFactorEnabled" (ionChange)="toggleTwoFactor()"></ion-toggle>
+          </div>
         </div>
       </div>
     </div>
 
     
-    <div class="form-row">
-      <div class="section-header" (click)="toggleSection('location')">
-        <span>{{ 'SETTINGS.LOCATION_ALERTS' | translate }}</span>
-        <ion-icon name="chevron-forward-outline" class="section-toggle-icon" [class.open]="expandLocationAlerts"></ion-icon>
-        <div class="section-underline"></div>
+    <!-- Location & Alerts Section -->
+    <div class="settings-category">
+      <div class="category-header" (click)="toggleSection('location')">
+        <div class="category-icon">
+          <ion-icon name="location-outline"></ion-icon>
+        </div>
+        <div class="category-info">
+          <div class="category-title-wrapper">
+            <h3 class="category-title">
+              {{ 'SETTINGS.LOCATION_ALERTS' | translate }}
+            </h3>
+            <ion-icon name="chevron-down-outline" class="category-arrow" [class.rotated]="expandLocationAlerts"></ion-icon>
+          </div>
+          <div class="category-underline"></div>
+          <p class="category-description">Configure location services and alert preferences</p>
+        </div>
       </div>
       
-      <div class="settings-list collapsible" [class.open]="expandLocationAlerts">
-        <div class="setting-item">
-          <div class="setting-left">
-            <ion-icon name="location-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">{{ 'SETTINGS.GPS_ACCESS' | translate }}</span>
+      <div class="category-content" [class.expanded]="expandLocationAlerts">
+        <div class="setting-card toggle-card">
+          <div class="setting-icon-wrapper">
+            <ion-icon name="location-outline"></ion-icon>
           </div>
-          <ion-toggle [(ngModel)]="gpsEnabled" (ionChange)="toggleGPS()"></ion-toggle>
+          <div class="setting-content">
+            <h4 class="setting-title">{{ 'SETTINGS.GPS_ACCESS' | translate }}</h4>
+            <p class="setting-description">Enable location tracking for alerts</p>
+          </div>
+          <div class="setting-toggle">
+            <ion-toggle [(ngModel)]="gpsEnabled" (ionChange)="toggleGPS()"></ion-toggle>
+          </div>
         </div>
 
-        <div class="setting-item">
-          <div class="setting-left">
-            <ion-icon name="time-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">{{ 'SETTINGS.TIME_BASED_ALERTS' | translate }}</span>
-            <span class="setting-subtitle">{{ 'SETTINGS.TIME_BASED_ALERTS_HINT' | translate }}</span>
+        <div class="setting-card toggle-card">
+          <div class="setting-icon-wrapper">
+            <ion-icon name="time-outline"></ion-icon>
           </div>
-          <ion-toggle [(ngModel)]="timeBasedAlerts" (ionChange)="toggleTimeBasedAlerts()"></ion-toggle>
+          <div class="setting-content">
+            <h4 class="setting-title">{{ 'SETTINGS.TIME_BASED_ALERTS' | translate }}</h4>
+            <p class="setting-description">{{ 'SETTINGS.TIME_BASED_ALERTS_HINT' | translate }}</p>
+          </div>
+          <div class="setting-toggle">
+            <ion-toggle [(ngModel)]="timeBasedAlerts" (ionChange)="toggleTimeBasedAlerts()"></ion-toggle>
+          </div>
         </div>
 
-        <div class="setting-item">
-          <div class="setting-left">
-            <ion-icon name="warning-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">{{ 'SETTINGS.DANGER_ZONE_ALERTS' | translate }}</span>
-            <span class="setting-subtitle">{{ 'SETTINGS.DANGER_ZONE_ALERTS_HINT' | translate }}</span>
+        <div class="setting-card toggle-card">
+          <div class="setting-icon-wrapper">
+            <ion-icon name="warning-outline"></ion-icon>
           </div>
-          <ion-toggle [(ngModel)]="dangerZoneAlerts" (ionChange)="toggleDangerZoneAlerts()"></ion-toggle>
+          <div class="setting-content">
+            <h4 class="setting-title">{{ 'SETTINGS.DANGER_ZONE_ALERTS' | translate }}</h4>
+            <p class="setting-description">{{ 'SETTINGS.DANGER_ZONE_ALERTS_HINT' | translate }}</p>
+          </div>
+          <div class="setting-toggle">
+            <ion-toggle [(ngModel)]="dangerZoneAlerts" (ionChange)="toggleDangerZoneAlerts()"></ion-toggle>
+          </div>
         </div>
 
-        <div class="setting-item" (click)="doNotDisturbSettings()">
-          <div class="setting-left">
-            <ion-icon name="moon-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">{{ 'SETTINGS.DO_NOT_DISTURB' | translate }}</span>
-            <span class="setting-subtitle">{{ 'SETTINGS.DO_NOT_DISTURB_HINT' | translate }}</span>
+        <div class="setting-card toggle-card" (click)="doNotDisturbSettings()">
+          <div class="setting-icon-wrapper">
+            <ion-icon name="moon-outline"></ion-icon>
           </div>
-          <ion-toggle [(ngModel)]="doNotDisturbEnabled" (ionChange)="toggleDoNotDisturb()"></ion-toggle>
+          <div class="setting-content">
+            <h4 class="setting-title">{{ 'SETTINGS.DO_NOT_DISTURB' | translate }}</h4>
+            <p class="setting-description">{{ 'SETTINGS.DO_NOT_DISTURB_HINT' | translate }}</p>
+          </div>
+          <div class="setting-toggle">
+            <ion-toggle [(ngModel)]="doNotDisturbEnabled" (ionChange)="toggleDoNotDisturb()"></ion-toggle>
+          </div>
         </div>
       </div>
     </div>
 
     
-    <div class="form-row">
-      <div class="section-header" (click)="toggleSection('notifications')">
-        <span>{{ 'SETTINGS.NOTIFICATIONS' | translate }}</span>
-        <ion-icon name="chevron-forward-outline" class="section-toggle-icon" [class.open]="expandNotifications"></ion-icon>
-        <div class="section-underline"></div>
+    <!-- Notifications Section -->
+    <div class="settings-category">
+      <div class="category-header" (click)="toggleSection('notifications')">
+        <div class="category-icon">
+          <ion-icon name="notifications-outline"></ion-icon>
+        </div>
+        <div class="category-info">
+          <div class="category-title-wrapper">
+            <h3 class="category-title">
+              {{ 'SETTINGS.NOTIFICATIONS' | translate }}
+            </h3>
+            <ion-icon name="chevron-down-outline" class="category-arrow" [class.rotated]="expandNotifications"></ion-icon>
+          </div>
+          <div class="category-underline"></div>
+          <p class="category-description">Customize your notification preferences</p>
+        </div>
       </div>
       
-      <div class="settings-list collapsible" [class.open]="expandNotifications">
-        <div class="setting-item" (click)="smartVibrationOptionsOpen = !smartVibrationOptionsOpen">
-          <div class="setting-left">
-            <ion-icon name="phone-portrait-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">{{ 'SETTINGS.SMART_VIBRATION' | translate }}</span>
+      <div class="category-content" [class.expanded]="expandNotifications">
+        <div class="setting-card toggle-card" (click)="smartVibrationOptionsOpen = !smartVibrationOptionsOpen">
+          <div class="setting-icon-wrapper">
+            <ion-icon name="phone-portrait-outline"></ion-icon>
           </div>
-          <ion-toggle [(ngModel)]="smartVibration" (ionChange)="toggleSmartVibration()" (click)="$event.stopPropagation()"></ion-toggle>
+          <div class="setting-content">
+            <h4 class="setting-title">{{ 'SETTINGS.SMART_VIBRATION' | translate }}</h4>
+            <p class="setting-description">Customize vibration patterns and intensity</p>
+          </div>
+          <div class="setting-toggle">
+            <ion-toggle [(ngModel)]="smartVibration" (ionChange)="toggleSmartVibration()" (click)="$event.stopPropagation()"></ion-toggle>
+          </div>
         </div>
+
         <!-- Smart Vibration subpanel -->
         <div class="subpanel" [class.open]="smartVibrationOptionsOpen">
-          <div class="sub-item">
-            <span>Pattern</span>
-            <ion-segment [(ngModel)]="selectedVibrationPattern">
-              <ion-segment-button value="gentle"><ion-label>Gentle</ion-label></ion-segment-button>
-              <ion-segment-button value="default"><ion-label>Default</ion-label></ion-segment-button>
-              <ion-segment-button value="strong"><ion-label>Strong</ion-label></ion-segment-button>
+          <div class="subpanel-content">
+            <div class="subpanel-item">
+              <h5>Pattern</h5>
+              <ion-segment [(ngModel)]="selectedVibrationPattern">
+                <ion-segment-button value="gentle"><ion-label>Gentle</ion-label></ion-segment-button>
+                <ion-segment-button value="default"><ion-label>Default</ion-label></ion-segment-button>
+                <ion-segment-button value="strong"><ion-label>Strong</ion-label></ion-segment-button>
+              </ion-segment>
+            </div>
+            <div class="subpanel-item">
+              <h5>Duration</h5>
+              <ion-range min="50" max="500" step="10" [(ngModel)]="vibrationDuration">
+                <ion-label slot="start">50ms</ion-label>
+                <ion-label slot="end">500ms</ion-label>
+              </ion-range>
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-card" (click)="alertSounds()">
+          <div class="setting-icon-wrapper">
+            <ion-icon name="volume-high-outline"></ion-icon>
+          </div>
+          <div class="setting-content">
+            <h4 class="setting-title">{{ 'SETTINGS.ALERT_SOUNDS' | translate }}</h4>
+            <p class="setting-description">Choose your preferred alert sound</p>
+          </div>
+          <div class="setting-action">
+            <span class="setting-value">{{selectedAlertSound}}</span>
+            <ion-icon name="chevron-forward-outline"></ion-icon>
+          </div>
+        </div>
+
+        <div class="setting-card" (click)="languagePreference()">
+          <div class="setting-icon-wrapper">
+            <ion-icon name="globe-outline"></ion-icon>
+          </div>
+          <div class="setting-content">
+            <h4 class="setting-title">{{ 'SETTINGS.LANGUAGE_PREFERENCE' | translate }}</h4>
+            <p class="setting-description">Set your preferred language</p>
+          </div>
+          <div class="setting-action">
+            <span class="setting-value">{{getLanguageName(currentLanguage)}}</span>
+            <ion-icon name="chevron-forward-outline"></ion-icon>
+          </div>
+        </div>
+
+        <div class="setting-card toggle-card">
+          <div class="setting-icon-wrapper">
+            <ion-icon name="flash-outline"></ion-icon>
+          </div>
+          <div class="setting-content">
+            <h4 class="setting-title">{{ 'SETTINGS.PANIC_MODE_VISUALS' | translate }}</h4>
+            <p class="setting-description">{{ 'SETTINGS.PANIC_MODE_HINT' | translate }}</p>
+          </div>
+          <div class="setting-toggle">
+            <ion-toggle [(ngModel)]="panicModeVisuals" (ionChange)="togglePanicModeVisuals()"></ion-toggle>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+    <!-- Localization Section -->
+    <div class="settings-category">
+      <div class="category-header" (click)="toggleSection('localization')">
+        <div class="category-icon">
+          <ion-icon name="globe-outline"></ion-icon>
+        </div>
+        <div class="category-info">
+          <div class="category-title-wrapper">
+            <h3 class="category-title">
+              {{ 'SETTINGS.LOCALIZATION' | translate }}
+            </h3>
+            <ion-icon name="chevron-down-outline" class="category-arrow" [class.rotated]="expandLocalization"></ion-icon>
+          </div>
+          <div class="category-underline"></div>
+          <p class="category-description">Customize language and regional settings</p>
+        </div>
+      </div>
+      
+      <div class="category-content" [class.expanded]="expandLocalization">
+        <div class="setting-card" (click)="appLanguage()">
+          <div class="setting-icon-wrapper">
+            <ion-icon name="language-outline"></ion-icon>
+          </div>
+          <div class="setting-content">
+            <h4 class="setting-title">{{ 'SETTINGS.APP_LANGUAGE' | translate }}</h4>
+            <p class="setting-description">Choose your preferred app language</p>
+          </div>
+          <div class="setting-action">
+            <span class="setting-value">{{getLanguageName(currentLanguage)}}</span>
+            <ion-icon name="chevron-forward-outline"></ion-icon>
+          </div>
+        </div>
+
+        <div class="setting-card" (click)="units()">
+          <div class="setting-icon-wrapper">
+            <ion-icon name="scale-outline"></ion-icon>
+          </div>
+          <div class="setting-content">
+            <h4 class="setting-title">{{ 'SETTINGS.UNITS' | translate }}</h4>
+            <p class="setting-description">Select measurement units</p>
+          </div>
+          <div class="setting-action">
+            <span class="setting-value">{{selectedUnit}}</span>
+            <ion-icon name="chevron-forward-outline"></ion-icon>
+          </div>
+        </div>
+
+        <div class="setting-card toggle-card">
+          <div class="setting-icon-wrapper">
+            <ion-icon name="map-outline"></ion-icon>
+          </div>
+          <div class="setting-content">
+            <h4 class="setting-title">{{ 'SETTINGS.TOURIST_TRANSLATION' | translate }}</h4>
+            <p class="setting-description">Enable tourist-friendly translations</p>
+          </div>
+          <div class="setting-toggle">
+            <ion-toggle [(ngModel)]="touristTranslationMode" (ionChange)="toggleTouristTranslation()"></ion-toggle>
+          </div>
+        </div>
+
+        <div class="setting-card">
+          <div class="setting-icon-wrapper">
+            <ion-icon name="grid-outline"></ion-icon>
+          </div>
+          <div class="setting-content">
+            <h4 class="setting-title">{{ 'SETTINGS.HOME_UI_MODE' | translate }}</h4>
+            <p class="setting-description">{{ 'SETTINGS.HOME_UI_MODE_HINT' | translate }}</p>
+          </div>
+          <div class="setting-segment">
+            <ion-segment value="{{homeUIMode}}" (ionChange)="onChangeHomeUiMode($event)">
+              <ion-segment-button value="sidebar">
+                <ion-label>{{ 'SETTINGS.HOME_UI_SIDEBAR' | translate }}</ion-label>
+              </ion-segment-button>
+              <ion-segment-button value="buttons">
+                <ion-label>{{ 'SETTINGS.HOME_UI_BUTTONS' | translate }}</ion-label>
+              </ion-segment-button>
             </ion-segment>
           </div>
-          <div class="sub-item">
-            <span>Duration</span>
-            <ion-range min="50" max="500" step="10" [(ngModel)]="vibrationDuration">
-              <ion-label slot="start">50ms</ion-label>
-              <ion-label slot="end">500ms</ion-label>
-            </ion-range>
-          </div>
-        </div>
-
-        <div class="setting-item" (click)="alertSounds()">
-          <div class="setting-left">
-            <ion-icon name="volume-high-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">{{ 'SETTINGS.ALERT_SOUNDS' | translate }}</span>
-          </div>
-          <div class="setting-right">
-            <span class="setting-value">{{selectedAlertSound}}</span>
-            <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
-          </div>
-        </div>
-
-        <div class="setting-item" (click)="languagePreference()">
-          <div class="setting-left">
-            <ion-icon name="globe-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">{{ 'SETTINGS.LANGUAGE_PREFERENCE' | translate }}</span>
-          </div>
-          <div class="setting-right">
-            <span class="setting-value">{{getLanguageName(currentLanguage)}}</span>
-            <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
-          </div>
-        </div>
-
-        <div class="setting-item">
-          <div class="setting-left">
-            <ion-icon name="flash-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">{{ 'SETTINGS.PANIC_MODE_VISUALS' | translate }}</span>
-            <span class="setting-subtitle">{{ 'SETTINGS.PANIC_MODE_HINT' | translate }}</span>
-          </div>
-          <ion-toggle [(ngModel)]="panicModeVisuals" (ionChange)="togglePanicModeVisuals()"></ion-toggle>
         </div>
       </div>
     </div>
 
     
-    <div class="form-row">
-      <div class="section-header" (click)="toggleSection('localization')">
-        <span>{{ 'SETTINGS.LOCALIZATION' | translate }}</span>
-        <ion-icon name="chevron-forward-outline" class="section-toggle-icon" [class.open]="expandLocalization"></ion-icon>
-        <div class="section-underline"></div>
+    <!-- Legal & Support Section -->
+    <div class="settings-category">
+      <div class="category-header" (click)="toggleSection('legal')">
+        <div class="category-icon">
+          <ion-icon name="document-text-outline"></ion-icon>
+        </div>
+        <div class="category-info">
+          <div class="category-title-wrapper">
+            <h3 class="category-title">
+              {{ 'SETTINGS.LEGAL_SUPPORT' | translate }}
+            </h3>
+            <ion-icon name="chevron-down-outline" class="category-arrow" [class.rotated]="expandLegalSupport"></ion-icon>
+          </div>
+          <div class="category-underline"></div>
+          <p class="category-description">Legal documents and support options</p>
+        </div>
       </div>
       
-      <div class="settings-list collapsible" [class.open]="expandLocalization">
-        <div class="setting-item" (click)="appLanguage()">
-          <div class="setting-left">
-            <ion-icon name="language-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">{{ 'SETTINGS.APP_LANGUAGE' | translate }}</span>
+      <div class="category-content" [class.expanded]="expandLegalSupport">
+        <div class="setting-card" (click)="termsOfService()">
+          <div class="setting-icon-wrapper">
+            <ion-icon name="document-text-outline"></ion-icon>
           </div>
-          <div class="setting-right">
-            <span class="setting-value">{{getLanguageName(currentLanguage)}}</span>
-            <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+          <div class="setting-content">
+            <h4 class="setting-title">{{ 'SETTINGS.TERMS_OF_SERVICE' | translate }}</h4>
+            <p class="setting-description">Read our terms and conditions</p>
           </div>
-        </div>
-
-        <div class="setting-item" (click)="units()">
-          <div class="setting-left">
-            <ion-icon name="scale-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">{{ 'SETTINGS.UNITS' | translate }}</span>
-          </div>
-          <div class="setting-right">
-            <span class="setting-value">{{selectedUnit}}</span>
-            <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+          <div class="setting-action">
+            <ion-icon name="chevron-forward-outline"></ion-icon>
           </div>
         </div>
 
-        <div class="setting-item">
-          <div class="setting-left">
-                                    <ion-icon name="language-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">{{ 'SETTINGS.TOURIST_TRANSLATION' | translate }}</span>
+        <div class="setting-card" (click)="privacyPolicy()">
+          <div class="setting-icon-wrapper">
+            <ion-icon name="shield-checkmark-outline"></ion-icon>
           </div>
-          <ion-toggle [(ngModel)]="touristTranslationMode" (ionChange)="toggleTouristTranslation()"></ion-toggle>
+          <div class="setting-content">
+            <h4 class="setting-title">{{ 'SETTINGS.PRIVACY_POLICY' | translate }}</h4>
+            <p class="setting-description">Learn how we protect your data</p>
+          </div>
+          <div class="setting-action">
+            <ion-icon name="chevron-forward-outline"></ion-icon>
+          </div>
         </div>
-        <div class="setting-item">
-          <div class="setting-left">
-            <ion-icon name="grid-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">{{ 'SETTINGS.HOME_UI_MODE' | translate }}</span>
-            <span class="setting-subtitle">{{ 'SETTINGS.HOME_UI_MODE_HINT' | translate }}</span>
+
+        <div class="setting-card" (click)="contactSupport()">
+          <div class="setting-icon-wrapper">
+            <ion-icon name="headset-outline"></ion-icon>
           </div>
-          <ion-segment value="{{homeUIMode}}" (ionChange)="onChangeHomeUiMode($event)" class="ui-mode-segment">
-            <ion-segment-button value="sidebar">
-              <ion-label>{{ 'SETTINGS.HOME_UI_SIDEBAR' | translate }}</ion-label>
-            </ion-segment-button>
-            <ion-segment-button value="buttons">
-              <ion-label>{{ 'SETTINGS.HOME_UI_BUTTONS' | translate }}</ion-label>
-            </ion-segment-button>
-          </ion-segment>
+          <div class="setting-content">
+            <h4 class="setting-title">{{ 'SETTINGS.CONTACT_SUPPORT' | translate }}</h4>
+            <p class="setting-description">Get help and contact our team</p>
+          </div>
+          <div class="setting-action">
+            <ion-icon name="chevron-forward-outline"></ion-icon>
+          </div>
+        </div>
+
+        <div class="setting-card danger-card" (click)="resetToDefaults()">
+          <div class="setting-icon-wrapper">
+            <ion-icon name="refresh-outline"></ion-icon>
+          </div>
+          <div class="setting-content">
+            <h4 class="setting-title">{{ 'SETTINGS.RESET_DEFAULTS' | translate }}</h4>
+            <p class="setting-description">Reset all settings to default values</p>
+          </div>
+          <div class="setting-action">
+            <ion-icon name="chevron-forward-outline"></ion-icon>
+          </div>
         </div>
       </div>
     </div>
 
-    
-    <div class="form-row">
-      <div class="section-header" (click)="toggleSection('legal')">
-        <span>{{ 'SETTINGS.LEGAL_SUPPORT' | translate }}</span>
-        <ion-icon name="chevron-forward-outline" class="section-toggle-icon" [class.open]="expandLegalSupport"></ion-icon>
-        <div class="section-underline"></div>
-      </div>
-      
-      <div class="settings-list collapsible" [class.open]="expandLegalSupport">
-        <div class="setting-item" (click)="termsOfService()">
-          <div class="setting-left">
-            <ion-icon name="document-text-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">{{ 'SETTINGS.TERMS_OF_SERVICE' | translate }}</span>
-          </div>
-          <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
-        </div>
-
-        <div class="setting-item" (click)="privacyPolicy()">
-          <div class="setting-left">
-            <ion-icon name="shield-checkmark-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">{{ 'SETTINGS.PRIVACY_POLICY' | translate }}</span>
-          </div>
-          <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
-        </div>
-
-        <div class="setting-item" (click)="contactSupport()">
-          <div class="setting-left">
-            <ion-icon name="headset-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">{{ 'SETTINGS.CONTACT_SUPPORT' | translate }}</span>
-          </div>
-          <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
-        </div>
-
-        <div class="setting-item" (click)="resetToDefaults()">
-          <div class="setting-left">
-            <ion-icon name="refresh-outline" class="setting-icon"></ion-icon>
-            <span class="setting-label">{{ 'SETTINGS.RESET_DEFAULTS' | translate }}</span>
-          </div>
-          <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
-        </div>
-      </div>
-    </div>
-
-    
-    <div class="form-row">
-      <div class="section-header">
-        <span>{{ 'SETTINGS.ABOUT_US' | translate }}</span>
-        <div class="section-underline"></div>
-      </div>
-      
+    <!-- About Section -->
+    <div class="about-section">
       <div class="about-card">
+        <div class="about-header">
+          <div class="about-icon">
+            <ion-icon name="information-circle-outline"></ion-icon>
+          </div>
+          <h3 class="about-title">GuardianCare</h3>
+        </div>
         <div class="about-content">
-          <ion-icon name="information-circle-outline" class="about-icon"></ion-icon>
-          <div class="about-text">
-            <h3>GuardianCare</h3>
-            <p>{{ 'SETTINGS.ABOUT_TEXT' | translate }}</p>
-            <span class="version">{{ 'SETTINGS.VERSION' | translate }}</span>
+          <p class="about-description">{{ 'SETTINGS.ABOUT_TEXT' | translate }}</p>
+          <div class="about-footer">
+            <span class="version-badge">{{ 'SETTINGS.VERSION' | translate }}</span>
+            <div class="about-links">
+              <a href="#" class="about-link">Privacy</a>
+              <a href="#" class="about-link">Terms</a>
+              <a href="#" class="about-link">Support</a>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    
   </div>
 </ion-content>

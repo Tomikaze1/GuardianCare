@@ -48,11 +48,12 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 140px;
-      height: 140px;
-      background: radial-gradient(circle, rgba(124, 58, 237, 0.2) 0%, transparent 70%);
+      width: 120px;
+      height: 120px;
+      background: radial-gradient(circle, rgba(124, 58, 237, 0.15) 0%, transparent 70%);
       border-radius: 50%;
       animation: glowPulse 3s ease-in-out infinite;
+      z-index: 0;
     }
   }
   
@@ -74,9 +75,9 @@
   
   .app-subtitle {
     font-family: 'DM Sans', sans-serif;
-    font-size: 1rem;
-    font-weight: 500;
-    color: #61677c;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #475569;
     margin: 0 0 0.8rem 0;
     animation: fadeInUp 1s ease-out 0.5s both;
     letter-spacing: 0.5px;
@@ -1188,7 +1189,9 @@
 
 // Report History Styles
 .history-toggle-btn {
-  margin: 16px 20px;
+  margin: 16px auto; // center under header
+  width: 100%;
+  max-width: 420px; // match phone width on desktop
   --background: linear-gradient(135deg, var(--primary-purple) 0%, #9333ea 100%);
   --color: white;
   font-weight: 600;
@@ -1204,6 +1207,8 @@
 .report-history-section {
   padding: 0 20px 20px;
   animation: fadeInUp 0.4s ease-out;
+  max-width: 420px; // constrain to phone width
+  margin: 0 auto;
 }
 
 .history-stats {

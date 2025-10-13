@@ -90,7 +90,8 @@
     "REPORTS": "Reports",
     "PROFILE": "Profile",
     "HEATMAP": "Heatmap",
-    "SETTINGS": "Settings"
+    "SETTINGS": "Settings",
+    "NOTIFICATIONS": "Notifications"
   },
   "HOME": {
     "ACTIONS": {
@@ -158,5 +159,9 @@
     "CANCEL": "Cancel",
     "SAVE_CHANGES": "Save Changes",
     "LOGOUT": "Logout"
+  },
+  "NOTIFICATIONS": {
+    "TITLE": "Notifications",
+    "SUBTITLE": "New incident reports and validations"
   }
 }

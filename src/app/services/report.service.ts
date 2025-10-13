@@ -856,11 +856,11 @@ export class ReportService {
     };
   }
 
-  getValidatedReports(): Observable<Report[]> {
+  getAllReports(): Observable<Report[]> {
     return new Observable<Report[]>(observer => {
       const q = query(
-        collection(getFirestore(), this.collectionName), 
-        where('status', '==', 'Validated')
+        collection(getFirestore(), this.collectionName)
+        // No status filter - get ALL reports
       );
       
       const unsubscribe = onSnapshot(q, 
@@ -869,8 +869,53 @@ export class ReportService {
             id: doc.id, 
             ...doc.data() 
           } as Report));
-          console.log('📊 Validated reports loaded:', reports.length);
+          console.log('📊 All reports loaded:', reports.length);
           observer.next(reports);
+        },
+        error => {
+          console.error('Error fetching all reports:', error);
+          observer.next([]);
+        }
+      );
+      
+      return unsubscribe;
+    });
+  }
+
+  getValidatedReports(): Observable<Report[]> {
+    return new Observable<Report[]>(observer => {
+      // Simplified query to avoid index requirements
+      const q = query(
+        collection(getFirestore(), this.collectionName), 
+        where('status', '==', 'Validated')
+        // Removed orderBy and second where clause to avoid index requirement
+      );
+      
+      const unsubscribe = onSnapshot(q, 
+        snapshot => {
+          const reports = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return { 
+              id: doc.id, 
+              ...data,
+              // Ensure timestamps are properly converted
+              validatedAt: data['validatedAt']?.toDate ? data['validatedAt'].toDate() : data['validatedAt'],
+              updatedAt: data['updatedAt']?.toDate ? data['updatedAt'].toDate() : data['updatedAt'],
+              createdAt: data['createdAt']?.toDate ? data['createdAt'].toDate() : data['createdAt']
+            } as Report;
+          });
+          
+          // Filter and sort in memory instead of in query
+          const filteredReports = reports
+            .filter(report => report.validatedAt) // Only admin-validated reports
+            .sort((a, b) => {
+              const aTime = a.validatedAt?.getTime() || 0;
+              const bTime = b.validatedAt?.getTime() || 0;
+              return bTime - aTime; // Most recent first
+            });
+          
+          console.log('📊 Real-time validated reports loaded:', filteredReports.length);
+          observer.next(filteredReports);
         },
         error => {
           console.error('Error fetching validated reports:', error);

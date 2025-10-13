@@ -30,17 +30,15 @@
         <div class="section-underline"></div>
       </div>
 
-      <div class="form-row">
-        <div class="profile-picture-container">
-          <div class="profile-picture-wrapper" (click)="selectProfileImage()">
-            <div class="profile-picture" [class.has-image]="profileImage">
-              <img *ngIf="profileImage" [src]="profileImage" alt="Profile Picture" class="profile-image">
-              <ion-icon *ngIf="!profileImage" name="person-circle" class="default-avatar"></ion-icon>
-            </div>
-            <div class="edit-overlay">
-              <ion-icon name="camera" class="edit-icon"></ion-icon>
-              <span class="edit-text">{{ 'PROFILE.CHANGE_PHOTO' | translate }}</span>
-            </div>
+      <div class="profile-picture-container">
+        <div class="profile-picture-wrapper" (click)="selectProfileImage()">
+          <div class="profile-picture" [class.has-image]="profileImage">
+            <img *ngIf="profileImage" [src]="profileImage" alt="Profile Picture" class="profile-image">
+            <ion-icon *ngIf="!profileImage" name="person-circle" class="default-avatar"></ion-icon>
+          </div>
+          <div class="edit-overlay">
+            <ion-icon name="camera" class="edit-icon"></ion-icon>
+            <span class="edit-text">{{ 'PROFILE.CHANGE_PHOTO' | translate }}</span>
           </div>
         </div>
       </div>
@@ -208,6 +206,252 @@
             <ion-icon name="checkmark-outline" slot="start"></ion-icon>
             {{ 'PROFILE.SAVE_CHANGES' | translate }}
           </ion-button>
+        </div>
+      </div>
+
+      <!-- Settings Section -->
+      <div class="section-header">
+        <span>Settings</span>
+        <div class="section-underline"></div>
+      </div>
+
+      <!-- Account & Security Settings -->
+      <div class="form-row">
+        <div class="section-header" (click)="toggleSection('account')">
+          <div class="section-title-row">
+            <span>Account & Security</span>
+            <ion-icon name="chevron-forward-outline" class="section-toggle-icon" [class.open]="expandAccountSecurity"></ion-icon>
+          </div>
+          <div class="section-underline"></div>
+        </div>
+        
+        <div class="settings-list collapsible" [class.open]="expandAccountSecurity">
+          <div class="setting-item">
+            <div class="setting-left">
+              <div class="setting-icon">
+                <ion-icon name="shield-checkmark"></ion-icon>
+              </div>
+              <div class="setting-title">Two-Factor Authentication</div>
+            </div>
+            <div class="setting-right">
+              <ion-toggle [(ngModel)]="twoFactorEnabled" (ionChange)="toggleTwoFactor()"></ion-toggle>
+            </div>
+          </div>
+
+          <div class="setting-item" (click)="changePassword()">
+            <div class="setting-left">
+              <div class="setting-icon">
+                <ion-icon name="key"></ion-icon>
+              </div>
+              <div class="setting-title">Change Password</div>
+            </div>
+            <div class="setting-right">
+              <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+            </div>
+          </div>
+
+          <div class="setting-item" (click)="updateEmail()">
+            <div class="setting-left">
+              <div class="setting-icon">
+                <ion-icon name="mail"></ion-icon>
+              </div>
+              <div class="setting-title">Update Email</div>
+            </div>
+            <div class="setting-right">
+              <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Location & Alerts Settings -->
+      <div class="form-row">
+        <div class="section-header" (click)="toggleSection('location')">
+          <div class="section-title-row">
+            <span>Location & Alerts</span>
+            <ion-icon name="chevron-forward-outline" class="section-toggle-icon" [class.open]="expandLocationAlerts"></ion-icon>
+          </div>
+          <div class="section-underline"></div>
+        </div>
+        
+        <div class="settings-list collapsible" [class.open]="expandLocationAlerts">
+          <div class="setting-item">
+            <div class="setting-left">
+              <div class="setting-icon">
+                <ion-icon name="location"></ion-icon>
+              </div>
+              <div class="setting-title">GPS Access</div>
+            </div>
+            <div class="setting-right">
+              <ion-toggle [(ngModel)]="gpsEnabled" (ionChange)="toggleGPS()"></ion-toggle>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-left">
+              <div class="setting-icon">
+                <ion-icon name="time"></ion-icon>
+              </div>
+              <div class="setting-title">Time-based Alerts</div>
+            </div>
+            <div class="setting-right">
+              <ion-toggle [(ngModel)]="timeBasedAlerts" (ionChange)="toggleTimeBasedAlerts()"></ion-toggle>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-left">
+              <div class="setting-icon">
+                <ion-icon name="warning"></ion-icon>
+              </div>
+              <div class="setting-title">Danger Zone Alerts</div>
+            </div>
+            <div class="setting-right">
+              <ion-toggle [(ngModel)]="dangerZoneAlerts" (ionChange)="toggleDangerZoneAlerts()"></ion-toggle>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notifications Settings -->
+      <div class="form-row">
+        <div class="section-header" (click)="toggleSection('notifications')">
+          <div class="section-title-row">
+            <span>Notifications</span>
+            <ion-icon name="chevron-forward-outline" class="section-toggle-icon" [class.open]="expandNotifications"></ion-icon>
+          </div>
+          <div class="section-underline"></div>
+        </div>
+        
+        <div class="settings-list collapsible" [class.open]="expandNotifications">
+          <div class="setting-item">
+            <div class="setting-left">
+              <div class="setting-icon">
+                <ion-icon name="phone-portrait"></ion-icon>
+              </div>
+              <div class="setting-title">Smart Vibration</div>
+            </div>
+            <div class="setting-right">
+              <ion-toggle [(ngModel)]="smartVibration" (ionChange)="toggleSmartVibration()"></ion-toggle>
+            </div>
+          </div>
+
+          <div class="setting-item" (click)="alertSounds()">
+            <div class="setting-left">
+              <div class="setting-icon">
+                <ion-icon name="volume-high"></ion-icon>
+              </div>
+              <div class="setting-title">Alert Sounds</div>
+            </div>
+            <div class="setting-right">
+              <span class="setting-value">{{selectedAlertSound}}</span>
+              <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-left">
+              <div class="setting-icon">
+                <ion-icon name="phone-portrait"></ion-icon>
+              </div>
+              <div class="setting-title">Vibration Pattern</div>
+            </div>
+            <div class="setting-right">
+              <ion-segment [(ngModel)]="selectedVibrationPattern">
+                <ion-segment-button value="gentle"><ion-label>Gentle</ion-label></ion-segment-button>
+                <ion-segment-button value="default"><ion-label>Default</ion-label></ion-segment-button>
+                <ion-segment-button value="strong"><ion-label>Strong</ion-label></ion-segment-button>
+              </ion-segment>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Localization Settings -->
+      <div class="form-row">
+        <div class="section-header" (click)="toggleSection('localization')">
+          <div class="section-title-row">
+            <span>Localization</span>
+            <ion-icon name="chevron-forward-outline" class="section-toggle-icon" [class.open]="expandLocalization"></ion-icon>
+          </div>
+          <div class="section-underline"></div>
+        </div>
+        
+        <div class="settings-list collapsible" [class.open]="expandLocalization">
+          <div class="setting-item" (click)="languagePreference()">
+            <div class="setting-left">
+              <div class="setting-icon">
+                <ion-icon name="globe"></ion-icon>
+              </div>
+              <div class="setting-title">Language Preference</div>
+            </div>
+            <div class="setting-right">
+              <span class="setting-value">{{getCurrentLanguageName()}}</span>
+              <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+            </div>
+          </div>
+
+          <div class="setting-item" (click)="unitPreference()">
+            <div class="setting-left">
+              <div class="setting-icon">
+                <ion-icon name="resize"></ion-icon>
+              </div>
+              <div class="setting-title">Unit System</div>
+            </div>
+            <div class="setting-right">
+              <span class="setting-value">{{selectedUnit}}</span>
+              <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Legal & Support -->
+      <div class="form-row">
+        <div class="section-header" (click)="toggleSection('legal')">
+          <div class="section-title-row">
+            <span>Legal & Support</span>
+            <ion-icon name="chevron-forward-outline" class="section-toggle-icon" [class.open]="expandLegalSupport"></ion-icon>
+          </div>
+          <div class="section-underline"></div>
+        </div>
+        
+        <div class="settings-list collapsible" [class.open]="expandLegalSupport">
+          <div class="setting-item" (click)="showPrivacyPolicy()">
+            <div class="setting-left">
+              <div class="setting-icon">
+                <ion-icon name="shield"></ion-icon>
+              </div>
+              <div class="setting-title">Privacy Policy</div>
+            </div>
+            <div class="setting-right">
+              <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+            </div>
+          </div>
+
+          <div class="setting-item" (click)="showTermsOfService()">
+            <div class="setting-left">
+              <div class="setting-icon">
+                <ion-icon name="document-text"></ion-icon>
+              </div>
+              <div class="setting-title">Terms of Service</div>
+            </div>
+            <div class="setting-right">
+              <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+            </div>
+          </div>
+
+          <div class="setting-item" (click)="contactSupport()">
+            <div class="setting-left">
+              <div class="setting-icon">
+                <ion-icon name="help-circle"></ion-icon>
+              </div>
+              <div class="setting-title">Contact Support</div>
+            </div>
+            <div class="setting-right">
+              <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
+            </div>
+          </div>
         </div>
       </div>
     </form>

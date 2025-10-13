@@ -34,6 +34,44 @@ export class ProfilePage implements OnInit {
   isEditingContact = false;
   editingContactId: string | null = null;
 
+  // Settings properties
+  currentLanguage = 'en';
+  twoFactorEnabled = false;
+  gpsEnabled = true;
+  timeBasedAlerts = true;
+  dangerZoneAlerts = true;
+  smartVibration = true;
+  selectedAlertSound = 'Default';
+  selectedVibrationPattern: 'gentle' | 'default' | 'strong' = 'default';
+  selectedUnit = 'Metric';
+  
+  // Settings UI state
+  expandAccountSecurity = false;
+  expandLocationAlerts = false;
+  expandNotifications = false;
+  expandLocalization = false;
+  expandLegalSupport = false;
+
+  // Settings options
+  languages = [
+    { code: 'en', name: 'English' },
+    { code: 'es', name: 'Español' },
+    { code: 'fr', name: 'Français' },
+    { code: 'ja', name: '日本語' },
+    { code: 'ph', name: 'Filipino' }
+  ];
+
+  alertSoundOptions = [
+    { value: 'Soft', label: 'Soft' },
+    { value: 'Default', label: 'Default' },
+    { value: 'Loud', label: 'Loud' }
+  ];
+
+  unitOptions = [
+    { value: 'Metric', label: 'Metric' },
+    { value: 'Imperial', label: 'Imperial' }
+  ];
+
   private userSubscription: Subscription = new Subscription();
   @ViewChild(IonContent, { static: false }) content?: IonContent;
 
@@ -569,5 +607,220 @@ export class ProfilePage implements OnInit {
       console.error('Logout error:', error);
       this.notificationService.error('Error', 'Failed to logout. Please try again.', 'OK', 3000);
     }
+  }
+
+  // Settings Methods
+  toggleSection(section: string) {
+    switch (section) {
+      case 'account':
+        this.expandAccountSecurity = !this.expandAccountSecurity;
+        break;
+      case 'location':
+        this.expandLocationAlerts = !this.expandLocationAlerts;
+        break;
+      case 'notifications':
+        this.expandNotifications = !this.expandNotifications;
+        break;
+      case 'localization':
+        this.expandLocalization = !this.expandLocalization;
+        break;
+      case 'legal':
+        this.expandLegalSupport = !this.expandLegalSupport;
+        break;
+    }
+  }
+
+  // Account & Security
+  async toggleTwoFactor() {
+    // Implementation for two-factor authentication
+    console.log('Two-factor authentication toggled:', this.twoFactorEnabled);
+    await this.showToast('Two-factor authentication setting updated', 'success');
+  }
+
+  async changePassword() {
+    const alert = await this.alertController.create({
+      header: 'Change Password',
+      message: 'Password change functionality will be implemented here.',
+      buttons: ['OK']
+    });
+    await alert.present();
+  }
+
+  async updateEmail() {
+    const alert = await this.alertController.create({
+      header: 'Update Email',
+      message: 'Email update functionality will be implemented here.',
+      buttons: ['OK']
+    });
+    await alert.present();
+  }
+
+  // Location & Alerts
+  async toggleGPS() {
+    console.log('GPS tracking toggled:', this.gpsEnabled);
+    await this.showToast('GPS setting updated', 'success');
+  }
+
+  async toggleDangerZoneAlerts() {
+    console.log('Danger zone alerts toggled:', this.dangerZoneAlerts);
+    await this.showToast('Danger zone alerts setting updated', 'success');
+  }
+
+  async toggleTimeBasedAlerts() {
+    console.log('Time-based alerts toggled:', this.timeBasedAlerts);
+    await this.showToast('Time-based alerts setting updated', 'success');
+  }
+
+  // Notifications
+  async toggleSmartVibration() {
+    console.log('Smart vibration toggled:', this.smartVibration);
+    await this.showToast('Smart vibration setting updated', 'success');
+  }
+
+  async changeAlertSound(event: any) {
+    console.log('Alert sound changed:', event.detail.value);
+    await this.showToast(`Alert sound changed to ${event.detail.value}`, 'success');
+  }
+
+  async changeVibrationPattern(event: any) {
+    console.log('Vibration pattern changed:', event.detail.value);
+    await this.showToast(`Vibration pattern changed to ${event.detail.value}`, 'success');
+  }
+
+  // Localization
+  async changeLanguage(event: any) {
+    const newLanguage = event.detail.value;
+    this.currentLanguage = newLanguage;
+    this.translate.use(newLanguage);
+    console.log('Language changed to:', newLanguage);
+    await this.showToast(`Language changed to ${this.languages.find(l => l.code === newLanguage)?.name}`, 'success');
+  }
+
+  async changeUnit(event: any) {
+    console.log('Unit system changed:', event.detail.value);
+    await this.showToast(`Unit system changed to ${event.detail.value}`, 'success');
+  }
+
+  // Legal & Support
+  async showPrivacyPolicy() {
+    const alert = await this.alertController.create({
+      header: 'Privacy Policy',
+      message: 'Privacy policy will be displayed here.',
+      buttons: ['OK']
+    });
+    await alert.present();
+  }
+
+  async showTermsOfService() {
+    const alert = await this.alertController.create({
+      header: 'Terms of Service',
+      message: 'Terms of service will be displayed here.',
+      buttons: ['OK']
+    });
+    await alert.present();
+  }
+
+  async contactSupport() {
+    const alert = await this.alertController.create({
+      header: 'Contact Support',
+      message: 'Support contact information will be displayed here.',
+      buttons: ['OK']
+    });
+    await alert.present();
+  }
+
+  // Additional settings methods to match original functionality
+  async alertSounds() {
+    const alert = await this.alertController.create({
+      header: 'Alert Sounds',
+      inputs: this.alertSoundOptions.map(sound => ({
+        name: 'alertSound',
+        type: 'radio',
+        label: sound.label,
+        value: sound.value,
+        checked: sound.value === this.selectedAlertSound
+      })),
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'OK',
+          handler: (data) => {
+            if (data) {
+              this.selectedAlertSound = data;
+              this.showToast(`Alert sound changed to ${data}`, 'success');
+            }
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  async languagePreference() {
+    const alert = await this.alertController.create({
+      header: 'Language Preference',
+      inputs: this.languages.map(lang => ({
+        name: 'language',
+        type: 'radio',
+        label: lang.name,
+        value: lang.code,
+        checked: lang.code === this.currentLanguage
+      })),
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'OK',
+          handler: (data) => {
+            if (data) {
+              this.currentLanguage = data;
+              this.translate.use(data);
+              const selectedLang = this.languages.find(l => l.code === data);
+              this.showToast(`Language changed to ${selectedLang?.name}`, 'success');
+            }
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  async unitPreference() {
+    const alert = await this.alertController.create({
+      header: 'Unit System',
+      inputs: this.unitOptions.map(unit => ({
+        name: 'unit',
+        type: 'radio',
+        label: unit.label,
+        value: unit.value,
+        checked: unit.value === this.selectedUnit
+      })),
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'OK',
+          handler: (data) => {
+            if (data) {
+              this.selectedUnit = data;
+              this.showToast(`Unit system changed to ${data}`, 'success');
+            }
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  getCurrentLanguageName(): string {
+    const lang = this.languages.find(l => l.code === this.currentLanguage);
+    return lang ? lang.name : 'English';
   }
 }

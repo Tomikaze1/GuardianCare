@@ -1,92 +1,161 @@
-<ion-menu *ngIf="uiMode === 'sidebar'" side="end" menuId="home-actions" contentId="home-content" class="home-actions-menu">
-  <ion-header>
-    <ion-toolbar class="menu-toolbar">
-      <ion-title>{{ 'HOME.ACTIONS_TITLE' | translate }}</ion-title>
-    </ion-toolbar>
-  </ion-header>
-  <ion-content>
-    <ion-list class="menu-list circle-menu">
-      <ion-item class="menu-item critical" button (click)="triggerPanicButton()">
-        <ion-icon name="alert-circle" slot="start"></ion-icon>
-        <ion-label>{{ 'HOME.ACTIONS.PANIC' | translate }}</ion-label>
-        <ion-note slot="end" class="menu-note">{{ 'HOME.ACTIONS.PANIC_NOTE' | translate }}</ion-note>
-      </ion-item>
-      <ion-item class="menu-item accent" button (click)="toggleHeatmap()">
-        <ion-icon name="flame" slot="start"></ion-icon>
-        <ion-label>{{ 'HOME.ACTIONS.HEATMAP' | translate }}</ion-label>
-        <ion-badge slot="end" color="warning" *ngIf="isHeatmapVisible">On</ion-badge>
-        <ion-note slot="end" class="menu-note" *ngIf="!isHeatmapVisible">{{ 'HOME.ACTIONS.HEATMAP_NOTE' | translate }}</ion-note>
-      </ion-item>
-      
-    </ion-list>
-  </ion-content>
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-</ion-menu>
+<ion-content [fullscreen]="true" id="home-content" class="modern-content">
+  <!-- Zone Alert Banner removed as requested -->
 
-<ion-content [fullscreen]="true" id="home-content">
-  <div id="map"></div>
-  
-  <!-- Compact heatmap legend -->
-  <div class="heatmap-legend" *ngIf="isHeatmapVisible">
-    <div class="legend-compact">
-      <div class="legend-dot level1"></div>
-      <div class="legend-dot level2"></div>
-      <div class="legend-dot level3"></div>
-      <div class="legend-dot level4"></div>
-      <div class="legend-dot level5"></div>
+  <!-- Full Width Header -->
+  <div class="app-header">
+    <div class="header-content">
+      <!-- Location Info Row with Enhanced Live Badge -->
+      <div class="location-row">
+        <div class="location-icon-box">
+          <ion-icon name="location-sharp"></ion-icon>
+        </div>
+        <div class="location-info">
+          <div class="location-address-row">
+            <span class="location-address">{{ currentAddress || 'Getting your location...' }}</span>
+          </div>
+          <div class="location-details" *ngIf="currentLocation">
+            <div class="location-coords-row">
+              <div class="location-coords">
+                <ion-icon name="navigate-outline" class="coord-icon"></ion-icon>
+                {{ currentLocation.lat.toFixed(5) }}, {{ currentLocation.lng.toFixed(5) }}
+              </div>
+              <div class="live-badge" *ngIf="isRealTimeTracking">
+                <div class="live-pulse"></div>
+                <span class="live-label">LIVE</span>
+                <div class="live-indicator"></div>
+              </div>
+            </div>
+            <div class="location-accuracy" *ngIf="gpsAccuracy">
+              <ion-icon name="cellular-outline" class="accuracy-icon"></ion-icon>
+              {{ gpsAccuracy.accuracy }}m accuracy
+            </div>
+          </div>
+        </div>
+        
+      </div>
+      
+      <!-- Safety and Reports Row (Side by Side) -->
+      <div class="safety-reports-row">
+        <!-- Safety Status -->
+        <div class="safety-row" [class]="getSafetyStatusClass()">
+          <div class="safety-icon-box">
+            <ion-icon name="shield-checkmark-outline"></ion-icon>
+          </div>
+          <div class="safety-info">
+            <div class="safety-title">{{ getSafetyStatusText() }}</div>
+          </div>
+        </div>
+        
+        <!-- Incidents Status -->
+        <div class="incidents-row" *ngIf="hasNearbyReports">
+          <div class="incidents-icon-box">
+            <ion-icon name="warning-outline"></ion-icon>
+          </div>
+          <div class="incidents-info">
+            <div class="incidents-title">{{ nearbyReportsCount }} Incidents Nearby<span *ngIf="nearestZoneDistance !== null"> • {{ getNearestDistanceText() }} away</span></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="floating-ui" *ngIf="uiMode === 'buttons'">
-    <ion-button 
-      id="panic-button" 
-      (click)="triggerPanicButton()" 
-      [disabled]="isPanicActive"
-      color="danger">
-      <ion-icon name="alert-circle"></ion-icon>
-    </ion-button>
-
-    <ion-button 
-      id="heatmap-toggle" 
-      (click)="toggleHeatmap()" 
-      [color]="isHeatmapVisible ? 'warning' : 'primary'">
-      <ion-icon name="flame"></ion-icon>
-    </ion-button>
-  </div>
-
-
-  <div class="gps-status" *ngIf="gpsAccuracy">
-    <ion-chip [color]="getGPSStatusColor()">
-      <ion-icon name="location"></ion-icon>
-      <ion-label>GPS: {{ gpsAccuracy.status }}</ion-label>
-    </ion-chip>
-  </div>
-
-  <div class="status-indicator" *ngIf="inDangerZone">
-    <ion-chip color="danger">
-      <ion-icon name="warning"></ion-icon>
-      <ion-label>You are in a danger zone!</ion-label>
-    </ion-chip>
+  <!-- Map Container -->
+  <div id="map" class="modern-map"></div>
+  
+  <!-- Modern Heatmap Legend -->
+  <div class="modern-legend" *ngIf="isHeatmapVisible">
+    <div class="legend-card">
+      <div class="legend-header">
+        <ion-icon name="analytics-outline"></ion-icon>
+        <span>Risk Levels</span>
+      </div>
+      <div class="legend-items">
+        <div class="legend-item level-1">
+          <div class="legend-color"></div>
+          <span>Low</span>
+        </div>
+        <div class="legend-item level-2">
+          <div class="legend-color"></div>
+          <span>Moderate</span>
+        </div>
+        <div class="legend-item level-3">
+          <div class="legend-color"></div>
+          <span>High</span>
+        </div>
+        <div class="legend-item level-4">
+          <div class="legend-color"></div>
+          <span>Critical</span>
+        </div>
+        <div class="legend-item level-5">
+          <div class="legend-color"></div>
+          <span>Extreme</span>
+        </div>
+      </div>
+    </div>
   </div>
   
-  <div *ngIf="uiMode === 'sidebar'" #edgeHandle class="edge-handle" (click)="openActionsMenu()" aria-label="Open Sidebar"></div>
+  <!-- Floating Action Buttons -->
+  <div class="fab-container">
+    <!-- Main Panic Button -->
+    <button class="fab-main panic-fab" 
+            (click)="triggerPanicButton()" 
+            [disabled]="isPanicActive">
+      <ion-icon name="alert-circle-outline"></ion-icon>
+      <div class="fab-ripple"></div>
+    </button>
+    
+    <!-- Heatmap Toggle -->
+    <button class="fab-secondary heatmap-fab" 
+            (click)="toggleHeatmap()"
+            [class.active]="isHeatmapVisible">
+      <ion-icon name="flame-outline"></ion-icon>
+      <div class="fab-ripple"></div>
+    </button>
+  </div>
+  
+  <!-- Swipe Indicator -->
+  <div class="swipe-indicator" *ngIf="!isQuickActionsOpen">
+    <div class="swipe-hint">
+      <ion-icon name="chevron-up-outline"></ion-icon>
+      <span>Swipe up for quick actions</span>
+    </div>
+  </div>
+
+  <!-- Bottom Quick Action Sheet -->
+  <div class="quick-actions-sheet" 
+       [class.sheet-open]="isQuickActionsOpen"
+       (touchstart)="onTouchStart($event)"
+       (touchmove)="onTouchMove($event)"
+       (touchend)="onTouchEnd($event)"
+       (mousedown)="onMouseDown($event)"
+       (mousemove)="onMouseMove($event)"
+       (mouseup)="onMouseUp($event)"
+       (mouseleave)="onMouseLeave($event)">
+    <div class="sheet-handle" (click)="toggleQuickActions()"></div>
+    <div class="sheet-content">
+      <div class="quick-action-grid">
+        <!-- Quick Action Cards -->
+        <div class="action-card" (click)="triggerPanicButton()">
+          <div class="action-icon danger-action">
+            <ion-icon name="warning"></ion-icon>
+          </div>
+          <div class="action-label">Emergency</div>
+        </div>
+        
+        <div class="action-card" (click)="toggleHeatmap()">
+          <div class="action-icon" [class.active]="isHeatmapVisible">
+            <ion-icon name="flame"></ion-icon>
+          </div>
+          <div class="action-label">Heatmap</div>
+        </div>
+        
+        <div class="action-card">
+          <div class="action-icon">
+            <ion-icon name="share-social"></ion-icon>
+          </div>
+          <div class="action-label">Share Location</div>
+        </div>
+      </div>
+    </div>
+  </div>
 </ion-content>

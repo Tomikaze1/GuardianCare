@@ -1,0 +1,494 @@
+// Notifications Page Styles - Matching Reports/Profile Design
+.notifications-content {
+  --background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);
+  min-height: 100vh;
+  font-family: 'DM Sans', 'Plus Jakarta Sans', Arial, sans-serif;
+  padding: 0;
+  padding-bottom: 120px;
+}
+
+// Logo/Title Section - Matching Reports/Profile
+.logo-container {
+  text-align: center;
+  margin-top: 20px;
+  margin-bottom: 4px;
+  
+  .logo-wrapper {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 0.4rem;
+    
+    .custom-logo {
+      position: relative;
+      display: inline-block;
+      font-size: 4.5rem;
+      animation: logoFloat 4s ease-in-out infinite;
+      z-index: 2;
+      
+      .shield-icon {
+        color: var(--primary-purple);
+        filter: drop-shadow(0 8px 20px rgba(124, 58, 237, 0.25));
+        position: relative;
+        z-index: 1;
+      }
+      
+      .notifications-icon {
+        position: absolute;
+        top: 42%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 2rem;
+        color: #ffffff;
+        z-index: 2;
+      }
+    }
+    
+    .logo-glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 120px;
+      height: 120px;
+      background: radial-gradient(circle, rgba(124, 58, 237, 0.15) 0%, transparent 70%);
+      border-radius: 50%;
+      animation: glowPulse 3s ease-in-out infinite;
+      z-index: 0;
+    }
+  }
+  
+  .app-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-purple) 50%, var(--accent-purple) 100%);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0 0 0.3rem 0;
+    text-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    letter-spacing: -1px;
+    animation: textShimmer 4s ease infinite;
+    filter: drop-shadow(0 2px 6px rgba(124, 58, 237, 0.15));
+  }
+  
+  .app-subtitle {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #475569;
+    margin: 0 0 0.8rem 0;
+    animation: fadeInUp 1s ease-out 0.5s both;
+    letter-spacing: 0.5px;
+  }
+  
+  .title-underline {
+    width: 58px;
+    height: 2.5px;
+    background: linear-gradient(90deg, var(--primary-purple), var(--primary-blue), var(--primary-purple));
+    margin: 0 auto;
+    border-radius: 2px;
+    animation: expandWidth 1.2s ease-out 1s both;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.25);
+  }
+}
+
+// Section Headers - Matching Reports Style
+.section-header {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.07rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 1.5rem 0 0.8rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  
+  &::before {
+    content: '';
+    width: 4px;
+    height: 20px;
+    background: linear-gradient(135deg, var(--primary-purple), var(--primary-blue));
+    border-radius: 2px;
+  }
+  
+  .section-underline {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, #e2e8f0 0%, transparent 100%);
+    margin-left: 0.5rem;
+  }
+}
+
+// Action Buttons - Matching Reports Design
+.actions-container {
+  margin: 0 20px 20px 20px;
+  
+  .button-row {
+    display: flex;
+    gap: 12px;
+    
+    .action-btn {
+      flex: 1;
+      height: 48px;
+      font-weight: 600;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      letter-spacing: 0.3px;
+      transition: all 0.3s ease;
+      
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+    }
+  }
+}
+
+// Notifications Section
+.notifications-section {
+  margin: 0 20px;
+  
+  .notifications-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+// Section Header - Matching Reports Design
+.section-header {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.07rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin-top: 20px;
+  margin-bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  
+  span {
+    position: relative;
+    z-index: 2;
+    letter-spacing: 0.01rem;
+  }
+  
+  .section-underline {
+    width: 30px;
+    height: 2.5px;
+    background: var(--primary-purple);
+    border-radius: 2px;
+    margin: 3px 0 6px 0;
+    box-shadow: 0 1px 5px rgba(124, 58, 237, 0.1);
+  }
+}
+
+// Notification Cards - Matching Reports Card Design
+.notification-card {
+  background: white;
+  border-radius: 6px;
+  padding: 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f1f5f9;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 4px;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--primary-purple);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    border-color: #e2e8f0;
+    
+    &::before {
+      opacity: 1;
+    }
+  }
+  
+  &.unread {
+    background: rgba(124, 58, 237, 0.02);
+    border-color: rgba(124, 58, 237, 0.2);
+    
+    &::before {
+      opacity: 1;
+      background: var(--primary-purple);
+    }
+  }
+  
+  &.priority-critical {
+    border-color: rgba(239, 68, 68, 0.3);
+    background: rgba(239, 68, 68, 0.02);
+    
+    &::before {
+      background: #ef4444;
+      opacity: 1;
+    }
+  }
+  
+  &.priority-high {
+    border-color: rgba(245, 158, 11, 0.3);
+    background: rgba(245, 158, 11, 0.02);
+    
+    &::before {
+      background: #f59e0b;
+      opacity: 1;
+    }
+  }
+}
+
+// Notification Header
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  
+  .notification-type {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-weight: 600;
+    color: #1a202c;
+    font-size: 0.75rem;
+    
+    ion-icon {
+      font-size: 12px;
+    }
+  }
+  
+  .priority-chip {
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+    padding: 1px 4px;
+  }
+}
+
+.notification-header .new-badge {
+  margin-left: 6px;
+  border-radius: 8px;
+  font-size: 0.55rem;
+  padding: 2px 6px;
+}
+
+// Notification Content
+.notification-content {
+  cursor: pointer;
+  
+  .notification-message {
+    margin-bottom: 4px;
+    
+    p {
+      margin: 0;
+      color: #475569;
+      font-size: 0.7rem;
+      line-height: 1.3;
+      font-weight: 400;
+    }
+  }
+  
+  .notification-time {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    color: #64748b;
+    font-size: 0.65rem;
+    margin-bottom: 4px;
+    
+    ion-icon {
+      font-size: 10px;
+    }
+  }
+  
+  .notification-actions {
+    display: flex;
+    justify-content: flex-end;
+    
+    .delete-btn {
+      --color: #64748b;
+      --background: transparent;
+      --padding-start: 4px;
+      --padding-end: 4px;
+      height: 20px;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        --color: #ef4444;
+        --background: rgba(239, 68, 68, 0.1);
+      }
+      
+      ion-icon {
+        font-size: 12px;
+      }
+    }
+  }
+}
+
+// Action Buttons - Matching Reports Design
+.action-buttons {
+  margin: 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  
+  .action-btn {
+    --border-radius: 12px;
+    --padding-top: 12px;
+    --padding-bottom: 12px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    
+    ion-icon {
+      margin-right: 8px;
+    }
+  }
+}
+
+// Empty State - Matching Reports Design
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #64748b;
+  
+  .empty-icon {
+    font-size: 4rem;
+    color: #cbd5e1;
+    margin-bottom: 20px;
+  }
+  
+  .empty-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #374151;
+    margin: 0 0 8px 0;
+  }
+  
+  .empty-message {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 0;
+    max-width: 280px;
+    margin: 0 auto;
+  }
+}
+
+// Loading State
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #64748b;
+  
+  ion-spinner {
+    margin-bottom: 16px;
+  }
+  
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+  }
+}
+
+// Animations - Matching Reports/Profile
+@keyframes logoFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.05); }
+}
+
+@keyframes textShimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes expandWidth {
+  from { width: 0; }
+  to { width: 58px; }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .logo-container {
+    margin-top: 16px;
+  }
+  
+  .actions-container {
+    margin: 0 16px 16px 16px;
+    
+    .button-row {
+      gap: 8px;
+      
+      .action-btn {
+        height: 44px;
+        font-size: 0.85rem;
+      }
+    }
+  }
+  
+  .notifications-section {
+    margin: 0 16px;
+  }
+  
+  .notification-card {
+    padding: 14px;
+    border-radius: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  
+  .notification-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    
+    .priority-chip {
+      align-self: flex-end;
+    }
+  }
+}
+
+.filters-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px 8px 12px;
+
+  ion-chip { height: 26px; font-size: 0.75rem; }
+  .sticky-toggle { margin-left: auto; font-size: 0.75rem; }
+}

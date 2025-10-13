@@ -13,6 +13,30 @@ export class NotificationService {
     private environmentInjector: EnvironmentInjector
   ) {}
 
+  // Method to stop alert sounds when notification is dismissed
+  private stopAlertSounds(): void {
+    // Stop any playing audio elements
+    const audioElements = document.querySelectorAll('audio');
+    audioElements.forEach(audio => {
+      if (!audio.paused) {
+        audio.pause();
+        audio.currentTime = 0;
+      }
+    });
+
+    // Stop any Web Audio API contexts
+    if (window.AudioContext || (window as any).webkitAudioContext) {
+      try {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        if (audioContext.state !== 'closed') {
+          audioContext.close();
+        }
+      } catch (error) {
+        console.warn('Could not close audio context:', error);
+      }
+    }
+  }
+
   show(notification: NotificationBanner): void {
     const componentRef = createComponent(NotificationBannerComponent, {
       environmentInjector: this.environmentInjector,
@@ -23,11 +47,13 @@ export class NotificationService {
     
     // Handle dismiss
     componentRef.instance.dismiss.subscribe(() => {
+      this.stopAlertSounds(); // Stop any playing sounds when dismissed
       this.dismiss(componentRef);
     });
 
     // Handle action
     componentRef.instance.action.subscribe(() => {
+      this.stopAlertSounds(); // Stop any playing sounds when action is taken
       this.dismiss(componentRef);
     });
 
@@ -107,6 +133,7 @@ export class NotificationService {
 
   // Dismiss all notifications
   dismissAll(): void {
+    this.stopAlertSounds(); // Stop any playing sounds when dismissing all
     this.notifications.forEach(componentRef => {
       this.dismiss(componentRef);
     });

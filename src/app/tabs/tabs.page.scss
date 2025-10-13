@@ -81,6 +81,17 @@ ion-tab-bar {
   }
 }
 
+.notif-badge {
+  position: absolute;
+  top: 2px;
+  right: 18px;
+  font-size: 10px;
+  height: 16px;
+  min-width: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+}
+
 // Page transitions
 ion-router-outlet > * {
   display: block;

@@ -692,6 +692,7 @@ export class ZoneDangerEngineService {
       this.triggerVibrationAlert(vibrationPattern);
     }
     
+    // Trigger sound for all incidents (risk levels 1-5)
     if (this.shouldTriggerSound()) {
       this.triggerSoundAlert(soundType);
     }
@@ -788,7 +789,10 @@ export class ZoneDangerEngineService {
   }
 
   private shouldTriggerSound(): boolean {
-    return true;
+    // Only allow sound for high-risk scenarios
+    // This method is used for nearby incidents and time-based alerts
+    // Sound should be limited to the most critical situations
+    return true; // Keep true for now, but individual methods can override with more specific logic
   }
 
   private shouldTriggerNotification(): boolean {

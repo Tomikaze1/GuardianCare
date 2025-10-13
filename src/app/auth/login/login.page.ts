@@ -68,7 +68,7 @@ export class LoginPage implements OnInit {
 
         if (userCredential.success) {
           await loading.dismiss();
-          this.notificationService.success('Success!', 'Login successful!', 'OK', 3000);
+          // Login notification removed as requested - will be dismissed on home page entry
           
           // Wait a moment for auth state to be established
           console.log('LoginPage: Login successful, waiting for auth state to settle...');
@@ -126,7 +126,7 @@ export class LoginPage implements OnInit {
       await loading.dismiss();
 
       if (result.success) {
-        this.notificationService.success('Success!', 'Google login successful!', 'OK', 3000);
+        // Login notification removed as requested - will be dismissed on home page entry
         
         // Wait a moment for auth state to be established
         console.log('LoginPage: Google login successful, waiting for auth state to settle...');
@@ -172,7 +172,7 @@ export class LoginPage implements OnInit {
       await loading.dismiss();
 
       if (result.success) {
-        this.notificationService.success('Success!', 'Facebook login successful!', 'OK', 3000);
+        // Login notification removed as requested - will be dismissed on home page entry
         
         // Wait a moment for auth state to be established
         console.log('LoginPage: Facebook login successful, waiting for auth state to settle...');

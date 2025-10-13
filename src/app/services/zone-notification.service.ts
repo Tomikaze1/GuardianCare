@@ -1,0 +1,652 @@
+import { Injectable } from '@angular/core';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { take } from 'rxjs/operators';
+import { NotificationService } from '../shared/services/notification.service';
+import { ZoneDangerEngineService, DangerZone } from './zone-danger-engine.service';
+
+export interface ZoneAlert {
+  id: string;
+  type: 'zone_entry' | 'zone_exit' | 'zone_level_change' | 'nearby_zone';
+  zoneId: string;
+  zoneName: string;
+  zoneLevel: 'Safe' | 'Neutral' | 'Caution' | 'Danger';
+  riskLevel: number;
+  message: string;
+  recommendations: string[];
+  timestamp: Date;
+  location: { lat: number; lng: number };
+  distance?: number;
+  isActive: boolean;
+}
+
+export interface ZoneNotificationSettings {
+  enableZoneEntryAlerts: boolean;
+  enableZoneExitAlerts: boolean;
+  enableLevelChangeAlerts: boolean;
+  enableNearbyZoneAlerts: boolean;
+  enableVibration: boolean;
+  enableSound: boolean;
+  enablePushNotifications: boolean;
+  alertRadius: number; // in meters
+  cooldownPeriod: number; // in minutes
+  minimumRiskLevel: number; // 1-5
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ZoneNotificationService {
+  private activeAlerts = new BehaviorSubject<ZoneAlert[]>([]);
+  public activeAlerts$ = this.activeAlerts.asObservable();
+  
+  private currentZone: DangerZone | null = null;
+  private previousZone: DangerZone | null = null;
+  private lastNotificationTime: number = 0;
+  private alertHistory: Set<string> = new Set();
+  
+  private defaultSettings: ZoneNotificationSettings = {
+    enableZoneEntryAlerts: true,
+    enableZoneExitAlerts: true,
+    enableLevelChangeAlerts: true,
+    enableNearbyZoneAlerts: true,
+    enableVibration: true,
+    enableSound: true,
+    enablePushNotifications: true,
+    alertRadius: 100, // 100 meters
+    cooldownPeriod: 5, // 5 minutes
+    minimumRiskLevel: 2 // Alert for risk level 2 and above
+  };
+  
+  private settings: ZoneNotificationSettings = { ...this.defaultSettings };
+
+  constructor(
+    private notificationService: NotificationService,
+    private zoneEngine: ZoneDangerEngineService
+  ) {
+    this.loadSettings();
+  }
+
+  /**
+   * Check if user has entered a new zone and trigger appropriate alerts
+   */
+  checkZoneEntry(location: { lat: number; lng: number }): void {
+    // Subscribe to zones to get current value
+    this.zoneEngine.zones$.pipe(take(1)).subscribe(zones => {
+      const currentZone = this.findZoneAtLocation(location, zones);
+    
+      // Check if user entered a new zone
+      if (currentZone && currentZone !== this.currentZone) {
+        this.previousZone = this.currentZone;
+        this.currentZone = currentZone;
+        
+        if (this.shouldTriggerAlert('zone_entry', currentZone)) {
+          this.triggerZoneEntryAlert(currentZone, location);
+        }
+      }
+      
+      // Check if user exited a zone
+      if (this.currentZone && !currentZone) {
+        if (this.shouldTriggerAlert('zone_exit', this.currentZone)) {
+          this.triggerZoneExitAlert(this.currentZone, location);
+        }
+        this.previousZone = this.currentZone;
+        this.currentZone = null;
+      }
+      
+      // Check for nearby zones
+      this.checkNearbyZones(location, zones);
+    });
+  }
+
+  /**
+   * Check for zone level changes and trigger alerts
+   */
+  checkZoneLevelChanges(): void {
+    if (!this.currentZone) return;
+    
+    this.zoneEngine.zones$.pipe(take(1)).subscribe(zones => {
+      const updatedZone = zones.find((z: DangerZone) => z.id === this.currentZone!.id);
+      
+      if (updatedZone && this.currentZone && updatedZone.level !== this.currentZone.level) {
+        const oldLevel = this.currentZone.level;
+        this.currentZone = updatedZone;
+        
+        if (this.shouldTriggerAlert('zone_level_change', updatedZone)) {
+          this.triggerZoneLevelChangeAlert(updatedZone, oldLevel);
+        }
+      }
+    });
+  }
+
+  /**
+   * Update notification settings
+   */
+  updateSettings(settings: Partial<ZoneNotificationSettings>): void {
+    this.settings = { ...this.settings, ...settings };
+    this.saveSettings();
+  }
+
+  /**
+   * Get current notification settings
+   */
+  getSettings(): ZoneNotificationSettings {
+    return { ...this.settings };
+  }
+
+  /**
+   * Reset settings to default
+   */
+  resetSettings(): void {
+    this.settings = { ...this.defaultSettings };
+    this.saveSettings();
+  }
+
+  /**
+   * Get current zone information
+   */
+  getCurrentZone(): DangerZone | null {
+    return this.currentZone;
+  }
+
+  /**
+   * Get active alerts
+   */
+  getActiveAlerts(): ZoneAlert[] {
+    return this.activeAlerts.value;
+  }
+
+  /**
+   * Dismiss an alert
+   */
+  dismissAlert(alertId: string): void {
+    const alerts = this.activeAlerts.value.filter(alert => alert.id !== alertId);
+    this.activeAlerts.next(alerts);
+  }
+
+  /**
+   * Dismiss all alerts
+   */
+  dismissAllAlerts(): void {
+    this.activeAlerts.next([]);
+  }
+
+  private findZoneAtLocation(location: { lat: number; lng: number }, zones: DangerZone[]): DangerZone | null {
+    return zones.find(zone => this.isPointInPolygon([location.lng, location.lat], zone.coordinates)) || null;
+  }
+
+  private checkNearbyZones(location: { lat: number; lng: number }, zones: DangerZone[]): void {
+    const nearbyZones = zones.filter(zone => {
+      const distance = this.calculateDistanceToZone(location, zone);
+      return distance <= this.settings.alertRadius && zone !== this.currentZone;
+    });
+
+    nearbyZones.forEach(zone => {
+      if (this.shouldTriggerAlert('nearby_zone', zone)) {
+        this.triggerNearbyZoneAlert(zone, location);
+      }
+    });
+  }
+
+  private calculateDistanceToZone(location: { lat: number; lng: number }, zone: DangerZone): number {
+    const zoneCenter = this.calculateZoneCenter(zone.coordinates);
+    return this.calculateDistance(
+      location.lat, location.lng,
+      zoneCenter[1], zoneCenter[0]
+    );
+  }
+
+  private calculateZoneCenter(coordinates: [number, number][]): [number, number] {
+    const lngSum = coordinates.reduce((sum, coord) => sum + coord[0], 0);
+    const latSum = coordinates.reduce((sum, coord) => sum + coord[1], 0);
+    return [lngSum / coordinates.length, latSum / coordinates.length];
+  }
+
+  private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = this.deg2rad(lat2 - lat1);
+    const dLon = this.deg2rad(lon2 - lon1);
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c * 1000; // Return distance in meters
+  }
+
+  private deg2rad(deg: number): number {
+    return deg * (Math.PI/180);
+  }
+
+  private isPointInPolygon(point: [number, number], polygon: [number, number][]): boolean {
+    const [x, y] = point;
+    let inside = false;
+    
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const [xi, yi] = polygon[i];
+      const [xj, yj] = polygon[j];
+      
+      if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
+        inside = !inside;
+      }
+    }
+    
+    return inside;
+  }
+
+  private shouldTriggerAlert(type: string, zone: DangerZone): boolean {
+    // Don't trigger alerts for Safe zones - they're not dangerous
+    if (zone.level === 'Safe') {
+      return false;
+    }
+
+    // Check if risk level meets minimum threshold
+    if (zone.riskLevel && zone.riskLevel < this.settings.minimumRiskLevel) {
+      return false;
+    }
+
+    // Check cooldown period
+    const now = Date.now();
+    const cooldownMs = this.settings.cooldownPeriod * 60 * 1000;
+    if (now - this.lastNotificationTime < cooldownMs) {
+      return false;
+    }
+
+    // Check if alert was already triggered recently
+    const alertKey = `${type}-${zone.id}-${Math.floor(now / (cooldownMs))}`;
+    if (this.alertHistory.has(alertKey)) {
+      return false;
+    }
+
+    // Check specific alert type settings
+    switch (type) {
+      case 'zone_entry':
+        return this.settings.enableZoneEntryAlerts;
+      case 'zone_exit':
+        return this.settings.enableZoneExitAlerts;
+      case 'zone_level_change':
+        return this.settings.enableLevelChangeAlerts;
+      case 'nearby_zone':
+        return this.settings.enableNearbyZoneAlerts;
+      default:
+        return false;
+    }
+  }
+
+  private triggerZoneEntryAlert(zone: DangerZone, location: { lat: number; lng: number }): void {
+    const alert: ZoneAlert = {
+      id: `entry-${zone.id}-${Date.now()}`,
+      type: 'zone_entry',
+      zoneId: zone.id,
+      zoneName: zone.name,
+      zoneLevel: zone.level,
+      riskLevel: zone.riskLevel || 1,
+      message: this.generateZoneEntryMessage(zone),
+      recommendations: this.generateZoneRecommendations(zone),
+      timestamp: new Date(),
+      location: location,
+      isActive: true
+    };
+
+    this.addAlert(alert);
+    this.triggerNotification(alert);
+    this.recordAlertHistory(alert);
+  }
+
+  private triggerZoneExitAlert(zone: DangerZone, location: { lat: number; lng: number }): void {
+    const alert: ZoneAlert = {
+      id: `exit-${zone.id}-${Date.now()}`,
+      type: 'zone_exit',
+      zoneId: zone.id,
+      zoneName: zone.name,
+      zoneLevel: zone.level,
+      riskLevel: zone.riskLevel || 1,
+      message: this.generateZoneExitMessage(zone),
+      recommendations: this.generateZoneExitRecommendations(zone),
+      timestamp: new Date(),
+      location: location,
+      isActive: true
+    };
+
+    this.addAlert(alert);
+    this.triggerNotification(alert);
+    this.recordAlertHistory(alert);
+  }
+
+  private triggerZoneLevelChangeAlert(zone: DangerZone, oldLevel: string): void {
+    const alert: ZoneAlert = {
+      id: `level-change-${zone.id}-${Date.now()}`,
+      type: 'zone_level_change',
+      zoneId: zone.id,
+      zoneName: zone.name,
+      zoneLevel: zone.level,
+      riskLevel: zone.riskLevel || 1,
+      message: this.generateZoneLevelChangeMessage(zone, oldLevel),
+      recommendations: this.generateZoneRecommendations(zone),
+      timestamp: new Date(),
+      location: { lat: 0, lng: 0 }, // Will be updated with current location
+      isActive: true
+    };
+
+    this.addAlert(alert);
+    this.triggerNotification(alert);
+    this.recordAlertHistory(alert);
+  }
+
+  private triggerNearbyZoneAlert(zone: DangerZone, location: { lat: number; lng: number }): void {
+    const distance = this.calculateDistanceToZone(location, zone);
+    
+    const alert: ZoneAlert = {
+      id: `nearby-${zone.id}-${Date.now()}`,
+      type: 'nearby_zone',
+      zoneId: zone.id,
+      zoneName: zone.name,
+      zoneLevel: zone.level,
+      riskLevel: zone.riskLevel || 1,
+      message: this.generateNearbyZoneMessage(zone, distance),
+      recommendations: this.generateNearbyZoneRecommendations(zone, distance),
+      timestamp: new Date(),
+      location: location,
+      distance: distance,
+      isActive: true
+    };
+
+    this.addAlert(alert);
+    this.triggerNotification(alert);
+    this.recordAlertHistory(alert);
+  }
+
+  private generateZoneEntryMessage(zone: DangerZone): string {
+    const levelEmoji = this.getLevelEmoji(zone.level);
+    const riskText = this.getRiskText(zone.riskLevel || 1);
+    
+    return `${levelEmoji} You have entered ${zone.name}\nRisk Level: ${riskText} (${zone.level})`;
+  }
+
+  private generateZoneExitMessage(zone: DangerZone): string {
+    const levelEmoji = this.getLevelEmoji(zone.level);
+    
+    return `${levelEmoji} You have left ${zone.name}\nZone Level: ${zone.level}`;
+  }
+
+  private generateZoneLevelChangeMessage(zone: DangerZone, oldLevel: string): string {
+    const levelEmoji = this.getLevelEmoji(zone.level);
+    
+    return `${levelEmoji} Zone level changed in ${zone.name}\n${oldLevel} → ${zone.level}`;
+  }
+
+  private generateNearbyZoneMessage(zone: DangerZone, distance: number): string {
+    const levelEmoji = this.getLevelEmoji(zone.level);
+    const distanceText = distance < 1000 ? `${Math.round(distance)}m` : `${(distance/1000).toFixed(1)}km`;
+    
+    return `${levelEmoji} High-risk zone nearby: ${zone.name}\nDistance: ${distanceText} | Level: ${zone.level}`;
+  }
+
+  private generateZoneRecommendations(zone: DangerZone): string[] {
+    const recommendations: string[] = [];
+    
+    switch (zone.level) {
+      case 'Danger':
+        recommendations.push('🚨 HIGH RISK: Consider leaving immediately');
+        recommendations.push('📱 Keep emergency contacts accessible');
+        recommendations.push('👥 Stay in well-lit, populated areas');
+        recommendations.push('🚶‍♀️ Avoid isolated areas');
+        break;
+      case 'Caution':
+        recommendations.push('⚠️ MODERATE RISK: Stay alert and cautious');
+        recommendations.push('📱 Keep your phone accessible');
+        recommendations.push('🔍 Be aware of your surroundings');
+        recommendations.push('👥 Stay near other people when possible');
+        break;
+      case 'Neutral':
+        recommendations.push('🟡 NEUTRAL: Normal vigilance recommended');
+        recommendations.push('📱 Stay aware of your surroundings');
+        recommendations.push('🔍 Be observant of unusual activity');
+        break;
+      case 'Safe':
+        recommendations.push('🟢 SAFE: Normal activities can resume');
+        recommendations.push('📱 Continue to stay aware');
+        break;
+    }
+    
+    if (zone.riskLevel && zone.riskLevel >= 4) {
+      recommendations.push('🚨 Multiple incidents reported in this area');
+    }
+    
+    return recommendations;
+  }
+
+  private generateZoneExitRecommendations(zone: DangerZone): string[] {
+    const recommendations: string[] = [];
+    
+    if (zone.level === 'Danger' || zone.level === 'Caution') {
+      recommendations.push('✅ You have left a high-risk area');
+      recommendations.push('📱 Continue to stay alert');
+      recommendations.push('🔍 Be aware of your surroundings');
+    } else {
+      recommendations.push('✅ You have left the zone');
+      recommendations.push('📱 Stay aware of your surroundings');
+    }
+    
+    return recommendations;
+  }
+
+  private generateNearbyZoneRecommendations(zone: DangerZone, distance: number): string[] {
+    const recommendations: string[] = [];
+    
+    recommendations.push(`⚠️ High-risk zone ${Math.round(distance)}m away`);
+    
+    if (zone.level === 'Danger') {
+      recommendations.push('🚨 EXTREME CAUTION: Very dangerous area nearby');
+      recommendations.push('📱 Keep emergency contacts ready');
+      recommendations.push('👥 Stay in populated areas');
+      recommendations.push('🚶‍♀️ Avoid walking alone');
+    } else if (zone.level === 'Caution') {
+      recommendations.push('⚠️ MODERATE CAUTION: Risky area nearby');
+      recommendations.push('📱 Keep your phone accessible');
+      recommendations.push('🔍 Be extra vigilant');
+    }
+    
+    recommendations.push('📱 Stay aware of your surroundings');
+    recommendations.push('🔍 Be observant of unusual activity');
+    
+    return recommendations;
+  }
+
+  private getLevelEmoji(level: string): string {
+    switch (level) {
+      case 'Safe': return '🟢';
+      case 'Neutral': return '🟡';
+      case 'Caution': return '🟠';
+      case 'Danger': return '🔴';
+      default: return '⚪';
+    }
+  }
+
+  private getRiskText(riskLevel: number): string {
+    switch (riskLevel) {
+      case 1: return 'Very Low';
+      case 2: return 'Low';
+      case 3: return 'Moderate';
+      case 4: return 'High';
+      case 5: return 'Very High';
+      default: return 'Unknown';
+    }
+  }
+
+  private addAlert(alert: ZoneAlert): void {
+    const alerts = [...this.activeAlerts.value, alert];
+    this.activeAlerts.next(alerts);
+  }
+
+  private triggerNotification(alert: ZoneAlert): void {
+    this.lastNotificationTime = Date.now();
+    
+    // Trigger vibration
+    if (this.settings.enableVibration) {
+      this.triggerVibration(alert.zoneLevel);
+    }
+    
+    // Trigger sound
+    if (this.settings.enableSound) {
+      this.triggerSound(alert.zoneLevel);
+    }
+    
+    // Show notification banner
+    this.showNotificationBanner(alert);
+    
+    // Trigger push notification
+    if (this.settings.enablePushNotifications) {
+      this.triggerPushNotification(alert);
+    }
+  }
+
+  private triggerVibration(level: string): void {
+    if ('vibrate' in navigator) {
+      let pattern: number[];
+      
+      switch (level) {
+        case 'Danger':
+          pattern = [300, 100, 300, 100, 300, 100, 300];
+          break;
+        case 'Caution':
+          pattern = [200, 100, 200, 100, 200];
+          break;
+        case 'Neutral':
+          pattern = [200, 200];
+          break;
+        default:
+          pattern = [100];
+      }
+      
+      navigator.vibrate(pattern);
+    }
+  }
+
+  private triggerSound(level: string): void {
+    // Play sound for all zone levels (Safe, Neutral, Caution, Danger)
+    // This covers risk levels 1, 2, 3, 4, 5
+
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      // Sound settings based on zone level
+      let frequency: number;
+      let duration: number;
+      
+      switch (level) {
+        case 'Safe':
+          frequency = 400;
+          duration = 0.2;
+          break;
+        case 'Neutral':
+          frequency = 500;
+          duration = 0.3;
+          break;
+        case 'Caution':
+          frequency = 600;
+          duration = 0.4;
+          break;
+        case 'Danger':
+          frequency = 800;
+          duration = 0.5;
+          break;
+        default:
+          frequency = 400;
+          duration = 0.2;
+      }
+      
+      oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + duration);
+      
+      console.log(`🔊 Zone ${level} sound alert triggered (risk level 1-5)`);
+    } catch (error) {
+      console.warn('Could not play sound:', error);
+    }
+  }
+
+  private showNotificationBanner(alert: ZoneAlert): void {
+    const notificationType = this.getNotificationType(alert.zoneLevel);
+    const title = this.getAlertTitle(alert.type);
+    
+    this.notificationService.show({
+      type: notificationType,
+      title: title,
+      message: alert.message,
+      actionText: 'View Details',
+      duration: 8000
+    });
+  }
+
+  private triggerPushNotification(alert: ZoneAlert): void {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const title = this.getAlertTitle(alert.type);
+      const body = alert.message;
+      
+      new Notification(title, {
+        body: body,
+        icon: '/assets/icon/favicon.png',
+        tag: 'zone-alert',
+        requireInteraction: true,
+        badge: '/assets/icon/favicon.png'
+      });
+    }
+  }
+
+  private getNotificationType(level: string): 'success' | 'warning' | 'error' | 'info' {
+    switch (level) {
+      case 'Danger': return 'error';
+      case 'Caution': return 'warning';
+      case 'Neutral': return 'info';
+      case 'Safe': return 'success';
+      default: return 'info';
+    }
+  }
+
+  private getAlertTitle(type: string): string {
+    switch (type) {
+      case 'zone_entry': return '🚨 Zone Entry Alert';
+      case 'zone_exit': return '✅ Zone Exit Alert';
+      case 'zone_level_change': return '🔄 Zone Level Change';
+      case 'nearby_zone': return '⚠️ Nearby Zone Alert';
+      default: return '📍 Zone Alert';
+    }
+  }
+
+  private recordAlertHistory(alert: ZoneAlert): void {
+    const alertKey = `${alert.type}-${alert.zoneId}-${Math.floor(Date.now() / (this.settings.cooldownPeriod * 60 * 1000))}`;
+    this.alertHistory.add(alertKey);
+    
+    // Clean up old history entries
+    setTimeout(() => {
+      this.alertHistory.delete(alertKey);
+    }, this.settings.cooldownPeriod * 60 * 1000 * 2);
+  }
+
+  private loadSettings(): void {
+    try {
+      const saved = localStorage.getItem('zoneNotificationSettings');
+      if (saved) {
+        this.settings = { ...this.defaultSettings, ...JSON.parse(saved) };
+      }
+    } catch (error) {
+      console.warn('Could not load zone notification settings:', error);
+    }
+  }
+
+  private saveSettings(): void {
+    try {
+      localStorage.setItem('zoneNotificationSettings', JSON.stringify(this.settings));
+    } catch (error) {
+      console.warn('Could not save zone notification settings:', error);
+    }
+  }
+}
