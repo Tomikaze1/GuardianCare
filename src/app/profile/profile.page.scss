@@ -3,7 +3,7 @@
   min-height: 100vh;
   font-family: 'DM Sans', 'Plus Jakarta Sans', Arial, sans-serif;
   padding: 0;
-  padding-bottom: 90px;
+  padding-bottom: 180px; // ensure content clears tab bar for tappable logout
 }
 
 // Improve overall typography for better visibility
@@ -543,6 +543,16 @@ ion-toast.toast-top {
   }
 }
 
+// Bottom anchored logout container
+.profile-logout {
+  position: static; // not sticky; scrolls with content
+  padding: 0 16px 0 16px;
+  background: transparent;
+  backdrop-filter: none;
+  max-width: 420px;
+  margin: 12px auto calc(env(safe-area-inset-bottom) + 96px) auto; // add extra clearance above tabs
+}
+
 // Animations
 @keyframes textShimmer {
   0%, 100% {
@@ -727,6 +737,8 @@ ion-toast.toast-top {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-left: auto; // push toggles/value to far right
+  justify-content: flex-end;
 }
 
 .setting-value {
@@ -788,17 +800,18 @@ ion-segment-button {
 @media (max-width: 480px) {
   .setting-item {
     padding: 14px 16px;
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row; // keep single line layout on mobile
+    align-items: center;
     gap: 12px;
   }
   
   .setting-left {
-    width: 100%;
+    width: auto;
   }
   
   .setting-right {
-    align-self: flex-end;
+    align-self: center;
+    margin-left: auto; // ensure right alignment
   }
 }
 

@@ -43,6 +43,8 @@
         </div>
       </div>
 
+      
+
       <!-- Personal Information Section -->
       <div class="section-header">
         <span>{{ 'PROFILE.PERSONAL_INFO' | translate }}</span>
@@ -79,7 +81,18 @@
             formControlName="email"
             placeholder="{{ 'PROFILE.EMAIL' | translate }}"
             type="email"
-            readonly>
+            [readonly]="!isEditing">
+          </ion-input>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="input-box">
+          <ion-icon name="home-outline"></ion-icon>
+          <ion-input
+            formControlName="address"
+            placeholder="Address"
+            [readonly]="!isEditing">
           </ion-input>
         </div>
       </div>
@@ -150,40 +163,19 @@
         </div>
       </div>
 
-      <!-- Action Buttons -->
+      <!-- Action Buttons (Edit or Save/Cancel in same position) -->
       <div class="button-row">
-        <ion-button 
-          *ngIf="!isEditing"
-          expand="block" 
-          fill="outline" 
-          color="medium"
-          (click)="refreshProfile()"
-          class="refresh-profile-btn">
-          <ion-icon name="refresh-outline" slot="start"></ion-icon>
-          {{ 'PROFILE.REFRESH_PROFILE' | translate }}
-        </ion-button>
-        
-        <ion-button 
-          *ngIf="!isEditing"
-          expand="block" 
-          fill="solid" 
-          color="primary"
-          (click)="toggleEdit()"
-          class="edit-profile-btn">
-          <ion-icon name="create-outline" slot="start"></ion-icon>
-          {{ 'PROFILE.EDIT_PROFILE' | translate }}
-        </ion-button>
-
-        <ion-button 
-          *ngIf="!isEditing"
-          expand="block" 
-          fill="solid" 
-          color="danger"
-          (click)="logOut()"
-          class="logout-btn">
-          <ion-icon name="log-out-outline" slot="start"></ion-icon>
-          {{ 'PROFILE.LOGOUT' | translate }}
-        </ion-button>
+        <div *ngIf="!isEditing">
+          <ion-button 
+            expand="block" 
+            fill="solid" 
+            color="primary"
+            (click)="toggleEdit()"
+            class="edit-profile-btn">
+            <ion-icon name="create-outline" slot="start"></ion-icon>
+            {{ 'PROFILE.EDIT_PROFILE' | translate }}
+          </ion-button>
+        </div>
 
         <div *ngIf="isEditing" class="edit-actions">
           <ion-button 
@@ -455,5 +447,18 @@
         </div>
       </div>
     </form>
+  </div>
+
+  <!-- Logout button anchored at bottom -->
+  <div class="profile-logout">
+    <ion-button 
+      expand="block" 
+      fill="solid" 
+      color="danger"
+      (click)="logOut()"
+      class="logout-btn">
+      <ion-icon name="log-out-outline" slot="start"></ion-icon>
+      {{ 'PROFILE.LOGOUT' | translate }}
+    </ion-button>
   </div>
 </ion-content>

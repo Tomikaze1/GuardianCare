@@ -90,7 +90,8 @@ export class ProfilePage implements OnInit {
     this.profileForm = this.fb.group({
       displayName: ['', [Validators.required, Validators.minLength(2)]],
       phone: ['', [Validators.required, Validators.pattern(/^\+?[\d\s\-\(\)]+$/)]],
-      email: [{ value: '', disabled: true }]
+      email: ['', [Validators.required, Validators.email]],
+      address: ['']
     });
   }
 
@@ -246,7 +247,8 @@ export class ProfilePage implements OnInit {
           this.profileForm.patchValue({
             displayName: displayName,
             phone: userData.phone || '',
-            email: userData.email || ''
+            email: userData.email || '',
+            address: userData.address || ''
           });
 
           this.profileImage = userData.photoURL || null;
@@ -332,6 +334,8 @@ export class ProfilePage implements OnInit {
             firstName: firstName,
             lastName: lastName,
             phone: this.profileForm.value.phone,
+            email: this.profileForm.value.email,
+            address: this.profileForm.value.address || '',
             photoURL: photoURL,
             emergencyContacts: this.emergencyContacts,
             // Keep the original single emergency contact format for backward compatibility
