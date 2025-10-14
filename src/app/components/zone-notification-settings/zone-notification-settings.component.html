@@ -1,0 +1,241 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Zone Notification Settings</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!-- Header Section -->
+  <div class="settings-header">
+    <ion-icon name="notifications-outline" size="large" color="primary"></ion-icon>
+    <h2>Location-Based Alerts</h2>
+    <p class="subtitle">Customize how you receive notifications when new zones are added to the heatmap</p>
+  </div>
+
+  <!-- Main Settings -->
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Notification Preferences</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <!-- Enable/Disable Location Notifications -->
+      <ion-item lines="full">
+        <ion-icon name="location-outline" slot="start" color="primary"></ion-icon>
+        <ion-label>
+          <h3>Location Notifications</h3>
+          <p>Receive alerts for zones near you</p>
+        </ion-label>
+        <ion-toggle 
+          [(ngModel)]="settings.enableLocationNotifications" 
+          (ionChange)="onLocationNotificationsToggle($event)">
+        </ion-toggle>
+      </ion-item>
+
+      <!-- Enable/Disable Time Information -->
+      <ion-item lines="none">
+        <ion-icon name="time-outline" slot="start" color="primary"></ion-icon>
+        <ion-label>
+          <h3>Show Time Information</h3>
+          <p>Display when incidents were reported</p>
+        </ion-label>
+        <ion-toggle 
+          [(ngModel)]="settings.enableTimeInformation" 
+          (ionChange)="onTimeInformationToggle($event)">
+        </ion-toggle>
+      </ion-item>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Notification Radius -->
+  <ion-card *ngIf="settings.enableLocationNotifications">
+    <ion-card-header>
+      <ion-card-title>
+        Notification Radius
+        <ion-button fill="clear" size="small" (click)="showRadiusInfo()">
+          <ion-icon name="information-circle-outline" slot="icon-only"></ion-icon>
+        </ion-button>
+      </ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-item lines="none">
+        <ion-label class="ion-text-wrap">
+          <h3>Maximum Distance: {{ settings.notificationRadiusKm }}km</h3>
+          <p>{{ getNotificationEstimate() }}</p>
+        </ion-label>
+      </ion-item>
+      
+      <ion-range 
+        [(ngModel)]="settings.notificationRadiusKm" 
+        min="1" 
+        max="50" 
+        step="1"
+        pin="true"
+        color="primary"
+        (ionChange)="onRadiusChange($event)">
+        <ion-label slot="start">1km</ion-label>
+        <ion-label slot="end">50km</ion-label>
+      </ion-range>
+
+      <!-- Quick preset buttons -->
+      <div class="preset-buttons">
+        <ion-button 
+          size="small" 
+          fill="outline"
+          [color]="settings.notificationRadiusKm === 1 ? 'primary' : 'medium'"
+          (click)="settings.notificationRadiusKm = 1; saveSettings()">
+          1km
+        </ion-button>
+        <ion-button 
+          size="small" 
+          fill="outline"
+          [color]="settings.notificationRadiusKm === 5 ? 'primary' : 'medium'"
+          (click)="settings.notificationRadiusKm = 5; saveSettings()">
+          5km
+        </ion-button>
+        <ion-button 
+          size="small" 
+          fill="outline"
+          [color]="settings.notificationRadiusKm === 10 ? 'primary' : 'medium'"
+          (click)="settings.notificationRadiusKm = 10; saveSettings()">
+          10km
+        </ion-button>
+        <ion-button 
+          size="small" 
+          fill="outline"
+          [color]="settings.notificationRadiusKm === 20 ? 'primary' : 'medium'"
+          (click)="settings.notificationRadiusKm = 20; saveSettings()">
+          20km
+        </ion-button>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Distance Thresholds -->
+  <ion-card *ngIf="settings.enableLocationNotifications">
+    <ion-card-header>
+      <ion-card-title>
+        Distance Thresholds
+        <ion-button fill="clear" size="small" (click)="showThresholdInfo()">
+          <ion-icon name="information-circle-outline" slot="icon-only"></ion-icon>
+        </ion-button>
+      </ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <!-- Very Close Threshold -->
+      <ion-item>
+        <ion-label class="ion-text-wrap">
+          <h3>🚨 Very Close: {{ getDistanceText(settings.closeThresholdKm) }}</h3>
+          <p>High priority alerts for nearby zones</p>
+        </ion-label>
+      </ion-item>
+      <ion-range 
+        [(ngModel)]="settings.closeThresholdKm" 
+        min="0.1" 
+        max="2" 
+        step="0.1"
+        pin="true"
+        color="danger"
+        (ionChange)="onCloseThresholdChange($event)">
+        <ion-label slot="start">100m</ion-label>
+        <ion-label slot="end">2km</ion-label>
+      </ion-range>
+
+      <!-- Nearby Threshold -->
+      <ion-item class="ion-margin-top">
+        <ion-label class="ion-text-wrap">
+          <h3>⚠️ Nearby: {{ getDistanceText(settings.nearbyThresholdKm) }}</h3>
+          <p>Medium-high priority alerts</p>
+        </ion-label>
+      </ion-item>
+      <ion-range 
+        [(ngModel)]="settings.nearbyThresholdKm" 
+        min="0.5" 
+        max="5" 
+        step="0.5"
+        pin="true"
+        color="warning"
+        (ionChange)="onNearbyThresholdChange($event)">
+        <ion-label slot="start">500m</ion-label>
+        <ion-label slot="end">5km</ion-label>
+      </ion-range>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Example Notification Preview -->
+  <ion-card *ngIf="settings.enableLocationNotifications">
+    <ion-card-header>
+      <ion-card-title>
+        <ion-icon name="eye-outline" color="primary"></ion-icon>
+        Notification Preview
+      </ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <div class="notification-preview">
+        <div class="preview-title">🚨 Very Close: Zone Added</div>
+        <div class="preview-message">
+          Crime / Theft at Downtown Cebu • {{ getDistanceText(settings.closeThresholdKm) }} away • High Risk
+          <span *ngIf="settings.enableTimeInformation"> • Reported 15 minutes ago</span>
+        </div>
+      </div>
+      
+      <div class="notification-preview secondary">
+        <div class="preview-title">📍 Near You: Zone Added</div>
+        <div class="preview-message">
+          Suspicious Activity at Mabolo District • {{ settings.notificationRadiusKm }}km away • Moderate Risk
+          <span *ngIf="settings.enableTimeInformation"> • Reported just now</span>
+        </div>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Information Card -->
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>
+        <ion-icon name="information-circle-outline" color="primary"></ion-icon>
+        How It Works
+      </ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-list lines="none">
+        <ion-item>
+          <ion-icon name="checkmark-circle" slot="start" color="success"></ion-icon>
+          <ion-label class="ion-text-wrap">
+            Receive alerts when admin validates reports near you
+          </ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-icon name="checkmark-circle" slot="start" color="success"></ion-icon>
+          <ion-label class="ion-text-wrap">
+            Distance calculated from your current location
+          </ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-icon name="checkmark-circle" slot="start" color="success"></ion-icon>
+          <ion-label class="ion-text-wrap">
+            Priority based on distance and risk level
+          </ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-icon name="checkmark-circle" slot="start" color="success"></ion-icon>
+          <ion-label class="ion-text-wrap">
+            Zones automatically added to heatmap
+          </ion-label>
+        </ion-item>
+      </ion-list>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Reset Button -->
+  <div class="reset-section ion-padding">
+    <ion-button expand="block" fill="outline" color="medium" (click)="resetToDefaults()">
+      <ion-icon name="refresh-outline" slot="start"></ion-icon>
+      Reset to Default Settings
+    </ion-button>
+  </div>
+
+  <!-- Bottom Spacing -->
+  <div style="height: 40px;"></div>
+</ion-content>
+
+

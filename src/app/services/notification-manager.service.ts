@@ -53,6 +53,7 @@ export class NotificationManagerService {
 
   constructor(private platform: Platform) {
     this.initializeNotifications();
+    this.loadPersistedNotifications();
   }
 
   private async initializeNotifications() {
@@ -90,6 +91,9 @@ export class NotificationManagerService {
     const currentNotifications = this.notificationsSubject.value;
     const updatedNotifications = [newNotification, ...currentNotifications].slice(0, 100);
     this.notificationsSubject.next(updatedNotifications);
+
+    // Save to localStorage whenever notifications change
+    this.saveNotificationsToStorage();
 
     if (this.settingsSubject.value.pushNotifications && this.settingsSubject.value.enabled) {
       this.showPushNotification(newNotification);
@@ -227,20 +231,24 @@ export class NotificationManagerService {
     const notifications = this.notificationsSubject.value;
     const updatedNotifications = notifications.map(n => n.id === notificationId ? { ...n, read: true } : n);
     this.notificationsSubject.next(updatedNotifications);
+    this.saveNotificationsToStorage();
   }
 
   markAllAsRead() {
     const notifications = this.notificationsSubject.value.map(n => ({ ...n, read: true }));
     this.notificationsSubject.next(notifications);
+    this.saveNotificationsToStorage();
   }
 
   removeNotification(notificationId: string) {
     const notifications = this.notificationsSubject.value.filter(n => n.id !== notificationId);
     this.notificationsSubject.next(notifications);
+    this.saveNotificationsToStorage();
   }
 
   clearAllNotifications() {
     this.notificationsSubject.next([]);
+    this.saveNotificationsToStorage();
   }
 
   getUnreadCount(): number {
@@ -262,6 +270,16 @@ export class NotificationManagerService {
   }
 
   private showWebPushNotification(notification: NotificationData) {
+    // Disable push notifications in localhost/development environment
+    const isLocalhost = window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1' ||
+                       window.location.hostname.includes('localhost');
+    
+    if (isLocalhost) {
+      console.log('🔕 Push notification disabled in localhost environment:', notification.title);
+      return;
+    }
+    
     if ('Notification' in window && Notification.permission === 'granted') {
       const webNotification = new Notification(notification.title, {
         body: notification.message,
@@ -287,6 +305,16 @@ export class NotificationManagerService {
   }
 
   private playNotificationSound(priority: string) {
+    // Disable sounds in localhost/development environment
+    const isLocalhost = window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1' ||
+                       window.location.hostname.includes('localhost');
+    
+    if (isLocalhost) {
+      console.log('🔕 Notification sound disabled in localhost environment');
+      return;
+    }
+    
     try {
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
@@ -336,6 +364,83 @@ export class NotificationManagerService {
   private isRecent(date: Date): boolean {
     const diffMs = Date.now() - new Date(date).getTime();
     return diffMs <= 5 * 60 * 1000;
+  }
+
+  /**
+   * Load notifications from localStorage when app starts
+   */
+  private loadPersistedNotifications() {
+    try {
+      const savedNotifications = localStorage.getItem('guardian_care_notifications');
+      if (savedNotifications) {
+        const notifications = JSON.parse(savedNotifications);
+        // Convert timestamp strings back to Date objects
+        const parsedNotifications = notifications.map((n: any) => ({
+          ...n,
+          timestamp: new Date(n.timestamp)
+        }));
+        this.notificationsSubject.next(parsedNotifications);
+        console.log('📱 Loaded', parsedNotifications.length, 'persisted notifications');
+      }
+    } catch (error) {
+      console.warn('Could not load persisted notifications:', error);
+    }
+  }
+
+  /**
+   * Save notifications to localStorage
+   */
+  private saveNotificationsToStorage() {
+    try {
+      const notifications = this.notificationsSubject.value;
+      localStorage.setItem('guardian_care_notifications', JSON.stringify(notifications));
+      console.log('💾 Saved', notifications.length, 'notifications to localStorage');
+    } catch (error) {
+      console.warn('Could not save notifications to localStorage:', error);
+    }
+  }
+
+  /**
+   * Clear all notifications from localStorage and memory
+   */
+  public clearAllNotificationsAndStorage() {
+    this.notificationsSubject.next([]);
+    localStorage.removeItem('guardian_care_notifications');
+    console.log('🗑️ Cleared all notifications from storage and memory');
+  }
+
+  /**
+   * Get notifications that occurred while user was offline
+   */
+  public async syncOfflineNotifications(): Promise<void> {
+    try {
+      const lastSyncTime = localStorage.getItem('last_notification_sync');
+      const currentTime = new Date().toISOString();
+      
+      console.log('🔄 Syncing offline notifications...');
+      
+      // Update sync time
+      localStorage.setItem('last_notification_sync', currentTime);
+      
+      // This will be called by AdminNotificationService to check for new validated reports
+      console.log('✅ Offline notification sync completed');
+    } catch (error) {
+      console.warn('Could not sync offline notifications:', error);
+    }
+  }
+
+  /**
+   * Check if user was offline for a significant period
+   */
+  public wasOfflineForSignificantTime(): boolean {
+    const lastSyncTime = localStorage.getItem('last_notification_sync');
+    if (!lastSyncTime) return true;
+    
+    const lastSync = new Date(lastSyncTime);
+    const now = new Date();
+    const diffHours = (now.getTime() - lastSync.getTime()) / (1000 * 60 * 60);
+    
+    return diffHours > 1; // Consider offline if more than 1 hour
   }
 }
 

@@ -40,7 +40,7 @@ export interface Report {
   anonymous: boolean;
   userId: string;
   media: string[];
-  riskLevel: number;
+  riskLevel: number | null;
   isSilent: boolean;
   status: 'Pending' | 'In Progress' | 'Resolved' | 'Closed' | 'Validated' | 'Rejected';
   createdAt?: any;
@@ -225,6 +225,7 @@ export class ReportService {
     }
   }
 
+  // Legacy method - risk levels are now determined by admins, not automatically assigned
   getRiskLevel(type: string): number {
     const riskLevels: { [key: string]: number } = {
       'lost-item': 1,
@@ -432,8 +433,8 @@ export class ReportService {
       );
       console.log('📍 Address:', locationAddress);
 
-      const riskLevel = this.getRiskLevel(data.type);
-      console.log(`⚠️ Risk level for ${data.type}: ${riskLevel}`);
+      // Risk level will be determined by admin, not automatically assigned
+      console.log(`⚠️ Risk level will be determined by admin for ${data.type}`);
 
       console.log('📝 Creating report object...');
       
@@ -458,7 +459,7 @@ export class ReportService {
           emergencyContact
         }),
         media: mediaUrls,
-        riskLevel,
+        riskLevel: null, // Will be determined by admin
         isSilent: data.isSilent || false,
         status: 'Pending',
         createdAt: serverTimestamp(),
@@ -810,13 +811,13 @@ export class ReportService {
     }
   }
 
-  getIncidentTypes(): Array<{ value: string; label: string; riskLevel: number; icon: string }> {
+  getIncidentTypes(): Array<{ value: string; label: string; icon: string }> {
     return [
-      { value: 'lost-item', label: 'Lost Item', riskLevel: 1, icon: 'search-outline' },
-      { value: 'suspicious-activity', label: 'Suspicious Activity', riskLevel: 2, icon: 'eye-outline' },
-      { value: 'crime-theft', label: 'Crime / Theft', riskLevel: 3, icon: 'shield-outline' },
-      { value: 'emergency', label: 'Emergency', riskLevel: 4, icon: 'medical-outline' },
-      { value: 'life-threatening', label: 'Life-threatening', riskLevel: 5, icon: 'warning-outline' }
+      { value: 'lost-item', label: 'Lost Item', icon: 'search-outline' },
+      { value: 'suspicious-activity', label: 'Suspicious Activity', icon: 'eye-outline' },
+      { value: 'crime-theft', label: 'Crime / Theft', icon: 'shield-outline' },
+      { value: 'emergency', label: 'Emergency', icon: 'medical-outline' },
+      { value: 'life-threatening', label: 'Life-threatening', icon: 'warning-outline' }
     ];
   }
 

@@ -8,7 +8,7 @@
     </ion-refresher-content>
   </ion-refresher>
 
-  <!-- Header - Notifications Specific Design -->
+  <!-- Header - Exact Match to Reports Design -->
   <div class="logo-container">
     <div class="logo-wrapper">
       <div class="custom-logo">
@@ -20,110 +20,108 @@
     <div class="app-title">{{ 'NOTIFICATIONS.TITLE' | translate }}</div>
     <div class="app-subtitle">{{ 'NOTIFICATIONS.SUBTITLE' | translate }}</div>
     <div class="title-underline"></div>
+    
+    <!-- Offline/Online Status Indicator -->
+    <div class="connection-status" [class.offline]="!isOnline">
+      <ion-icon [name]="isOnline ? 'wifi-outline' : 'wifi-off-outline'" [color]="isOnline ? 'success' : 'warning'"></ion-icon>
+      <span>{{ isOnline ? 'Online' : 'Offline' }}</span>
+      <ion-button *ngIf="!isOnline" fill="clear" size="small" (click)="manualSync()">
+        <ion-icon name="refresh-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </div>
   </div>
 
-  <!-- Notifications List -->
-  <div class="notifications-list" *ngIf="!isLoading">
-    
-    <!-- Filters -->
-    <div class="filters-row" *ngIf="notifications.length > 0">
-      <ion-chip [outline]="activeFilter !== 'all'" (click)="setFilter('all')">All</ion-chip>
-      <ion-chip [outline]="activeFilter !== 'new'" (click)="setFilter('new')">New</ion-chip>
-      <ion-chip [outline]="activeFilter !== 'unread'" (click)="setFilter('unread')">Unread</ion-chip>
-      <ion-toggle class="sticky-toggle" [checked]="stickyNew" (ionChange)="toggleStickyNew($event)">Stick NEW on top</ion-toggle>
-    </div>
-    
-    <!-- Empty State -->
-    <div class="empty-state" *ngIf="notifications.length === 0">
-      <ion-icon name="notifications-off" class="empty-icon"></ion-icon>
-      <h3 class="empty-title">No New Notifications</h3>
-      <p class="empty-message">
-        You're all caught up! New incident reports and validations will appear here.
-      </p>
+  <!-- Notification History Section -->
+  <div class="notification-history-section">
+    <div class="section-header">
+      <span>My Notifications</span>
+      <div class="section-underline"></div>
     </div>
 
-    <!-- Notification Items - Matching Reports Card Design -->
-    <div class="notifications-section" *ngIf="notifications.length > 0">
-      <div class="section-header">
-        <span class="vertical-indicator"></span>
-        <h3 class="section-title">Recent Notifications</h3>
-      </div>
 
-      <div class="notifications-grid">
-        <div class="notification-card" 
-             *ngFor="let notification of filteredNotifications; trackBy: trackByNotificationId"
-             [class.unread]="!notification.read"
-             [class.priority-critical]="notification.priority === 'critical'"
-             [class.priority-high]="notification.priority === 'high'"
-             [class.priority-medium]="notification.priority === 'medium'"
-             [class.priority-low]="notification.priority === 'low'">
-          
-          <div class="notification-header">
-            <div class="notification-type">
-              <ion-icon 
-                [name]="getNotificationIcon(notification.type)" 
-                [color]="getNotificationColor(notification.type)">
-              </ion-icon>
-              <span>{{ notification.title }}</span>
-              <ion-badge *ngIf="isNewBadge(notification)" color="success" class="new-badge">NEW</ion-badge>
-            </div>
-            <ion-chip 
-              [color]="getPriorityColor(notification.priority)" 
-              size="small"
-              class="priority-chip">
-              <ion-icon [name]="getPriorityIcon(notification.priority)"></ion-icon>
-              <ion-label>{{ notification.priority }}</ion-label>
-            </ion-chip>
+    <div class="notifications-list" *ngIf="filteredNotifications.length > 0">
+      <div class="notification-card" 
+           *ngFor="let notification of filteredNotifications; trackBy: trackByNotificationId"
+           [class.unread]="!notification.read"
+           (click)="markAsRead(notification)">
+        
+        <div class="notification-header">
+          <div class="notification-type">
+            <ion-icon [name]="getNotificationIcon(notification.type)"></ion-icon>
+            <span>{{ getNotificationTypeLabel(notification.type) }}</span>
+            <ion-badge *ngIf="!notification.read" color="success" class="new-badge">NEW</ion-badge>
           </div>
+          <ion-chip [color]="getStatusColor(notification)" size="small" *ngIf="notification.type === 'report_validated'">
+            <ion-icon [name]="getStatusIcon(notification)"></ion-icon>
+            <ion-label>{{ getStatusText(notification) }}</ion-label>
+          </ion-chip>
+        </div>
 
-          <div class="notification-content" (click)="markAsRead(notification)">
-            <div class="notification-message">
-              <p>
-                {{ notification.message }}
-                <ng-container *ngIf="getDistanceText(notification)">
-                  • {{ getDistanceText(notification) }}
-                </ng-container>
-              </p>
-            </div>
+        <div class="notification-date">
+          <ion-icon name="calendar-outline"></ion-icon>
+          <span>{{ formatTimestamp(notification.timestamp) }}</span>
+        </div>
 
-            <div class="notification-time">
-              <ion-icon name="time-outline"></ion-icon>
-              <span>{{ formatTimestamp(notification.timestamp) }}</span>
-            </div>
+        <div class="notification-location" *ngIf="notification.data?.locationAddress">
+          <ion-icon name="location-outline"></ion-icon>
+          <span>{{ notification.data?.locationAddress }}</span>
+        </div>
 
-            <div class="notification-actions">
-              <ion-button 
-                fill="clear" 
-                size="small"
-                (click)="deleteNotification(notification); $event.stopPropagation()"
-                class="delete-btn">
-                <ion-icon name="trash-outline"></ion-icon>
-              </ion-button>
-            </div>
+        <div class="notification-description">
+          <p [innerHTML]="formatNotificationMessage(notification)"></p>
+        </div>
+
+        <!-- Admin Risk Level -->
+        <div class="notification-validation" *ngIf="notification.data?.adminLevel">
+          <div class="validation-header">
+            <ion-icon name="shield-checkmark-outline"></ion-icon>
+            <span>Admin Risk Level</span>
+          </div>
+          <div class="validation-level-indicator">
+            <div class="level-color-bar" [style.background]="getRiskLevelColor(notification.data.adminLevel || 1)"></div>
+            <span class="validation-score">Level {{ notification.data.adminLevel || 1 }} - {{ getRiskLevelText(notification.data.adminLevel || 1) }}</span>
+          </div>
+          <div class="validation-date">
+            <small>{{ notification.type === 'report_validated' ? 'Validated on' : 'Created on' }} {{ formatTimestamp(notification.timestamp) }}</small>
           </div>
         </div>
+
+        <ion-button 
+          expand="block" 
+          fill="clear" 
+          size="small"
+          (click)="viewNotificationDetails(notification); $event.stopPropagation()"
+          class="view-details-btn">
+          <ion-icon name="information-circle-outline" slot="start"></ion-icon>
+          View Full Details
+        </ion-button>
       </div>
+    </div>
+
+    <div class="no-notifications" *ngIf="notifications.length === 0">
+      <ion-icon name="notifications-off-outline"></ion-icon>
+      <h3>No Notifications Yet</h3>
+      <p>You don't have any notifications yet. New incident reports and validations will appear here.</p>
     </div>
 
     <!-- Action Buttons -->
     <div class="action-buttons" *ngIf="notifications.length > 0">
       <ion-button 
         expand="block" 
-        fill="outline" 
-        color="primary"
+        fill="outline"
+        color="success"
         (click)="markAllAsRead()"
         class="action-btn">
-        <ion-icon name="checkmark-done" slot="start"></ion-icon>
+        <ion-icon name="checkmark-outline" slot="start"></ion-icon>
         Mark All Read
       </ion-button>
-      
       <ion-button 
         expand="block" 
         fill="solid" 
         color="danger"
         (click)="clearAllNotifications()"
         class="action-btn">
-        <ion-icon name="trash" slot="start"></ion-icon>
+        <ion-icon name="trash-outline" slot="start"></ion-icon>
         Clear All
       </ion-button>
     </div>

@@ -50,6 +50,7 @@
 
     <div class="reports-list" *ngIf="userReports.length > 0">
       <div class="report-card" *ngFor="let report of userReports">
+        
         <div class="report-header">
           <div class="report-type">
             <ion-icon [name]="getIncidentTypeIcon(report.type)"></ion-icon>
@@ -89,19 +90,15 @@
           </div>
         </div>
 
-        <!-- Validation Level -->
-        <div class="report-validation" *ngIf="report.validationLevel">
+        <!-- Admin Risk Level -->
+        <div class="report-validation" *ngIf="report.status === 'Validated'">
           <div class="validation-header">
             <ion-icon name="shield-checkmark-outline"></ion-icon>
-            <span>Admin Validation Rating</span>
+            <span>Admin Risk Level</span>
           </div>
-          <div class="validation-stars">
-            <ion-icon 
-              *ngFor="let star of getValidationStars(report.validationLevel)" 
-              [name]="star" 
-              class="star-icon"
-              [class.filled]="star === 'star'"></ion-icon>
-            <span class="validation-score">Level {{ report.validationLevel }}/5</span>
+          <div class="validation-level-indicator">
+            <div class="level-color-bar" [style.background]="getRiskLevelColor(getReportRiskLevel(report))"></div>
+            <span class="validation-score">Level {{ getReportRiskLevel(report) }} - {{ getRiskLevelText(getReportRiskLevel(report)) }}</span>
           </div>
           <div class="validation-date" *ngIf="report.validatedAt">
             <small>Validated on {{ formatReportDate(report.validatedAt) }}</small>

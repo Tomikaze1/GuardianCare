@@ -1113,6 +1113,8 @@
   }
 }
 
+
+
 @keyframes expandWidth {
   from {
     width: 0;
@@ -1340,43 +1342,54 @@
 .report-validation {
   margin: 12px 0;
   padding: 12px;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(16, 185, 129, 0.1) 100%);
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, rgba(124, 58, 237, 0.04) 100%);
   border-radius: 8px;
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-left: 4px solid var(--primary-purple);
+  position: relative;
+  
+  &::before {
+    content: 'ADMIN VALIDATED';
+    position: absolute;
+    top: -8px;
+    right: 8px;
+    background: var(--primary-purple);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
   
   .validation-header {
     display: flex;
     align-items: center;
     gap: 8px;
     margin-bottom: 8px;
-    color: #059669;
-    font-weight: 600;
-    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--primary-purple);
+    font-size: 1rem;
     
     ion-icon {
       font-size: 1.1rem;
     }
   }
   
-  .validation-stars {
+  .validation-level-indicator {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
     
-    .star-icon {
-      font-size: 1.2rem;
-      color: #cbd5e1;
-      
-      &.filled {
-        color: #fbbf24;
-        filter: drop-shadow(0 2px 4px rgba(251, 191, 36, 0.3));
-      }
+    .level-color-bar {
+      width: 20px;
+      height: 8px;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     
     .validation-score {
-      margin-left: 8px;
       font-weight: 700;
-      color: #059669;
+      color: var(--primary-purple);
       font-size: 1rem;
     }
   }
@@ -1385,9 +1398,8 @@
     margin-top: 8px;
     
     small {
-      color: #6b7280;
+      color: #64748b;
       font-size: 0.8rem;
-      font-style: italic;
     }
   }
 }

@@ -145,20 +145,18 @@ export class ZoneDangerEngineService {
 
   private convertReportToZone(report: any): DangerZone {
     // Get the risk level set by admin (this is the numeric 1-5 level)
-    // Priority: level (admin validation) > riskLevel (auto-calculated)
-    const adminLevel = report.level; // Admin's validation (1-5 stars)
-    const autoRiskLevel = report.riskLevel; // Auto-calculated from incident type
-    const riskLevel = Number(adminLevel || autoRiskLevel || 1);
+    // Priority: riskLevel (admin's PRIMARY field) > level (compatibility) > validationLevel (legacy)
+    const riskLevel = Number(report.riskLevel || report.level || report.validationLevel || 1);
     
     // Debug logging to verify correct level is being used
     console.log(`🔍 convertReportToZone: ${report.locationAddress || report.location?.simplifiedAddress || 'Unknown'}`, {
       reportId: report.id,
-      adminLevel: adminLevel,
-      autoRiskLevel: autoRiskLevel,
+      riskLevel: report.riskLevel,
+      level: report.level,
+      validationLevel: report.validationLevel,
       finalRiskLevel: riskLevel,
       type: report.type,
-      status: report.status,
-      fullReport: report
+      status: report.status
     });
     
     // Map risk level to severity (1-5 to 0-10)
@@ -464,6 +462,16 @@ export class ZoneDangerEngineService {
   }
 
   private triggerSoundAlert(soundType: 'beep' | 'siren' | 'chime') {
+    // Disable sounds in localhost/development environment
+    const isLocalhost = window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1' ||
+                       window.location.hostname.includes('localhost');
+    
+    if (isLocalhost) {
+      console.log('🔕 Zone danger sound disabled in localhost environment:', soundType);
+      return;
+    }
+    
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
@@ -519,6 +527,16 @@ export class ZoneDangerEngineService {
   }
 
   private triggerPushNotification(alertData: any) {
+    // Disable push notifications in localhost/development environment
+    const isLocalhost = window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1' ||
+                       window.location.hostname.includes('localhost');
+    
+    if (isLocalhost) {
+      console.log('🔕 Zone danger push notification disabled in localhost environment:', alertData.zoneName);
+      return;
+    }
+    
     if ('Notification' in window && Notification.permission === 'granted') {
       new Notification('🚨 Zone Alert', {
         body: `High risk detected in ${alertData.zoneName}. Severity: ${Math.round(alertData.severity * 100)}%`,

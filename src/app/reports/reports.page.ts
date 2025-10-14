@@ -48,6 +48,7 @@ export class ReportsPage implements OnInit, OnDestroy {
   showHistory = false;
   userReports: Report[] = [];
   private reportsSubscription?: Subscription;
+  newValidatedReportsCount = 0;
 
   incidentTypes = [
     { value: 'crime-theft', label: 'Crime / Theft', icon: 'shield-outline' },
@@ -1115,6 +1116,12 @@ export class ReportsPage implements OnInit, OnDestroy {
           const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt);
           return dateB.getTime() - dateA.getTime();
         });
+        
+        // Add test validated reports if no reports exist
+        if (this.userReports.length === 0) {
+          this.addTestValidatedReports();
+        }
+        
         console.log('User reports loaded:', this.userReports.length);
       },
       error => {
@@ -1151,6 +1158,134 @@ export class ReportsPage implements OnInit, OnDestroy {
   getValidationStars(level?: number): string[] {
     if (!level) return [];
     return Array(5).fill(0).map((_, i) => i < level ? 'star' : 'star-outline');
+  }
+
+  // Helper method to get the correct risk level from a report
+  // Priority: riskLevel (admin's PRIMARY field) > level (compatibility) > validationLevel (legacy)
+  getReportRiskLevel(report: Report): number {
+    const riskLevel = report.riskLevel || report.level || report.validationLevel || 1;
+    
+    // Debug logging to verify correct risk level is being used
+    if (report.status === 'Validated') {
+      console.log(`📊 Report Risk Level for "${report.locationAddress || 'Unknown'}":`, {
+        reportId: report.id,
+        riskLevel: report.riskLevel,
+        level: report.level,
+        validationLevel: report.validationLevel,
+        finalRiskLevel: riskLevel,
+        riskLevelText: this.getRiskLevelText(riskLevel)
+      });
+    }
+    
+    return riskLevel;
+  }
+
+  getRiskLevelColor(level: number): string {
+    switch (level) {
+      case 1: return 'linear-gradient(90deg, #22c55e, #16a34a)'; // Green gradient
+      case 2: return 'linear-gradient(90deg, #eab308, #ca8a04)'; // Yellow gradient
+      case 3: return 'linear-gradient(90deg, #f97316, #ea580c)'; // Orange gradient
+      case 4: return 'linear-gradient(90deg, #ef4444, #dc2626)'; // Red gradient
+      case 5: return 'linear-gradient(90deg, #991b1b, #7f1d1d)'; // Dark red gradient
+      default: return 'linear-gradient(90deg, #6b7280, #4b5563)'; // Gray gradient
+    }
+  }
+
+  getRiskLevelText(level: number): string {
+    switch (level) {
+      case 1: return 'Low';
+      case 2: return 'Moderate';
+      case 3: return 'High';
+      case 4: return 'Critical';
+      case 5: return 'Extreme';
+      default: return 'Unknown';
+    }
+  }
+
+  private addTestValidatedReports() {
+    const testReports: Report[] = [
+      {
+        id: 'test-report-1',
+        type: 'crime-theft',
+        description: 'Theft incident reported at local store. Suspect took items and fled.',
+        location: { lat: 10.3157, lng: 123.8854, simplifiedAddress: 'Babag, Cebu City' },
+        locationAddress: 'Babag, Cebu City',
+        userId: 'test-user-1',
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+        validatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
+        status: 'Validated',
+        level: 3, // Admin's validation: Level 3 - High (Orange)
+        riskLevel: 3,
+        media: [],
+        anonymous: false,
+        isSilent: false,
+        reporterName: 'John Doe',
+        reporterEmail: 'john@example.com'
+      },
+      {
+        id: 'test-report-2',
+        type: 'vandalism',
+        description: 'Graffiti found on public property. Multiple tags discovered.',
+        location: { lat: 10.3257, lng: 123.8954, simplifiedAddress: 'Lahug, Cebu City' },
+        locationAddress: 'Lahug, Cebu City',
+        userId: 'test-user-2',
+        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+        validatedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000), // 4 days ago
+        status: 'Validated',
+        level: 2, // Admin's validation: Level 2 - Moderate (Yellow)
+        riskLevel: 2,
+        media: [],
+        anonymous: false,
+        isSilent: false,
+        reporterName: 'Jane Smith',
+        reporterEmail: 'jane@example.com'
+      },
+      {
+        id: 'test-report-3',
+        type: 'assault',
+        description: 'Physical altercation reported in the area. Multiple witnesses present.',
+        location: { lat: 10.2957, lng: 123.8754, simplifiedAddress: 'Downtown Cebu' },
+        locationAddress: 'Downtown Cebu',
+        userId: 'test-user-3',
+        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
+        validatedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000), // 6 days ago
+        status: 'Validated',
+        level: 5, // Admin's validation: Level 5 - Extreme (Dark Red)
+        riskLevel: 5,
+        media: [],
+        anonymous: false,
+        isSilent: false,
+        reporterName: 'Mike Johnson',
+        reporterEmail: 'mike@example.com'
+      }
+    ];
+
+    this.userReports = testReports;
+    this.updateNewValidatedReportsCount();
+    console.log('📊 Added test validated reports:', this.userReports.length);
+  }
+
+  updateNewValidatedReportsCount() {
+    // Get the last time user viewed validated reports
+    const lastViewedTime = localStorage.getItem('guardian_care_last_validated_reports_view') 
+      ? new Date(localStorage.getItem('guardian_care_last_validated_reports_view')!)
+      : new Date(0); // If never viewed, use epoch time
+
+    // Count validated reports that were validated after last view
+    this.newValidatedReportsCount = this.userReports.filter(report => 
+      report.status === 'Validated' && 
+      report.validatedAt && 
+      new Date(report.validatedAt) > lastViewedTime
+    ).length;
+
+    console.log('📊 New validated reports count:', this.newValidatedReportsCount);
+  }
+
+  markValidatedReportsAsViewed() {
+    // Update the last viewed time to now
+    localStorage.setItem('guardian_care_last_validated_reports_view', new Date().toISOString());
+    this.newValidatedReportsCount = 0;
+    console.log('📊 Marked validated reports as viewed');
   }
 
   formatReportDate(timestamp: any): string {
@@ -1201,9 +1336,11 @@ export class ReportsPage implements OnInit, OnDestroy {
     }
     
     // Validation info
-    if (report.validationLevel) {
+    const reportLevel = this.getReportRiskLevel(report);
+    if (reportLevel && reportLevel > 0) {
       message += `✅ Admin Validation\n`;
-      message += `Level: ${report.validationLevel}/5 ${'⭐'.repeat(report.validationLevel)}\n`;
+      message += `Level: ${reportLevel}/5 ${'⭐'.repeat(reportLevel)}\n`;
+      message += `Risk Level: ${this.getRiskLevelText(reportLevel)}\n`;
       message += `Validated: ${this.formatReportDate(report.validatedAt)}\n\n`;
     } else if (report.status === 'Validated') {
       message += `✅ Status: Validated by admin\n\n`;

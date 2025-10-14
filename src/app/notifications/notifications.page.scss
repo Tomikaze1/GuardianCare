@@ -1,4 +1,4 @@
-// Notifications Page Styles - Matching Reports/Profile Design
+// Notification Content - Exact Match to Reports
 .notifications-content {
   --background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);
   min-height: 100vh;
@@ -7,7 +7,7 @@
   padding-bottom: 120px;
 }
 
-// Logo/Title Section - Matching Reports/Profile
+// Logo Container - Exact Match to Reports
 .logo-container {
   text-align: center;
   margin-top: 20px;
@@ -94,70 +94,56 @@
   }
 }
 
-// Section Headers - Matching Reports Style
-.section-header {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 1.07rem;
-  font-weight: 700;
-  color: #1a202c;
-  margin: 1.5rem 0 0.8rem 0;
+// Connection Status Indicator
+.connection-status {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px 16px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--success-green);
+  transition: all 0.3s ease;
   
-  &::before {
-    content: '';
-    width: 4px;
-    height: 20px;
-    background: linear-gradient(135deg, var(--primary-purple), var(--primary-blue));
-    border-radius: 2px;
+  ion-icon {
+    font-size: 16px;
   }
   
-  .section-underline {
-    flex: 1;
-    height: 1px;
-    background: linear-gradient(90deg, #e2e8f0 0%, transparent 100%);
-    margin-left: 0.5rem;
+  span {
+    font-family: 'Plus Jakarta Sans', sans-serif;
   }
-}
-
-// Action Buttons - Matching Reports Design
-.actions-container {
-  margin: 0 20px 20px 20px;
   
-  .button-row {
-    display: flex;
-    gap: 12px;
+  ion-button {
+    --padding-start: 4px;
+    --padding-end: 4px;
+    --padding-top: 4px;
+    --padding-bottom: 4px;
+    height: 24px;
+    width: 24px;
     
-    .action-btn {
-      flex: 1;
-      height: 48px;
-      font-weight: 600;
-      border-radius: 12px;
-      font-size: 0.9rem;
-      letter-spacing: 0.3px;
-      transition: all 0.3s ease;
-      
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      }
+    ion-icon {
+      font-size: 14px;
     }
   }
-}
-
-// Notifications Section
-.notifications-section {
-  margin: 0 20px;
   
-  .notifications-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+  &.offline {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.3);
+    color: var(--warning-orange);
   }
 }
 
-// Section Header - Matching Reports Design
+// Notification History Section - Exact Match to Reports
+.notification-history-section {
+  padding: 0 20px;
+}
+
+// Section Headers - Matching Reports/Profile Style
 .section-header {
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 1.07rem;
@@ -185,208 +171,246 @@
   }
 }
 
-// Notification Cards - Matching Reports Card Design
+
+// Notifications List - Exact Match to Reports
+.notifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .notification-card {
   background: white;
-  border-radius: 6px;
-  padding: 6px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-  border: 1px solid #f1f5f9;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(124, 58, 237, 0.1);
   transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  margin-bottom: 4px;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: var(--primary-purple);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
+  animation: fadeInUp 0.4s ease-out;
+  cursor: pointer;
   
   &:hover {
+    box-shadow: 0 4px 20px rgba(124, 58, 237, 0.15);
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-    border-color: #e2e8f0;
-    
-    &::before {
-      opacity: 1;
-    }
   }
   
   &.unread {
+    border-left: 4px solid var(--primary-purple);
     background: rgba(124, 58, 237, 0.02);
-    border-color: rgba(124, 58, 237, 0.2);
-    
-    &::before {
-      opacity: 1;
-      background: var(--primary-purple);
-    }
-  }
-  
-  &.priority-critical {
-    border-color: rgba(239, 68, 68, 0.3);
-    background: rgba(239, 68, 68, 0.02);
-    
-    &::before {
-      background: #ef4444;
-      opacity: 1;
-    }
-  }
-  
-  &.priority-high {
-    border-color: rgba(245, 158, 11, 0.3);
-    background: rgba(245, 158, 11, 0.02);
-    
-    &::before {
-      background: #f59e0b;
-      opacity: 1;
-    }
   }
 }
 
-// Notification Header
 .notification-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 4px;
+  margin-bottom: 12px;
   
   .notification-type {
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: 8px;
     font-weight: 600;
-    color: #1a202c;
-    font-size: 0.75rem;
+    color: var(--primary-purple);
+    font-size: 1rem;
     
     ion-icon {
-      font-size: 12px;
+      font-size: 1.2rem;
     }
-  }
-  
-  .priority-chip {
-    font-size: 0.6rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.2px;
-    padding: 1px 4px;
-  }
-}
-
-.notification-header .new-badge {
-  margin-left: 6px;
-  border-radius: 8px;
-  font-size: 0.55rem;
-  padding: 2px 6px;
-}
-
-// Notification Content
-.notification-content {
-  cursor: pointer;
-  
-  .notification-message {
-    margin-bottom: 4px;
     
-    p {
-      margin: 0;
-      color: #475569;
+    .new-badge {
       font-size: 0.7rem;
-      line-height: 1.3;
-      font-weight: 400;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 8px;
+      margin-left: 4px;
     }
   }
+}
+
+.notification-date,
+.notification-location {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: #64748b;
+  font-size: 0.85rem;
   
-  .notification-time {
+  ion-icon {
+    font-size: 1rem;
+    color: var(--primary-purple);
+  }
+}
+
+.notification-description {
+  margin: 12px 0;
+  padding: 12px;
+  background: rgba(124, 58, 237, 0.03);
+  border-radius: 8px;
+  
+  p {
+    margin: 0;
+    color: #334155;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    font-weight: 500;
+    
+    // Make distance and time more prominent
+    strong {
+      font-weight: 700;
+      color: var(--primary-purple);
+    }
+  }
+}
+
+.notification-validation {
+  margin: 12px 0;
+  padding: 12px;
+  background: rgba(124, 58, 237, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(124, 58, 237, 0.1);
+  
+  .validation-header {
     display: flex;
     align-items: center;
-    gap: 3px;
-    color: #64748b;
-    font-size: 0.65rem;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary-purple);
+    
+    ion-icon {
+      font-size: 1rem;
+      color: var(--primary-purple);
+    }
+  }
+  
+  .validation-level-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     margin-bottom: 4px;
     
-    ion-icon {
-      font-size: 10px;
-    }
-  }
-  
-  .notification-actions {
-    display: flex;
-    justify-content: flex-end;
-    
-    .delete-btn {
-      --color: #64748b;
-      --background: transparent;
-      --padding-start: 4px;
-      --padding-end: 4px;
-      height: 20px;
+    .level-color-bar {
+      width: 20px;
+      height: 8px;
       border-radius: 4px;
-      transition: all 0.2s ease;
-      
-      &:hover {
-        --color: #ef4444;
-        --background: rgba(239, 68, 68, 0.1);
-      }
-      
-      ion-icon {
-        font-size: 12px;
-      }
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-  }
-}
-
-// Action Buttons - Matching Reports Design
-.action-buttons {
-  margin: 20px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  
-  .action-btn {
-    --border-radius: 12px;
-    --padding-top: 12px;
-    --padding-bottom: 12px;
-    font-weight: 600;
-    font-size: 0.95rem;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
     
-    ion-icon {
-      margin-right: 8px;
+    .validation-score {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--primary-purple);
     }
+  }
+  
+  .validation-date {
+    font-size: 0.75rem;
+    color: #64748b;
   }
 }
 
-// Empty State - Matching Reports Design
-.empty-state {
+.view-details-btn {
+  margin-top: 12px;
+  --color: var(--primary-purple);
+  --border-color: var(--primary-purple);
+  --border-width: 1px;
+  --border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  
+  ion-icon {
+    font-size: 16px;
+  }
+}
+
+// No Notifications - Matching Reports
+.no-notifications {
   text-align: center;
   padding: 60px 20px;
-  color: #64748b;
   
-  .empty-icon {
+  ion-icon {
     font-size: 4rem;
     color: #cbd5e1;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
   }
   
-  .empty-title {
+  h3 {
     font-size: 1.25rem;
     font-weight: 600;
-    color: #374151;
+    color: #475569;
     margin: 0 0 8px 0;
   }
   
-  .empty-message {
+  p {
+    color: #64748b;
     font-size: 0.9rem;
     line-height: 1.5;
     margin: 0;
-    max-width: 280px;
-    margin: 0 auto;
+  }
+}
+
+// Action Buttons - Matching Reports
+.action-buttons {
+  margin: 32px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  
+  .action-btn {
+    --border-radius: 16px;
+    --padding-top: 16px;
+    --padding-bottom: 16px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    height: 52px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    
+    ion-icon {
+      margin-right: 8px;
+      font-size: 20px;
+    }
+    
+    &[color="success"] {
+      --background: var(--success-green);
+      --color: white;
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+      
+      &:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+      }
+    }
+    
+    &[color="danger"] {
+      --background: #dc2626;
+      --color: white;
+      --border-width: 0;
+      box-shadow: 0 4px 16px rgba(220, 38, 38, 0.4);
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      
+      &:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 24px rgba(220, 38, 38, 0.5);
+        --background: #b91c1c;
+      }
+      
+      &:active {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+      }
+    }
+    
+    &:hover {
+      transform: translateY(-2px);
+    }
   }
 }
 
@@ -397,34 +421,20 @@
   align-items: center;
   justify-content: center;
   padding: 60px 20px;
-  color: #64748b;
   
   ion-spinner {
     margin-bottom: 16px;
+    --color: var(--primary-purple);
   }
   
   p {
-    margin: 0;
+    color: #64748b;
     font-size: 0.9rem;
+    margin: 0;
   }
 }
 
-// Animations - Matching Reports/Profile
-@keyframes logoFloat {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
-}
-
-@keyframes glowPulse {
-  0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
-  50% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.05); }
-}
-
-@keyframes textShimmer {
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
-}
-
+// Animations - Exact Match to Reports
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -436,59 +446,87 @@
   }
 }
 
+@keyframes logoFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes glowPulse {
+  0% {
+    opacity: 0.1;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  100% {
+    opacity: 0.3;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+}
+
 @keyframes expandWidth {
-  from { width: 0; }
-  to { width: 58px; }
+  from {
+    width: 0;
+  }
+  to {
+    width: 58px;
+  }
+}
+
+@keyframes textShimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
 }
 
 // Responsive Design
 @media (max-width: 768px) {
   .logo-container {
-    margin-top: 16px;
-  }
-  
-  .actions-container {
-    margin: 0 16px 16px 16px;
+    padding: 24px 16px 20px 16px;
     
-    .button-row {
-      gap: 8px;
-      
-      .action-btn {
-        height: 44px;
-        font-size: 0.85rem;
-      }
+    .app-title {
+      font-size: 1.75rem;
+    }
+    
+    .app-subtitle {
+      font-size: 0.9rem;
     }
   }
   
-  .notifications-section {
-    margin: 0 16px;
+  .notification-history-section {
+    padding: 0 16px;
   }
   
-  .notification-card {
-    padding: 14px;
-    border-radius: 12px;
+  .history-stats {
+    ion-chip {
+      font-size: 0.75rem;
+      
+      ion-label {
+        font-size: 0.7rem;
+      }
+    }
   }
 }
 
 @media (max-width: 480px) {
-  
-  .notification-header {
+  .filters-row {
     flex-direction: column;
-    align-items: flex-start;
     gap: 8px;
     
-    .priority-chip {
-      align-self: flex-end;
+    .filter-chip {
+      width: 100%;
     }
   }
-}
-
-.filters-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 12px 8px 12px;
-
-  ion-chip { height: 26px; font-size: 0.75rem; }
-  .sticky-toggle { margin-left: auto; font-size: 0.75rem; }
+  
+  .action-buttons {
+    .action-btn {
+      height: 48px;
+      font-size: 0.9rem;
+    }
+  }
 }

@@ -34,12 +34,20 @@ export class TabsPage implements OnInit, OnDestroy {
     this.clearStuckHoverStates();
     this.updateUnreadFromLocal();
     window.addEventListener('storage', this.storageListener);
+    
+    // Add custom event listener for notification updates
+    window.addEventListener('notificationUpdate', (event: any) => {
+      console.log('📱 Received notification update event:', event.detail);
+      this.updateUnreadFromLocal();
+    });
+    
     // Refresh periodically in case other parts update without storage events
     this.intervalId = setInterval(() => this.updateUnreadFromLocal(), 4000);
   }
 
   ngOnDestroy() {
     window.removeEventListener('storage', this.storageListener);
+    window.removeEventListener('notificationUpdate', () => {});
     if (this.intervalId) clearInterval(this.intervalId);
   }
 
