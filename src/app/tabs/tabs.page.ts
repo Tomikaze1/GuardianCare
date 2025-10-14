@@ -58,8 +58,16 @@ export class TabsPage implements OnInit, OnDestroy {
         this.unreadCount = 0;
         return;
       }
-      const arr = JSON.parse(raw) as Array<{ read?: boolean }>; 
-      this.unreadCount = Array.isArray(arr) ? arr.filter(n => !n.read).length : 0;
+      const arr = JSON.parse(raw) as Array<{ 
+        read?: boolean; 
+        data?: { seenByUser?: boolean } 
+      }>; 
+      
+      // Count notifications that are unread AND haven't been seen by user
+      this.unreadCount = Array.isArray(arr) ? 
+        arr.filter(n => !n.read && !n.data?.seenByUser).length : 0;
+        
+      console.log(`📱 Tab badge count updated: ${this.unreadCount} unseen notifications`);
     } catch {
       this.unreadCount = 0;
     }

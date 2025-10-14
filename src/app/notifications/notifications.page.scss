@@ -1,4 +1,4 @@
-// Notification Content - Exact Match to Reports
+// Notifications Page Styles - Exact Match to Reports Design
 .notifications-content {
   --background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);
   min-height: 100vh;
@@ -7,7 +7,6 @@
   padding-bottom: 120px;
 }
 
-// Logo Container - Exact Match to Reports
 .logo-container {
   text-align: center;
   margin-top: 20px;
@@ -94,56 +93,6 @@
   }
 }
 
-// Connection Status Indicator
-.connection-status {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 12px;
-  padding: 8px 16px;
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--success-green);
-  transition: all 0.3s ease;
-  
-  ion-icon {
-    font-size: 16px;
-  }
-  
-  span {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-  }
-  
-  ion-button {
-    --padding-start: 4px;
-    --padding-end: 4px;
-    --padding-top: 4px;
-    --padding-bottom: 4px;
-    height: 24px;
-    width: 24px;
-    
-    ion-icon {
-      font-size: 14px;
-    }
-  }
-  
-  &.offline {
-    background: rgba(245, 158, 11, 0.1);
-    border-color: rgba(245, 158, 11, 0.3);
-    color: var(--warning-orange);
-  }
-}
-
-// Notification History Section - Exact Match to Reports
-.notification-history-section {
-  padding: 0 20px;
-}
-
-// Section Headers - Matching Reports/Profile Style
 .section-header {
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 1.07rem;
@@ -154,13 +103,11 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  
   span {
     position: relative;
     z-index: 2;
     letter-spacing: 0.01rem;
   }
-  
   .section-underline {
     width: 30px;
     height: 2.5px;
@@ -171,12 +118,125 @@
   }
 }
 
+// Notification History Section - Exact Match to Report History
+.notification-history-section {
+  padding: 0 20px 20px;
+  animation: fadeInUp 0.4s ease-out;
+  max-width: 420px; // constrain to phone width
+  margin: 0 auto;
+}
 
-// Notifications List - Exact Match to Reports
+.filters-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 20px 20px 24px 20px;
+  flex-wrap: wrap;
+
+  ion-chip { 
+    height: 40px; 
+    font-size: 0.95rem;
+    font-weight: 600;
+    --border-width: 2px;
+    --border-radius: 20px;
+    --border-color: var(--primary-purple);
+    transition: all 0.3s ease;
+    min-width: 90px;
+    text-align: center;
+    
+    ion-label {
+      font-weight: 600;
+    }
+    
+    // FORCE BLACK TEXT ON ALL OUTLINE CHIPS
+    &[outline="true"] {
+      color: black !important;
+      --color: black !important;
+      
+      ion-label {
+        color: black !important;
+      }
+      
+      &::part(native) {
+        color: black !important;
+      }
+    }
+    
+    // Additional override for outline chips
+    &.ion-color-light {
+      --color: black !important;
+      color: black !important;
+      
+      ion-label {
+        color: black !important;
+      }
+    }
+    
+    &:not([outline]) {
+      --background: var(--primary-purple);
+      --color: white;
+      box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
+    }
+    
+    &[outline] {
+      --color: #000000 !important;
+      --background: white !important;
+      --border-color: #e0e0e0 !important;
+      color: #000000 !important;
+      
+      * {
+        color: #000000 !important;
+      }
+      
+      ion-label {
+        color: #000000 !important;
+        font-weight: 600 !important;
+      }
+      
+      &::part(native) {
+        color: #000000 !important;
+        background: white !important;
+      }
+      
+      &::part(text) {
+        color: #000000 !important;
+      }
+      
+      &:hover {
+        --background: rgba(124, 58, 237, 0.05) !important;
+        --border-color: var(--primary-purple) !important;
+        --color: #000000 !important;
+        color: #000000 !important;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(124, 58, 237, 0.15);
+        
+        * {
+          color: #000000 !important;
+        }
+        
+        ion-label {
+          color: #000000 !important;
+        }
+      }
+    }
+    
+    // Force black text on all outline chips
+    &.ion-color-light {
+      --color: #000000 !important;
+      
+      ion-label {
+        color: #000000 !important;
+      }
+    }
+  }
+}
+
 .notifications-list {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding-bottom: 100px; // Extra space to prevent tab bar from covering last item
 }
 
 .notification-card {
@@ -312,19 +372,6 @@
   }
 }
 
-.view-details-btn {
-  margin-top: 12px;
-  --color: var(--primary-purple);
-  --border-color: var(--primary-purple);
-  --border-width: 1px;
-  --border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  
-  ion-icon {
-    font-size: 16px;
-  }
-}
 
 // No Notifications - Matching Reports
 .no-notifications {
@@ -501,25 +548,19 @@
   .notification-history-section {
     padding: 0 16px;
   }
-  
-  .history-stats {
-    ion-chip {
-      font-size: 0.75rem;
-      
-      ion-label {
-        font-size: 0.7rem;
-      }
-    }
-  }
 }
 
 @media (max-width: 480px) {
   .filters-row {
-    flex-direction: column;
-    gap: 8px;
+    gap: 12px;
+    padding: 16px 20px 20px 20px;
     
-    .filter-chip {
-      width: 100%;
+    ion-chip {
+      height: 36px;
+      font-size: 0.9rem;
+      flex: 1;
+      min-width: 75px;
+      --border-radius: 18px;
     }
   }
   
@@ -527,6 +568,50 @@
     .action-btn {
       height: 48px;
       font-size: 0.9rem;
+    }
+  }
+}
+
+// AGGRESSIVE OVERRIDE FOR FILTER BUTTON TEXT COLOR
+.notifications-content {
+  .filters-row {
+    ion-chip[outline] {
+      color: #000000 !important;
+      --color: #000000 !important;
+      
+      ion-label {
+        color: #000000 !important;
+      }
+      
+      * {
+        color: #000000 !important;
+      }
+    }
+    
+    // Custom filter classes
+    .active-filter {
+      --background: var(--primary-purple) !important;
+      --color: white !important;
+      color: white !important;
+      
+      ion-label {
+        color: white !important;
+      }
+    }
+    
+    .inactive-filter {
+      --background: white !important;
+      --color: #000000 !important;
+      --border-color: #e0e0e0 !important;
+      color: #000000 !important;
+      
+      ion-label {
+        color: #000000 !important;
+      }
+      
+      * {
+        color: #000000 !important;
+      }
     }
   }
 }

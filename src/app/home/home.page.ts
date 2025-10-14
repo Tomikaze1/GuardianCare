@@ -106,6 +106,9 @@ export class HomePage implements OnInit, OnDestroy {
     this.content?.scrollToTop(0);
     this.zoneEngine.initializeZones();
     
+    // Check for navigation from notifications
+    this.checkForNotificationNavigation();
+    
     // Clear all notification banners on successful login
     this.notificationService.dismissAll();
     
@@ -3603,6 +3606,87 @@ export class HomePage implements OnInit, OnDestroy {
     const d = this.nearestZoneDistance;
     if (d < 1000) return `${d}m`;
     return `${(d / 1000).toFixed(1)}km`;
+  }
+
+  // Handle navigation from notifications
+  checkForNotificationNavigation() {
+    const navigationData = localStorage.getItem('guardian_care_navigate_to_location');
+    if (navigationData) {
+      try {
+        const locationData = JSON.parse(navigationData);
+        console.log('🗺️ Received navigation data from notification:', locationData);
+        
+        // Clear the navigation data
+        localStorage.removeItem('guardian_care_navigate_to_location');
+        
+        // Navigate to the location after a short delay to ensure map is ready
+        setTimeout(() => {
+          this.navigateToNotificationLocation(locationData);
+        }, 1000);
+      } catch (error) {
+        console.error('Error parsing navigation data:', error);
+        localStorage.removeItem('guardian_care_navigate_to_location');
+      }
+    }
+  }
+
+  navigateToNotificationLocation(locationData: any) {
+    if (this.map && locationData.lat && locationData.lng) {
+      // Fly to the location with animation
+      this.map.flyTo({
+        center: [locationData.lng, locationData.lat],
+        zoom: 16,
+        duration: 2000
+      });
+      
+      // Add a marker for the notification location
+      this.addNotificationMarker(locationData);
+      
+      // Show a toast notification
+      this.notificationService.info(
+        'Location Found', 
+        `Showing ${locationData.reportType || 'incident'} location`,
+        'OK', 
+        3000
+      );
+      
+      console.log('🗺️ Navigated to notification location:', locationData);
+    }
+  }
+
+  addNotificationMarker(locationData: any) {
+    if (this.map) {
+      // Remove any existing notification markers
+      const existingMarker = document.getElementById('notification-marker');
+      if (existingMarker) {
+        existingMarker.remove();
+      }
+      
+      // Create a custom marker element
+      const markerEl = document.createElement('div');
+      markerEl.id = 'notification-marker';
+      markerEl.className = 'notification-marker';
+      markerEl.innerHTML = `
+        <div class="marker-content">
+          <div class="marker-icon">📍</div>
+          <div class="marker-label">${locationData.reportType || 'Incident'}</div>
+          <div class="marker-risk">Level ${locationData.riskLevel || 'N/A'}</div>
+        </div>
+      `;
+      
+      // Add marker to map
+      new mapboxgl.Marker(markerEl)
+        .setLngLat([locationData.lng, locationData.lat])
+        .addTo(this.map);
+      
+      // Remove marker after 10 seconds
+      setTimeout(() => {
+        const marker = document.getElementById('notification-marker');
+        if (marker) {
+          marker.remove();
+        }
+      }, 10000);
+    }
   }
 
 }

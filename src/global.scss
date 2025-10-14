@@ -9,6 +9,36 @@
  * https://ionicframework.com/docs/layout/global-stylesheets
  */
 
+// Notification marker styles for map
+.notification-marker {
+  .marker-content {
+    background: var(--primary-purple);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+    border: 2px solid white;
+    text-align: center;
+    min-width: 80px;
+    
+    .marker-icon {
+      font-size: 18px;
+      margin-bottom: 4px;
+    }
+    
+    .marker-label {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    
+    .marker-risk {
+      font-size: 10px;
+      opacity: 0.9;
+    }
+  }
+}
+
 /* Core CSS required for Ionic components to work properly */
 @import "@ionic/angular/css/core.css";
 
