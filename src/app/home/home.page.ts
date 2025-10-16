@@ -760,15 +760,14 @@ export class HomePage implements OnInit, OnDestroy {
       
       this.map.easeTo(animationOptions);
       
-      // Rotate the navigation arrow to match heading
-      // Note: Arrow always points UP on screen (forward direction)
-      // Map rotates underneath, so arrow stays pointing in direction of travel
+      // Keep arrow pointing up relative to screen. Important: do NOT set
+      // transform on the marker root element because Mapbox uses it to
+      // position the marker via translate(). Changing it hides the marker.
       if (location.heading !== undefined && location.heading !== null) {
         const markerElement = this.userMarker.getElement();
-        if (markerElement) {
-          // Since map rotates with bearing, arrow should point north (up) in local coordinate system
-          // The map rotation will make it point in the right direction
-          markerElement.style.transform = `rotate(0deg)`;
+        const arrowEl = markerElement?.querySelector('.waze-arrow') as HTMLElement | null;
+        if (arrowEl) {
+          arrowEl.style.transform = 'rotate(0deg)';
         }
       }
       
@@ -2412,9 +2411,42 @@ export class HomePage implements OnInit, OnDestroy {
         
         console.log('📍 NAVIGATION: Style loaded, cleaning up any remaining heatmap elements');
         
-        // Re-add user marker
-        if (this.userMarker && this.currentLocation && this.map) {
-          this.userMarker.addTo(this.map);
+        // Re-add or recreate the blue navigation arrow marker
+        if (this.currentLocation && this.map) {
+          if (this.userMarker) {
+            this.userMarker.addTo(this.map);
+            this.userMarker.setLngLat([this.currentLocation.lng, this.currentLocation.lat]);
+          } else {
+            const markerElement = document.createElement('div');
+            markerElement.className = 'waze-navigation-marker';
+            markerElement.innerHTML = `
+              <svg width="44" height="52" viewBox="0 0 44 52" class="waze-arrow">
+                <path d="M22 6 L36 30 L30 30 L30 46 L14 46 L14 30 L8 30 Z" 
+                      fill="#00B8D4" stroke="#FFFFFF" stroke-width="2.5" class="nav-arrow"/>
+              </svg>
+            `;
+
+            // Ensure required CSS exists (idempotent)
+            if (!document.querySelector('style[data-nav-arrow="1"]')) {
+              const style = document.createElement('style');
+              style.setAttribute('data-nav-arrow', '1');
+              style.textContent = `
+                .waze-navigation-marker{position:relative;width:44px;height:52px;display:flex;align-items:flex-end;justify-content:center}
+                .waze-arrow{position:relative;z-index:2;filter:drop-shadow(0 3px 8px rgba(0,0,0,.3));display:block}
+                .nav-arrow{transition:all .2s ease}
+              `;
+              document.head.appendChild(style);
+            }
+
+            this.userMarker = new mapboxgl.Marker({
+              element: markerElement,
+              anchor: 'bottom',
+              rotationAlignment: 'map',
+              pitchAlignment: 'map'
+            })
+              .setLngLat([this.currentLocation.lng, this.currentLocation.lat])
+              .addTo(this.map);
+          }
         }
         
         // CRITICAL FIX: Ensure completely clean navigation mode
