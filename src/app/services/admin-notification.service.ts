@@ -103,15 +103,13 @@ export class AdminNotificationService {
 
         const newEvents: AdminValidationEvent[] = [];
         
-        // Filter for reports that were JUST validated (within last 30 seconds)
-        const thirtySecondsAgo = new Date(Date.now() - 30 * 1000);
-        
+        // Filter for ALL validated reports (not just recent ones)
+        // This ensures all admin-validated reports appear in notifications
         const newlyValidatedReports = reports.filter(report => {
           return report.status === 'Validated' && 
                  report.validatedAt && 
-                 report.validatedAt > thirtySecondsAgo &&
                  !this.processedReportIds.has(report.id!);
-                 // Removed user filter - now shows ALL validated reports
+                 // Removed time filter - show ALL validated reports
         });
         
         console.log('✅ Found newly validated reports:', newlyValidatedReports.length);
@@ -137,23 +135,9 @@ export class AdminNotificationService {
           const timeStr = this.formatTimeAgo(report.validatedAt!);
           const riskText = this.getRiskLevelText(report.level || report.riskLevel || 1);
           
-          if (isForCurrentUser) {
-            // For report owner - show validation confirmation
-            this.notificationManager.addReportNotification(
-              `Your Report Validated`,
-              `${report.type} • ${event.locationAddress} • ${timeStr}`,
-              report.id!
-            );
-          } else {
-            // For other users - show new incident alert
-            this.notificationManager.addLocationNotification(
-              `New ${report.type} Incident`,
-              `${report.type} • ${event.locationAddress} • ${riskText} Risk • ${timeStr}`,
-              event.riskLevel >= 3 ? 'high' : 'medium'
-            );
-          }
-          
-          console.log('🔔 Created validation notification for report:', report.id);
+          // Disabled NotificationManager notifications to prevent duplicates
+          // Notifications are now loaded directly from Firestore in notifications.page.ts
+          console.log('🔔 Admin validation detected for report:', report.id, '- notifications loaded from Firestore');
         });
 
         if (newEvents.length > 0) {
@@ -172,15 +156,16 @@ export class AdminNotificationService {
   }
 
   private formatTimeAgo(date: Date): string {
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-
-    if (minutes < 1) return 'just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    return date.toLocaleDateString();
+    // Show the exact validation date/time like admin interface
+    return date.toLocaleString('en-US', {
+      day: '2-digit',
+      month: '2-digit', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    });
   }
 
   private getRiskLevelText(riskLevel: number): string {

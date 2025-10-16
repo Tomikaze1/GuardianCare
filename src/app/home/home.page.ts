@@ -435,13 +435,13 @@ export class HomePage implements OnInit, OnDestroy {
           let zoneLevel = 'Caution';
           let icon = '🟠';
           let title = 'NEW INCIDENT REPORTED NEARBY';
-          let message = `⚠️ A new ${report.type.toLowerCase()} incident has been reported ${Math.round(distanceFromUser)}m away!\n\n📍 Location: ${report.locationAddress || report.location?.simplifiedAddress || 'Unknown location'}\n\n🚨 This is a NEW report that was just validated by admin. Stay alert and aware of your surroundings.`;
+          let message = `⚠️ A new ${report.type.toLowerCase()} incident has been reported ${Math.round(distanceFromUser)}m away!\n\n📍 Location: ${report.locationAddress || report.location?.fullAddress || report.location?.simplifiedAddress || 'Unknown location'}\n\n🚨 This is a NEW report that was just validated by admin. Stay alert and aware of your surroundings.`;
           
           if (riskLevel >= 4) {
             zoneLevel = 'Danger';
             icon = '🔴';
             title = 'NEW DANGER INCIDENT NEARBY';
-            message = `🚨 A new ${report.type.toLowerCase()} incident has been reported ${Math.round(distanceFromUser)}m away!\n\n📍 Location: ${report.locationAddress || report.location?.simplifiedAddress || 'Unknown location'}\n\n⚠️ This is a HIGH RISK incident that was just validated by admin. Consider avoiding this area.`;
+            message = `🚨 A new ${report.type.toLowerCase()} incident has been reported ${Math.round(distanceFromUser)}m away!\n\n📍 Location: ${report.locationAddress || report.location?.fullAddress || report.location?.simplifiedAddress || 'Unknown location'}\n\n⚠️ This is a HIGH RISK incident that was just validated by admin. Consider avoiding this area.`;
           }
           
           // Start continuous alert sound for NEW incidents using specific risk level
@@ -465,7 +465,7 @@ export class HomePage implements OnInit, OnDestroy {
           // Report is far away - just show regular notification
           this.notificationManager.addAdminValidatedReportNotification({
             type: report.type,
-            locationAddress: report.locationAddress || report.location?.simplifiedAddress || 'Unknown Location',
+            locationAddress: report.locationAddress || report.location?.fullAddress || report.location?.simplifiedAddress || 'Unknown Location',
             riskLevel: report.riskLevel || report.level || 1,
             validatedAt: new Date(report.createdAt || Date.now()),
             distanceFromUser: distanceFromUser
@@ -3150,20 +3150,20 @@ export class HomePage implements OnInit, OnDestroy {
         
         const alertMessage = riskLevel >= 4 ? 
           `⚠️ You have entered a HIGH-RISK danger zone!\n\n` +
-          `📍 Location: ${nearestIncident.location.simplifiedAddress || 'Unknown'}\n` +
+          `📍 Location: ${nearestIncident.locationAddress || nearestIncident.location.fullAddress || nearestIncident.location.simplifiedAddress || 'Unknown'}\n` +
           `📊 Risk Level: ${riskLevel}/5 (${this.getRiskLevelText(riskLevel)})\n` +
           `📝 Incident: ${nearestIncident.type || 'Unknown'}\n` +
           `📅 Reported: ${nearestIncident.createdAt ? new Date(nearestIncident.createdAt).toLocaleDateString() : 'Unknown'}\n\n` +
           `🚨 Please exercise EXTREME CAUTION and consider leaving this area immediately!` :
           riskLevel >= 3 ?
           `⚠️ You have entered a CAUTION zone!\n\n` +
-          `📍 Location: ${nearestIncident.location.simplifiedAddress || 'Unknown'}\n` +
+          `📍 Location: ${nearestIncident.locationAddress || nearestIncident.location.fullAddress || nearestIncident.location.simplifiedAddress || 'Unknown'}\n` +
           `📊 Risk Level: ${riskLevel}/5 (${this.getRiskLevelText(riskLevel)})\n` +
           `📝 Incident: ${nearestIncident.type || 'Unknown'}\n` +
           `📅 Reported: ${nearestIncident.createdAt ? new Date(nearestIncident.createdAt).toLocaleDateString() : 'Unknown'}\n\n` +
           `⚠️ Please stay alert and exercise caution in this area!` :
           `📍 You have entered a heatmap zone!\n\n` +
-          `📍 Location: ${nearestIncident.location.simplifiedAddress || 'Unknown'}\n` +
+          `📍 Location: ${nearestIncident.locationAddress || nearestIncident.location.fullAddress || nearestIncident.location.simplifiedAddress || 'Unknown'}\n` +
           `📊 Risk Level: ${riskLevel}/5 (${this.getRiskLevelText(riskLevel)})\n` +
           `📝 Incident: ${nearestIncident.type || 'Unknown'}\n` +
           `📅 Reported: ${nearestIncident.createdAt ? new Date(nearestIncident.createdAt).toLocaleDateString() : 'Unknown'}\n\n` +
@@ -3211,20 +3211,20 @@ export class HomePage implements OnInit, OnDestroy {
         
         const alertMessage = riskLevel >= 4 ? 
           `⚠️ You have entered a HIGH-RISK danger zone!\n\n` +
-          `📍 Location: ${nearestIncident.location.simplifiedAddress || 'Unknown'}\n` +
+          `📍 Location: ${nearestIncident.locationAddress || nearestIncident.location.fullAddress || nearestIncident.location.simplifiedAddress || 'Unknown'}\n` +
           `📊 Risk Level: ${riskLevel}/5 (${this.getRiskLevelText(riskLevel)})\n` +
           `📝 Incident: ${nearestIncident.type || 'Unknown'}\n` +
           `📅 Reported: ${nearestIncident.createdAt ? new Date(nearestIncident.createdAt).toLocaleDateString() : 'Unknown'}\n\n` +
           `🚨 Please exercise EXTREME CAUTION and consider leaving this area immediately!` :
           riskLevel >= 3 ?
           `⚠️ You have entered a CAUTION zone!\n\n` +
-          `📍 Location: ${nearestIncident.location.simplifiedAddress || 'Unknown'}\n` +
+          `📍 Location: ${nearestIncident.locationAddress || nearestIncident.location.fullAddress || nearestIncident.location.simplifiedAddress || 'Unknown'}\n` +
           `📊 Risk Level: ${riskLevel}/5 (${this.getRiskLevelText(riskLevel)})\n` +
           `📝 Incident: ${nearestIncident.type || 'Unknown'}\n` +
           `📅 Reported: ${nearestIncident.createdAt ? new Date(nearestIncident.createdAt).toLocaleDateString() : 'Unknown'}\n\n` +
           `⚠️ Please stay alert and exercise caution in this area!` :
           `📍 You have entered a heatmap zone!\n\n` +
-          `📍 Location: ${nearestIncident.location.simplifiedAddress || 'Unknown'}\n` +
+          `📍 Location: ${nearestIncident.locationAddress || nearestIncident.location.fullAddress || nearestIncident.location.simplifiedAddress || 'Unknown'}\n` +
           `📊 Risk Level: ${riskLevel}/5 (${this.getRiskLevelText(riskLevel)})\n` +
           `📝 Incident: ${nearestIncident.type || 'Unknown'}\n` +
           `📅 Reported: ${nearestIncident.createdAt ? new Date(nearestIncident.createdAt).toLocaleDateString() : 'Unknown'}\n\n` +

@@ -1,5 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
+import { NotificationManagerService } from '../services/notification-manager.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-tabs',
@@ -21,54 +23,44 @@ import { trigger, transition, style, animate } from '@angular/animations';
 })
 export class TabsPage implements OnInit, OnDestroy {
   unreadCount = 0;
-  private storageListener = (e: StorageEvent) => {
-    if (e.key === 'guardian_care_notifications') {
-      this.updateUnreadFromLocal();
-    }
-  };
-  private intervalId: any;
+  private notificationSubscription?: Subscription;
 
-  constructor() {}
+  constructor(private notificationManager: NotificationManagerService) {}
 
   ngOnInit() {
     this.clearStuckHoverStates();
-    this.updateUnreadFromLocal();
-    window.addEventListener('storage', this.storageListener);
     
-    // Add custom event listener for notification updates
-    window.addEventListener('notificationUpdate', (event: any) => {
-      console.log('📱 Received notification update event:', event.detail);
-      this.updateUnreadFromLocal();
+    // Calculate badge count based on NEW notifications (not all unread)
+    this.updateBadgeCount();
+    
+    // Listen for storage changes to update badge in real-time
+    window.addEventListener('storage', () => {
+      this.updateBadgeCount();
     });
-    
-    // Refresh periodically in case other parts update without storage events
-    this.intervalId = setInterval(() => this.updateUnreadFromLocal(), 4000);
   }
 
   ngOnDestroy() {
-    window.removeEventListener('storage', this.storageListener);
-    window.removeEventListener('notificationUpdate', () => {});
-    if (this.intervalId) clearInterval(this.intervalId);
+    if (this.notificationSubscription) {
+      this.notificationSubscription.unsubscribe();
+    }
   }
 
-  private updateUnreadFromLocal() {
+  private updateBadgeCount() {
     try {
-      const raw = localStorage.getItem('guardian_care_notifications');
-      if (!raw) {
-        this.unreadCount = 0;
-        return;
-      }
-      const arr = JSON.parse(raw) as Array<{ 
-        read?: boolean; 
-        data?: { seenByUser?: boolean } 
-      }>; 
-      
-      // Count notifications that are unread AND haven't been seen by user
-      this.unreadCount = Array.isArray(arr) ? 
-        arr.filter(n => !n.read && !n.data?.seenByUser).length : 0;
+      // Get notifications from localStorage (same source as notifications page)
+      const stored = localStorage.getItem('guardian_care_notifications');
+      if (stored) {
+        const notifications = JSON.parse(stored);
         
-      console.log(`📱 Tab badge count updated: ${this.unreadCount} unseen notifications`);
-    } catch {
+        // Count only NEW notifications (not seen by user)
+        this.unreadCount = notifications.filter((n: any) => {
+          return !n.read && !n.data?.seenByUser;
+        }).length;
+      } else {
+        this.unreadCount = 0;
+      }
+    } catch (error) {
+      console.warn('Could not update badge count:', error);
       this.unreadCount = 0;
     }
   }

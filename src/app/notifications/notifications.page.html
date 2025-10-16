@@ -56,7 +56,7 @@
             <span>{{ getNotificationTypeLabel(notification.type) }}</span>
             <ion-badge *ngIf="shouldShowNewBadge(notification)" color="success" class="new-badge">NEW</ion-badge>
           </div>
-          <ion-chip [color]="getStatusColor(notification)" size="small" *ngIf="notification.type === 'report_validated'">
+          <ion-chip [color]="getStatusColor(notification)" size="small" *ngIf="notification.type === 'report_validated' || notification.type === 'new_zone'">
             <ion-icon [name]="getStatusIcon(notification)"></ion-icon>
             <ion-label>{{ getStatusText(notification) }}</ion-label>
           </ion-chip>
@@ -77,17 +77,17 @@
         </div>
 
         <!-- Admin Risk Level -->
-        <div class="notification-validation" *ngIf="notification.data?.adminLevel || notification.data?.riskLevel">
+        <div class="notification-validation" *ngIf="notification.data?.adminLevel">
           <div class="validation-header">
             <ion-icon name="shield-checkmark-outline"></ion-icon>
-            <span>Admin Risk Level</span>
+            <span>Admin Risk Assessment</span>
           </div>
           <div class="validation-level-indicator">
-            <div class="level-color-bar" [style.background]="getRiskLevelColor(notification.data.adminLevel || notification.data.riskLevel || 1)"></div>
-            <span class="validation-score">Level {{ notification.data.adminLevel || notification.data.riskLevel || 1 }} - {{ getRiskLevelText(notification.data.adminLevel || notification.data.riskLevel || 1) }}</span>
+            <div class="level-color-bar" [style.background]="getRiskLevelColor(notification.data.adminLevel)"></div>
+            <span class="validation-score">Level {{ notification.data.adminLevel }} - {{ getRiskLevelText(notification.data.adminLevel) }} Risk</span>
           </div>
           <div class="validation-date">
-            <small>{{ notification.type === 'report_validated' ? 'Validated on' : 'Created on' }} {{ formatTimestamp(notification.timestamp) }}</small>
+            <small>{{ notification.type === 'report_validated' ? 'Validated on' : 'Alert created' }} {{ formatTimestamp(notification.timestamp) }}</small>
           </div>
         </div>
 

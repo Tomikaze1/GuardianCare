@@ -838,7 +838,7 @@ export class ReportService {
       2: '#ffc107',
       3: '#fd7e14',
       4: '#dc3545',
-      5: '#6f42c1'
+      5: '#8B0000'
     };
     return colors[level as keyof typeof colors] || '#6c757d';
   }

@@ -52,6 +52,7 @@ export class NotificationManagerService {
   public settings$ = this.settingsSubject.asObservable();
 
   constructor(private platform: Platform) {
+    this.loadNotificationsFromStorage();
     this.initializeNotifications();
   }
 
@@ -94,14 +95,15 @@ export class NotificationManagerService {
     const currentNotifications = this.notificationsSubject.value;
     const updatedNotifications = [newNotification, ...currentNotifications].slice(0, 100); // Keep last 100
     this.notificationsSubject.next(updatedNotifications);
+    this.saveNotificationsToStorage();
 
-    // Show push notification if enabled
-    if (this.settingsSubject.value.pushNotifications && this.settingsSubject.value.enabled) {
+    // Show push notification only for zone context (set by ZoneNotificationService)
+    if ((window as any).__guardianCareZoneSound === true && this.settingsSubject.value.pushNotifications && this.settingsSubject.value.enabled) {
       this.showPushNotification(newNotification);
     }
 
-    // Play sound if enabled
-    if (this.settingsSubject.value.soundEnabled && newNotification.sound !== false) {
+    // Play sound only for zone context
+    if ((window as any).__guardianCareZoneSound === true && this.settingsSubject.value.soundEnabled && newNotification.sound !== false) {
       this.playNotificationSound(newNotification.priority);
     }
 
@@ -121,8 +123,8 @@ export class NotificationManagerService {
       title,
       message,
       icon: 'shield',
-      sound: true,
-      vibration: true,
+      sound: false, // no sound for banner-only confirmation
+      vibration: false,
       persistent: priority === 'critical'
     });
   }
@@ -251,6 +253,7 @@ export class NotificationManagerService {
       notification.id === notificationId ? { ...notification, read: true } : notification
     );
     this.notificationsSubject.next(updatedNotifications);
+    this.saveNotificationsToStorage();
   }
 
   // Mark all as read
@@ -258,6 +261,7 @@ export class NotificationManagerService {
     const notifications = this.notificationsSubject.value;
     const updatedNotifications = notifications.map(notification => ({ ...notification, read: true }));
     this.notificationsSubject.next(updatedNotifications);
+    this.saveNotificationsToStorage();
   }
 
   // Remove notification
@@ -265,11 +269,13 @@ export class NotificationManagerService {
     const notifications = this.notificationsSubject.value;
     const updatedNotifications = notifications.filter(notification => notification.id !== notificationId);
     this.notificationsSubject.next(updatedNotifications);
+    this.saveNotificationsToStorage();
   }
 
   // Clear all notifications
   clearAllNotifications() {
     this.notificationsSubject.next([]);
+    this.saveNotificationsToStorage();
   }
 
   // Get unread count
@@ -397,5 +403,31 @@ export class NotificationManagerService {
   private isRecent(date: Date): boolean {
     const diffMs = Date.now() - new Date(date).getTime();
     return diffMs <= 5 * 60 * 1000; // 5 minutes
+  }
+
+  // Persistence methods
+  private saveNotificationsToStorage() {
+    try {
+      localStorage.setItem('guardian_care_notifications', JSON.stringify(this.notificationsSubject.value));
+    } catch (error) {
+      console.warn('Could not save notifications to storage:', error);
+    }
+  }
+
+  private loadNotificationsFromStorage() {
+    try {
+      const stored = localStorage.getItem('guardian_care_notifications');
+      if (stored) {
+        const notifications = JSON.parse(stored);
+        // Convert timestamp strings back to Date objects
+        const parsedNotifications = notifications.map((n: any) => ({
+          ...n,
+          timestamp: new Date(n.timestamp)
+        }));
+        this.notificationsSubject.next(parsedNotifications);
+      }
+    } catch (error) {
+      console.warn('Could not load notifications from storage:', error);
+    }
   }
 }
