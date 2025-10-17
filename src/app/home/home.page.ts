@@ -267,11 +267,12 @@ export class HomePage implements OnInit, OnDestroy {
     const priority = this.getNotificationPriority(alert.zoneLevel);
     const title = this.getAlertTitle(alert.type);
     
-    this.notificationManager.addSafetyNotification(
-      title,
-      alert.message,
-      priority
-    );
+    // Disabled to prevent repeated zone alert notifications
+    // this.notificationManager.addSafetyNotification(
+    //   title,
+    //   alert.message,
+    //   priority
+    // );
     
     // Show 5-second notification toast when entering a zone
     if (alert.type === 'zone_entry') {
@@ -456,13 +457,14 @@ export class HomePage implements OnInit, OnDestroy {
           });
         } else {
           // Report is far away - just show regular notification
-          this.notificationManager.addAdminValidatedReportNotification({
-            type: report.type,
-            locationAddress: report.locationAddress || report.location?.fullAddress || report.location?.simplifiedAddress || 'Unknown Location',
-            riskLevel: report.riskLevel || report.level || 1,
-            validatedAt: new Date(report.createdAt || Date.now()),
-            distanceFromUser: distanceFromUser
-          });
+          // Disabled to prevent repeated zone alert notifications
+          // this.notificationManager.addAdminValidatedReportNotification({
+          //   type: report.type,
+          //   locationAddress: report.locationAddress || report.location?.fullAddress || report.location?.simplifiedAddress || 'Unknown Location',
+          //   riskLevel: report.riskLevel || report.level || 1,
+          //   validatedAt: new Date(report.createdAt || Date.now()),
+          //   distanceFromUser: distanceFromUser
+          // });
         }
 
         console.log(`🔔 Admin validation notification triggered for report:`, {
@@ -497,11 +499,12 @@ export class HomePage implements OnInit, OnDestroy {
         if (distance <= nearbyRadius) {
           const priority = this.getReportNotificationPriority(report.riskLevel || report.level);
           
-          this.notificationManager.addLocationNotification(
-            'New Incident Nearby',
-            `${report.type} reported ${Math.round(distance)}m away`,
-            priority
-          );
+          // Disabled to prevent repeated zone alert notifications
+          // this.notificationManager.addLocationNotification(
+          //   'New Incident Nearby',
+          //   `${report.type} reported ${Math.round(distance)}m away`,
+          //   priority
+          // );
         }
       }
     });

@@ -906,9 +906,36 @@ export class ReportService {
             } as Report;
           });
           
+          // Debug: Log all reports before filtering
+          console.log('📊 All reports from database before filtering:', reports.length);
+          console.log('📊 Reports without validatedAt:', reports.filter(r => !r.validatedAt).length);
+          console.log('📊 Reports with validatedAt:', reports.filter(r => r.validatedAt).length);
+          
+          // Show reports without validatedAt for debugging
+          const reportsWithoutValidatedAt = reports.filter(r => !r.validatedAt);
+          if (reportsWithoutValidatedAt.length > 0) {
+            console.log('⚠️ Reports missing validatedAt field:', reportsWithoutValidatedAt.map(r => ({
+              id: r.id,
+              type: r.type,
+              status: r.status,
+              reporterName: r.reporterName,
+              userId: r.userId,
+              locationAddress: r.locationAddress
+            })));
+          }
+          
           // Filter and sort in memory instead of in query
+          // TEMPORARILY: Include reports even without validatedAt to see if that's the issue
           const filteredReports = reports
-            .filter(report => report.validatedAt) // Only admin-validated reports
+            .filter(report => {
+              // Include reports with status 'Validated' even if they don't have validatedAt
+              if (report.status === 'Validated' && !report.validatedAt) {
+                console.log('⚠️ Found Validated report without validatedAt:', report.id, report.type);
+                // Set a default validatedAt if missing
+                report.validatedAt = report.updatedAt || report.createdAt || new Date();
+              }
+              return report.status === 'Validated'; // Changed from report.validatedAt to report.status
+            })
             .sort((a, b) => {
               const aTime = a.validatedAt?.getTime() || 0;
               const bTime = b.validatedAt?.getTime() || 0;

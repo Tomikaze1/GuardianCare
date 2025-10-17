@@ -113,29 +113,52 @@ export class NotificationsPage implements OnInit, OnDestroy {
 
   private loadReportValidationNotifications() {
     // Show notifications for ALL validated reports (not just user's own)
+    console.log('👤 Current user for notifications:', this.currentUser);
     if (this.currentUser) {
       this.subscriptions.push(
         this.reportService.getValidatedReports().subscribe(reports => {
-          console.log('📊 Loading validated reports:', reports.length);
+          console.log('📊 Loading validated reports from service:', reports.length);
+          console.log('📊 Reports from service:', reports.map(r => ({
+            id: r.id,
+            type: r.type,
+            status: r.status,
+            validatedAt: r.validatedAt,
+            reporterName: r.reporterName
+          })));
           
           // Get last check time to determine which reports are NEW
           const lastCheckTime = this.getLastNotificationCheckTime();
           
-          // Only show notifications for:
-          // 1. User's own reports (regardless of age)
-          // 2. Very recent validations (within 24 hours)
-          const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+          // Show notifications for:
+          // 1. User's own reports (becomes "Your Report Validated")
+          // 2. ALL validated reports from other users (becomes "New Zone Alert" with same design)
           const validatedReports = reports.filter(report => {
             if (report.status !== 'Validated' || !report.validatedAt) return false;
             
-            const validatedDate = new Date(report.validatedAt);
+            // Show ALL validated reports - user's own reports OR any other user's validated reports
             const isUserReport = report.userId === this.currentUser.uid;
-            const isRecentValidation = validatedDate > oneDayAgo;
-            
-            return isUserReport || isRecentValidation;
+            return true; // Show ALL validated reports regardless of age
           });
           
-          console.log('✅ Validated reports found:', validatedReports.length);
+          console.log('✅ All validated reports found:', validatedReports.length);
+          
+          // Debug: Check for the specific crime-theft report from dasdadasd
+          const specificReport = validatedReports.find(report => 
+            report.type === 'crime-theft' && 
+            (report.reporterName === 'dasdadasd' || report.userId === 'dasdadasd' || 
+             report.locationAddress?.includes('General Lim Street'))
+          );
+          console.log('🔍 Looking for crime-theft report from dasdadasd:', specificReport);
+          
+          // Debug: Show all report types and details
+          console.log('📊 All report details:', validatedReports.map(r => ({
+            id: r.id,
+            type: r.type,
+            reporterName: r.reporterName,
+            userId: r.userId,
+            locationAddress: r.locationAddress,
+            status: r.status
+          })));
           console.log('📅 Last notification check time:', lastCheckTime);
           
           validatedReports.forEach(report => {
@@ -144,66 +167,97 @@ export class NotificationsPage implements OnInit, OnDestroy {
               n.data?.reportId === report.id
             );
             
-            if (!existingNotification) {
-              // CRITICAL: Admin validation stores risk level in 'level' field (1-5 stars from admin interface)
-              // Priority: level (admin-set) > validationLevel (legacy) > riskLevel (auto-calculated)
-              const adminLevel = report.level ?? report.validationLevel ?? report.riskLevel ?? 1;
-              const riskLevel = Number(adminLevel);
-              
-              console.log('📊 Report risk level data:', {
-                reportId: report.id,
-                level: report.level,
-                validationLevel: report.validationLevel,
-                riskLevel: report.riskLevel,
-                finalRiskLevel: riskLevel
-              });
-              
-              const validatedDate = new Date(report.validatedAt);
-              const timeStr = this.formatDetailedTime(validatedDate);
-              const isUserReport = report.userId === this.currentUser.uid;
-              const riskText = this.getRiskLevelText(riskLevel);
-
-              // Determine if this is a TRULY NEW notification (validated after last check)
-              const isNewNotification = validatedDate > lastCheckTime;
-
-              // Create notification based on whether it's user's own report or others
-              const notification: NotificationItem = {
-                id: `validated_${report.id}`,
-                type: isUserReport ? 'report_validated' : 'new_zone',
-                title: isUserReport ? `Your Report Validated` : `New Zone Alert`,
-                message: `${report.type} • ${report.locationAddress || report.location?.fullAddress || report.location?.simplifiedAddress || 'Unknown Location'} • Level ${riskLevel} - ${riskText} Risk • ${timeStr}`,
-                timestamp: validatedDate,
-                read: !isNewNotification, // Only mark as unread if it's truly new
-                data: {
-                  reportId: report.id,
-                  reportType: report.type,
-                  riskLevel: riskLevel, // Store final risk level
-                  adminLevel: riskLevel, // Store admin-validated level (same value)
-                  location: report.location,
-                  locationAddress: report.locationAddress || report.location?.fullAddress || report.location?.simplifiedAddress || 'Unknown Location',
-                  validatedTime: timeStr,
-                  seenByUser: !isNewNotification // Only mark as unseen if it's truly new
-                },
-                priority: riskLevel >= 4 ? 'critical' : riskLevel >= 3 ? 'high' : 'medium'
-              };
-              
-              console.log('🔔 Creating notification with correct risk level:', {
-                type: notification.type,
-                adminLevel: riskLevel,
-                color: this.getRiskLevelColor(riskLevel),
-                riskText: riskText,
-                isNew: isNewNotification,
-                validatedDate: validatedDate.toISOString(),
-                lastCheckTime: lastCheckTime.toISOString()
-              });
-              
-              this.notifications.unshift(notification);
-              if (report.id) this.processedReportIds.add(report.id);
+            console.log(`🔍 Processing report ${report.id}:`, {
+              exists: !!existingNotification,
+              userId: report.userId,
+              currentUserId: this.currentUser?.uid,
+              status: report.status,
+              validatedAt: report.validatedAt,
+              type: report.type,
+              reporterName: report.reporterName,
+              locationAddress: report.locationAddress
+            });
+            
+            // Always create notification to ensure all reports are displayed
+            // Remove existing notification first to prevent duplicates
+            if (existingNotification) {
+              const existingIndex = this.notifications.findIndex(n => n.data?.reportId === report.id);
+              if (existingIndex !== -1) {
+                this.notifications.splice(existingIndex, 1);
+                console.log(`🗑️ Removed existing notification for report ${report.id}`);
+              }
             }
+            
+            // CRITICAL: Admin validation stores risk level in 'level' field (1-5 stars from admin interface)
+            // Priority: level (admin-set) > validationLevel (legacy) > riskLevel (auto-calculated)
+            const adminLevel = report.level ?? report.validationLevel ?? report.riskLevel ?? 1;
+            const riskLevel = Number(adminLevel);
+            
+            console.log('📊 Report risk level data:', {
+              reportId: report.id,
+              level: report.level,
+              validationLevel: report.validationLevel,
+              riskLevel: report.riskLevel,
+              finalRiskLevel: riskLevel
+            });
+            
+            const validatedDate = new Date(report.validatedAt);
+            const timeStr = this.formatDetailedTime(validatedDate);
+            const isUserReport = report.userId === this.currentUser.uid;
+            const riskText = this.getRiskLevelText(riskLevel);
+
+            // Determine if this is a TRULY NEW notification (validated after last check)
+            const isNewNotification = validatedDate > lastCheckTime;
+
+            // Create notification with same design for both user's own reports and zone alerts
+            const notification: NotificationItem = {
+              id: `validated_${report.id}`,
+              type: isUserReport ? 'report_validated' : 'new_zone',
+              title: isUserReport ? `Your Report Validated` : `New Zone Alert`,
+              message: `${report.type} • ${report.locationAddress || report.location?.fullAddress || report.location?.simplifiedAddress || 'Unknown Location'} • Level ${riskLevel} - ${riskText} Risk • ${timeStr}`,
+              timestamp: validatedDate,
+              read: !isNewNotification, // Only mark as unread if it's truly new
+              data: {
+                reportId: report.id,
+                reportType: report.type,
+                riskLevel: riskLevel, // Store final risk level
+                adminLevel: riskLevel, // Store admin-validated level (same value)
+                location: report.location,
+                locationAddress: report.locationAddress || report.location?.fullAddress || report.location?.simplifiedAddress || 'Unknown Location',
+                validatedTime: timeStr,
+                seenByUser: !isNewNotification, // Only mark as unseen if it's truly new
+                // Add same fields for both notification types to ensure consistent design
+                isUserReport: isUserReport,
+                validatedAt: report.validatedAt,
+                userId: report.userId
+              },
+              priority: riskLevel >= 4 ? 'critical' : riskLevel >= 3 ? 'high' : 'medium'
+            };
+            
+            console.log('🔔 Creating notification with correct risk level:', {
+              type: notification.type,
+              adminLevel: riskLevel,
+              color: this.getRiskLevelColor(riskLevel),
+              riskText: riskText,
+              isNew: isNewNotification,
+              validatedDate: validatedDate.toISOString(),
+              lastCheckTime: lastCheckTime.toISOString()
+            });
+            
+            this.notifications.unshift(notification);
+            if (report.id) this.processedReportIds.add(report.id);
           });
           
           this.saveNotifications();
           this.sortNotifications();
+          
+          console.log(`📊 FINAL NOTIFICATION COUNT: ${this.notifications.length} notifications created from ${validatedReports.length} validated reports`);
+          console.log(`📊 Notification breakdown:`, {
+            totalNotifications: this.notifications.length,
+            totalValidatedReports: validatedReports.length,
+            userReports: this.notifications.filter(n => n.data?.isUserReport).length,
+            otherUserReports: this.notifications.filter(n => !n.data?.isUserReport).length
+          });
         })
       );
     }
@@ -234,32 +288,32 @@ export class NotificationsPage implements OnInit, OnDestroy {
           notification.type !== 'engagement'
         );
         
+        // Allow only specific notification types from NotificationManager (not zone alerts)
         filteredNotifications.forEach(notification => {
-          const convertedType = this.convertNotificationType(notification.type);
-          // Skip NotificationManager report/zone items to avoid duplicates (we already add from Firestore stream)
-          if (convertedType === 'report_validated' || convertedType === 'new_zone') {
-            return;
-          }
-          const existingIndex = this.notifications.findIndex(n => n.id === notification.id);
-          if (existingIndex === -1) {
-            const convertedNotification: NotificationItem = {
-              id: notification.id,
-              type: convertedType,
-              title: notification.title,
-              message: notification.message,
-              timestamp: notification.timestamp,
-              read: notification.read,
-              priority: notification.priority,
-              data: {
-                actionUrl: notification.actionUrl,
-                icon: notification.icon,
-                sound: notification.sound,
-                vibration: notification.vibration,
-                persistent: notification.persistent,
-                distanceMeters: (notification as any).distanceMeters
-              }
-            };
-            this.notifications.unshift(convertedNotification);
+          // Only allow report notifications, filter out safety/location notifications that cause zone alerts
+          if (notification.type === 'report') {
+            const convertedType = this.convertNotificationType(notification.type);
+            const existingIndex = this.notifications.findIndex(n => n.id === notification.id);
+            if (existingIndex === -1) {
+              const convertedNotification: NotificationItem = {
+                id: notification.id,
+                type: convertedType,
+                title: notification.title,
+                message: notification.message,
+                timestamp: notification.timestamp,
+                read: notification.read,
+                priority: notification.priority,
+                data: {
+                  actionUrl: notification.actionUrl,
+                  icon: notification.icon,
+                  sound: notification.sound,
+                  vibration: notification.vibration,
+                  persistent: notification.persistent,
+                  distanceMeters: (notification as any).distanceMeters
+                }
+              };
+              this.notifications.unshift(convertedNotification);
+            }
           }
         });
         
@@ -409,7 +463,7 @@ export class NotificationsPage implements OnInit, OnDestroy {
       case 'report_validated':
         return 'checkmark-circle';
       case 'new_zone':
-        return 'warning';
+        return 'checkmark-circle'; // Same icon for consistent design
       case 'system':
         return 'information-circle';
       default:
@@ -422,7 +476,7 @@ export class NotificationsPage implements OnInit, OnDestroy {
       case 'report_validated':
         return 'success';
       case 'new_zone':
-        return 'warning';
+        return 'success'; // Same color for consistent design
       case 'system':
         return 'primary';
       default:
@@ -610,17 +664,10 @@ export class NotificationsPage implements OnInit, OnDestroy {
     }
   }
 
-  // Check if notification should show NEW badge (only if recent AND not seen by user)
+  // Check if notification should show NEW badge (disabled - no NEW badges)
   shouldShowNewBadge(notification: NotificationItem): boolean {
-    const now = new Date().getTime();
-    const notificationTime = new Date(notification.timestamp).getTime();
-    const timeDiff = now - notificationTime;
-    
-    // Show NEW badge only if notification is less than 30 minutes old AND not seen by user
-    const isRecent = timeDiff <= 30 * 60 * 1000; // 30 minutes in milliseconds
-    const notSeenByUser = !notification.data?.seenByUser;
-    
-    return isRecent && notSeenByUser;
+    // Always return false to remove all NEW badges
+    return false;
   }
 
   // Ensure new notifications are marked as unseen by user
@@ -651,30 +698,18 @@ export class NotificationsPage implements OnInit, OnDestroy {
   }
 
   getStatusColor(notification: NotificationItem): string {
-    if (notification.type === 'report_validated') {
-      return 'success';
-    } else if (notification.type === 'new_zone') {
-      return 'primary';
-    }
-    return 'medium';
+    // Both notification types show the same "Validated" status
+    return 'success';
   }
 
   getStatusIcon(notification: NotificationItem): string {
-    if (notification.type === 'report_validated') {
-      return 'checkmark-circle-outline';
-    } else if (notification.type === 'new_zone') {
-      return 'add-circle-outline';
-    }
-    return 'information-circle-outline';
+    // Both notification types show the same checkmark icon
+    return 'checkmark-circle-outline';
   }
 
   getStatusText(notification: NotificationItem): string {
-    if (notification.type === 'report_validated') {
-      return 'Validated';
-    } else if (notification.type === 'new_zone') {
-      return 'New Zone';
-    }
-    return 'Notification';
+    // Both notification types show "Validated" text for consistent design
+    return 'Validated';
   }
 
 
@@ -807,6 +842,25 @@ export class NotificationsPage implements OnInit, OnDestroy {
       console.log('🧹 Cleared test notifications');
     } catch (error) {
       console.error('Error clearing test notifications:', error);
+    }
+  }
+
+  // Clear all repeated notifications to stop them from appearing
+  private clearAllRepeatedNotifications() {
+    try {
+      // Clear all notifications from localStorage
+      localStorage.removeItem('guardian_care_notifications');
+      
+      // Reset the notifications array
+      this.notifications = [];
+      this.filteredNotifications = [];
+      
+      // Update the view
+      this.applyFiltersAndSort();
+      
+      console.log('🧹 Cleared all repeated notifications');
+    } catch (error) {
+      console.error('Error clearing repeated notifications:', error);
     }
   }
 }
