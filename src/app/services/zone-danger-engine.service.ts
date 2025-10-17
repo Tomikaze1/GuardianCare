@@ -359,35 +359,9 @@ export class ZoneDangerEngineService {
   }
 
   public simulateRecentIncidents() {
-    const zones = this.zones.value;
-    const now = new Date();
-    
-    const dangerZone = zones.find(z => z.level === 'Danger');
-    if (dangerZone) {
-      const recentTime = new Date(now.getTime() - 15 * 60 * 1000);
-      dangerZone.incidents.push({
-        id: 'recent-test-1',
-        timestamp: recentTime,
-        severity: 8,
-        type: 'assault',
-        description: 'Recent incident for testing alerts'
-      });
-    }
-
-    const cautionZone = zones.find(z => z.level === 'Caution');
-    if (cautionZone) {
-      const nearbyTime = new Date(now.getTime() - 90 * 60 * 1000);
-      cautionZone.incidents.push({
-        id: 'nearby-test-1',
-        timestamp: nearbyTime,
-        severity: 6,
-        type: 'theft',
-        description: 'Nearby incident for testing alerts'
-      });
-    }
-
-    this.zones.next([...zones]);
-    console.log('🧪 Simulated recent incidents for testing');
+    // Simulation disabled - no test incidents will be created
+    console.log('🧪 Incident simulation disabled - no test incidents created');
+    return;
   }
 
   public updateCurrentLocation(location: { lat: number; lng: number }) {

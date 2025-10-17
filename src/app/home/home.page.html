@@ -113,49 +113,5 @@
     </button>
   </div>
   
-  <!-- Swipe Indicator -->
-  <div class="swipe-indicator" *ngIf="!isQuickActionsOpen">
-    <div class="swipe-hint">
-      <ion-icon name="chevron-up-outline"></ion-icon>
-      <span>Swipe up for quick actions</span>
-    </div>
-  </div>
 
-  <!-- Bottom Quick Action Sheet -->
-  <div class="quick-actions-sheet" 
-       [class.sheet-open]="isQuickActionsOpen"
-       (touchstart)="onTouchStart($event)"
-       (touchmove)="onTouchMove($event)"
-       (touchend)="onTouchEnd($event)"
-       (mousedown)="onMouseDown($event)"
-       (mousemove)="onMouseMove($event)"
-       (mouseup)="onMouseUp($event)"
-       (mouseleave)="onMouseLeave($event)">
-    <div class="sheet-handle" (click)="toggleQuickActions()"></div>
-    <div class="sheet-content">
-      <div class="quick-action-grid">
-        <!-- Quick Action Cards -->
-        <div class="action-card" (click)="triggerPanicButton()">
-          <div class="action-icon danger-action">
-            <ion-icon name="warning"></ion-icon>
-          </div>
-          <div class="action-label">Emergency</div>
-        </div>
-        
-        <div class="action-card" (click)="toggleHeatmap()">
-          <div class="action-icon" [class.active]="isHeatmapVisible">
-            <ion-icon name="flame"></ion-icon>
-          </div>
-          <div class="action-label">Heatmap</div>
-        </div>
-        
-        <div class="action-card">
-          <div class="action-icon">
-            <ion-icon name="share-social"></ion-icon>
-          </div>
-          <div class="action-label">Share Location</div>
-        </div>
-      </div>
-    </div>
-  </div>
 </ion-content>

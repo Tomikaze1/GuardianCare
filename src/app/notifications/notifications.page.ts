@@ -52,8 +52,8 @@ export class NotificationsPage implements OnInit, OnDestroy {
     this.subscribeToNotifications();
     this.subscribeToAdminValidations();
     
-    // Create test notifications for demonstration
-    // this.createTestNotifications();
+    // Test notifications disabled - no demo data
+    this.clearTestNotifications();
   }
 
   ngOnDestroy() {
@@ -121,10 +121,18 @@ export class NotificationsPage implements OnInit, OnDestroy {
           // Get last check time to determine which reports are NEW
           const lastCheckTime = this.getLastNotificationCheckTime();
           
-          // For existing users, show ALL validated reports (not just new ones)
-          // This restores the original behavior where all 11+ reports are shown
+          // Only show notifications for:
+          // 1. User's own reports (regardless of age)
+          // 2. Very recent validations (within 24 hours)
+          const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
           const validatedReports = reports.filter(report => {
-            return report.status === 'Validated' && report.validatedAt;
+            if (report.status !== 'Validated' || !report.validatedAt) return false;
+            
+            const validatedDate = new Date(report.validatedAt);
+            const isUserReport = report.userId === this.currentUser.uid;
+            const isRecentValidation = validatedDate > oneDayAgo;
+            
+            return isUserReport || isRecentValidation;
           });
           
           console.log('✅ Validated reports found:', validatedReports.length);
@@ -789,6 +797,16 @@ export class NotificationsPage implements OnInit, OnDestroy {
       case 'medium': return 'information-circle';
       case 'low': return 'checkmark-circle';
       default: return 'information-circle';
+    }
+  }
+
+  // Clear test notifications
+  private clearTestNotifications() {
+    try {
+      localStorage.removeItem('guardian_care_notifications');
+      console.log('🧹 Cleared test notifications');
+    } catch (error) {
+      console.error('Error clearing test notifications:', error);
     }
   }
 }

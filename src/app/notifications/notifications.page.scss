@@ -4,7 +4,7 @@
   min-height: 100vh;
   font-family: 'DM Sans', 'Plus Jakarta Sans', Arial, sans-serif;
   padding: 0;
-  padding-bottom: 120px;
+  padding-bottom: calc(180px + env(safe-area-inset-bottom)); // Account for safe area
 }
 
 .logo-container {
@@ -235,8 +235,8 @@
 .notifications-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding-bottom: 100px; // Extra space to prevent tab bar from covering last item
+  gap: 12px; // Reduced from 16px to 12px for tighter spacing
+  padding-bottom: 20px; // Reduced from 140px to 20px to bring buttons closer
 }
 
 .notification-card {
@@ -400,10 +400,13 @@
 
 // Action Buttons - Matching Reports
 .action-buttons {
-  margin: 32px 0;
+  margin: 16px 0 40px 0; // Reduced top margin from 32px to 16px
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding-bottom: 20px; // Added extra padding at bottom
+  position: relative;
+  z-index: 10; // Ensure buttons stay above other content
   
   .action-btn {
     --border-radius: 16px;
@@ -417,6 +420,8 @@
     font-family: 'Plus Jakarta Sans', sans-serif;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
+    position: relative;
+    z-index: 5; // Ensure buttons are clickable
     
     ion-icon {
       margin-right: 8px;
@@ -568,6 +573,19 @@
       height: 48px;
       font-size: 0.9rem;
     }
+    
+    // Closer spacing on mobile
+    margin: 12px 0 50px 0; // Reduced top margin from 32px to 12px
+    padding-bottom: 30px;
+  }
+  
+  // Ensure content doesn't get cut off on mobile
+  .notifications-content {
+    padding-bottom: calc(200px + env(safe-area-inset-bottom));
+  }
+  
+  .notifications-list {
+    padding-bottom: 20px; // Reduced from 160px to 20px for closer spacing
   }
 }
 

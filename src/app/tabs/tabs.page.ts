@@ -30,6 +30,9 @@ export class TabsPage implements OnInit, OnDestroy {
   ngOnInit() {
     this.clearStuckHoverStates();
     
+    // Clear any existing test notifications
+    this.clearTestNotifications();
+    
     // Calculate badge count based on NEW notifications (not all unread)
     this.updateBadgeCount();
     
@@ -42,6 +45,16 @@ export class TabsPage implements OnInit, OnDestroy {
   ngOnDestroy() {
     if (this.notificationSubscription) {
       this.notificationSubscription.unsubscribe();
+    }
+  }
+
+  private clearTestNotifications() {
+    try {
+      // Clear localStorage to remove test notifications
+      localStorage.removeItem('guardian_care_notifications');
+      console.log('🧹 Cleared test notifications from tabs');
+    } catch (error) {
+      console.warn('Could not clear test notifications:', error);
     }
   }
 

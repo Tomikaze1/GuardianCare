@@ -12,7 +12,13 @@
 
     <ion-tab-button tab="notifications">
       <ion-icon name="notifications"></ion-icon>
-      <ion-badge *ngIf="unreadCount > 0" color="danger" class="notif-badge">{{ unreadCount }}</ion-badge>
+      <ion-badge *ngIf="unreadCount > 0" 
+                 color="danger" 
+                 class="notif-badge"
+                 [class.double-digit]="unreadCount >= 10"
+                 [class.triple-digit]="unreadCount >= 100">
+        {{ unreadCount > 99 ? '99+' : unreadCount }}
+      </ion-badge>
       <ion-label>Notifications</ion-label>
     </ion-tab-button>
 

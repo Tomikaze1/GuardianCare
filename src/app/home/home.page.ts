@@ -47,13 +47,6 @@ export class HomePage implements OnInit, OnDestroy {
   private lastNotificationTime: number = 0;
   // Track current risk level when inside a heatmap zone (1-5). Null when safe/outside
   private currentZoneRiskLevel: number | null = null;
-  // Quick Actions Sheet properties
-  isQuickActionsOpen = false;
-  private touchStartY = 0;
-  private touchCurrentY = 0;
-  private isDragging = false;
-  private sheetHeight = 0;
-  private isMouseDown = false;;
   @ViewChild('edgeHandle', { static: false }) edgeHandleRef?: ElementRef<HTMLDivElement>;
   private dragData: { dragging: boolean; startY: number; offsetY: number } = { dragging: false, startY: 0, offsetY: 200 };
   uiMode: 'sidebar' | 'buttons' = 'buttons';
@@ -727,6 +720,29 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   updateUserMarker(location: { lat: number; lng: number; heading?: number }) {
+    if (this.map) {
+      // Robustness: if marker is missing (e.g., after style swap), recreate it
+      if (!this.userMarker || !this.userMarker.getElement()?.isConnected) {
+        if (this.currentLocation) {
+          const markerElement = document.createElement('div');
+          markerElement.className = 'waze-navigation-marker';
+          markerElement.innerHTML = `
+            <svg width="44" height="52" viewBox="0 0 44 52" class="waze-arrow">
+              <path d="M22 6 L36 30 L30 30 L30 46 L14 46 L14 30 L8 30 Z"
+                    fill="#00B8D4" stroke="#FFFFFF" stroke-width="2.5" class="nav-arrow"/>
+            </svg>
+          `;
+          this.userMarker = new mapboxgl.Marker({
+            element: markerElement,
+            anchor: 'bottom',
+            rotationAlignment: 'map',
+            pitchAlignment: 'map'
+          })
+            .setLngLat([location.lng, location.lat])
+            .addTo(this.map);
+        }
+      }
+    }
     if (this.userMarker && this.map) {
       // Smoothly animate marker movement
       this.userMarker.setLngLat([location.lng, location.lat]);
@@ -1053,102 +1069,8 @@ export class HomePage implements OnInit, OnDestroy {
     }, 100);
 
     this.setupEdgeHandleDrag();
-    this.initializeQuickActionsSheet();
   }
 
-  // Quick Actions Sheet Methods
-  initializeQuickActionsSheet() {
-    // Calculate sheet height
-    setTimeout(() => {
-      const sheet = document.querySelector('.quick-actions-sheet');
-      if (sheet) {
-        this.sheetHeight = sheet.scrollHeight;
-      }
-    }, 100);
-  }
-
-  toggleQuickActions() {
-    this.isQuickActionsOpen = !this.isQuickActionsOpen;
-  }
-
-  onTouchStart(event: TouchEvent) {
-    this.touchStartY = event.touches[0].clientY;
-    this.touchCurrentY = this.touchStartY;
-    this.isDragging = true;
-  }
-
-  onTouchMove(event: TouchEvent) {
-    if (!this.isDragging) return;
-    
-    this.touchCurrentY = event.touches[0].clientY;
-    const deltaY = this.touchCurrentY - this.touchStartY;
-    
-    // Prevent default scrolling when dragging
-    if (Math.abs(deltaY) > 10) {
-      event.preventDefault();
-    }
-  }
-
-  onTouchEnd(event: TouchEvent) {
-    if (!this.isDragging) return;
-    
-    const deltaY = this.touchCurrentY - this.touchStartY;
-    const threshold = 50; // Minimum distance to trigger action
-    
-    if (deltaY < -threshold) {
-      // Swipe up - open sheet
-      this.isQuickActionsOpen = true;
-    } else if (deltaY > threshold) {
-      // Swipe down - close sheet
-      this.isQuickActionsOpen = false;
-    }
-    
-    this.isDragging = false;
-  }
-
-  // Mouse event handlers for browser testing
-  onMouseDown(event: MouseEvent) {
-    this.touchStartY = event.clientY;
-    this.touchCurrentY = this.touchStartY;
-    this.isMouseDown = true;
-    this.isDragging = true;
-  }
-
-  onMouseMove(event: MouseEvent) {
-    if (!this.isDragging || !this.isMouseDown) return;
-    
-    this.touchCurrentY = event.clientY;
-    const deltaY = this.touchCurrentY - this.touchStartY;
-    
-    // Prevent default scrolling when dragging
-    if (Math.abs(deltaY) > 10) {
-      event.preventDefault();
-    }
-  }
-
-  onMouseUp(event: MouseEvent) {
-    if (!this.isDragging || !this.isMouseDown) return;
-    
-    const deltaY = this.touchCurrentY - this.touchStartY;
-    const threshold = 50; // Minimum distance to trigger action
-    
-    if (deltaY < -threshold) {
-      // Drag up - open sheet
-      this.isQuickActionsOpen = true;
-    } else if (deltaY > threshold) {
-      // Drag down - close sheet
-      this.isQuickActionsOpen = false;
-    }
-    
-    this.isDragging = false;
-    this.isMouseDown = false;
-  }
-
-  onMouseLeave(event: MouseEvent) {
-    // Reset dragging state when mouse leaves the element
-    this.isDragging = false;
-    this.isMouseDown = false;
-  }
 
   openActionsMenu() {
     const menu = document.querySelector('ion-menu[menuId="home-actions"]') as HTMLIonMenuElement | null;
@@ -2773,10 +2695,10 @@ export class HomePage implements OnInit, OnDestroy {
   
   async testIncidentAlerts() {
     try {
-      this.zoneEngine.simulateRecentIncidents();
+      // Simulation disabled - no test incidents
       await this.notificationService.success(
-        '🧪 TEST INCIDENTS SIMULATED',
-        'Recent incidents have been added to test the alert system.\n\n• Recent assault in danger zone (15 min ago)\n• Nearby theft in caution zone (90 min ago)\n\nMove into these zones to test alerts!',
+        '🧪 TEST INCIDENTS DISABLED',
+        'Test incident simulation has been disabled. No test incidents will be created.',
         'OK',
         8000
       );

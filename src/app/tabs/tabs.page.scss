@@ -8,8 +8,10 @@ ion-tab-bar {
   z-index: 99;
   height: 60px;
   padding: 0;
+  padding-bottom: env(safe-area-inset-bottom); // Handle devices with home indicator
   box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.08);
   border-top: 1px solid rgba(124, 58, 237, 0.08);
+  min-height: 60px; // Ensure minimum height
   
   ion-tab-button {
     --background: transparent;
@@ -20,11 +22,14 @@ ion-tab-bar {
     --padding-bottom: 8px;
     position: relative;
     font-family: 'DM Sans', sans-serif;
+    overflow: visible; // Allow badge to extend beyond button bounds
     
     ion-icon {
       font-size: 1.5rem;
       margin-bottom: 4px;
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      z-index: 1;
     }
     
     ion-label {
@@ -83,13 +88,40 @@ ion-tab-bar {
 
 .notif-badge {
   position: absolute;
-  top: 2px;
-  right: 18px;
-  font-size: 10px;
-  height: 16px;
-  min-width: 16px;
-  padding: 0 4px;
-  border-radius: 8px;
+  top: 4px;
+  right: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  height: 18px;
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  border: 2px solid white;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  animation: badgePulse 2s ease-in-out infinite;
+  
+  // Ensure single digits are centered
+  &:not([class*="double-digit"]) {
+    padding: 0 6px;
+  }
+  
+  // For double digits, adjust padding
+  &[class*="double-digit"] {
+    padding: 0 4px;
+    min-width: 20px;
+  }
+  
+  // For triple digits, show 99+
+  &[class*="triple-digit"] {
+    padding: 0 3px;
+    min-width: 22px;
+  }
 }
 
 // Page transitions
@@ -106,5 +138,53 @@ ion-router-outlet > * {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes badgePulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.6);
+  }
+}
+
+// Mobile responsive improvements
+@media (max-width: 480px) {
+  .notif-badge {
+    top: 3px;
+    right: 10px;
+    font-size: 10px;
+    height: 16px;
+    min-width: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    
+    &[class*="double-digit"] {
+      min-width: 18px;
+      padding: 0 3px;
+    }
+    
+    &[class*="triple-digit"] {
+      min-width: 20px;
+      padding: 0 2px;
+    }
+  }
+  
+  ion-tab-bar {
+    height: 56px;
+    
+    ion-tab-button {
+      ion-icon {
+        font-size: 1.4rem;
+      }
+      
+      ion-label {
+        font-size: 0.65rem;
+      }
+    }
   }
 }
