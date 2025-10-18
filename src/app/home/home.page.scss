@@ -19,6 +19,10 @@
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  left: 0;
 }
 
 ion-content {
@@ -27,6 +31,8 @@ ion-content {
   --padding-top: 0;
   --padding-bottom: 0;
   padding-bottom: env(safe-area-inset-bottom); // Handle devices with home indicator
+  overflow: hidden !important; // Prevent any scrolling on the content
+  --overflow: hidden;
 }
 
 // Full Width Header - Now Sticky
@@ -58,6 +64,7 @@ ion-content {
   border-radius: 0;
   overflow: hidden;
   margin-bottom: 60px; // Ensure content doesn't get hidden behind tabs
+  touch-action: manipulation; // Allow map interactions while preventing page scroll
 }
 
 // Enhanced Live Badge
