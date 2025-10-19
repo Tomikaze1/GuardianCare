@@ -100,7 +100,6 @@
   }
 }
 
-// Color variants
 .notification-info {
   border-left-color: #007bff;
   background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
@@ -229,7 +228,6 @@
   }
 }
 
-// Animations
 @keyframes slideInDown {
   from {
     transform: translateX(-50%) translateY(-100%);
@@ -256,7 +254,6 @@
   animation: slideOutUp 0.3s ease-in forwards;
 }
 
-// Responsive design
 @media (max-width: 576px) {
   .notification-banner {
     width: 95%;

@@ -472,7 +472,7 @@
       ion-icon {
         width: 1.1rem;
         height: 1.1rem;
-        color: white !important; // Force white color for visibility on purple background
+        color: white !important; 
       }
     }
   }
@@ -708,7 +708,6 @@
   }
 }
 
-// Time and Date Box Styles
 .time-date-box {
   flex-direction: column;
   align-items: flex-start;
@@ -1124,7 +1123,6 @@
   }
 }
 
-// Map popup styles
 .location-popup {
   font-family: 'Plus Jakarta Sans', sans-serif;
   
@@ -1141,7 +1139,6 @@
   }
 }
 
-// Mapbox marker customization
 .mapboxgl-marker {
   cursor: pointer;
   
@@ -1151,7 +1148,6 @@
   }
 }
 
-// Map container responsive adjustments
 @media (max-width: 768px) {
   .map-container {
     height: 180px;
@@ -1189,11 +1185,10 @@
   }
 }
 
-// Report History Styles
 .history-toggle-btn {
-  margin: 16px auto; // center under header
+  margin: 16px auto; 
   width: 100%;
-  max-width: 420px; // match phone width on desktop
+  max-width: 420px; 
   --background: linear-gradient(135deg, var(--primary-purple) 0%, #9333ea 100%);
   --color: white;
   font-weight: 600;
@@ -1209,7 +1204,7 @@
 .report-history-section {
   padding: 0 20px 20px;
   animation: fadeInUp 0.4s ease-out;
-  max-width: 420px; // constrain to phone width
+  max-width: 420px; 
   margin: 0 auto;
 }
 
@@ -1238,7 +1233,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding-bottom: 100px; // Extra space to prevent tab bar from covering last item
+  padding-bottom: 100px; 
 }
 
 .report-card {
@@ -1438,7 +1433,7 @@
 
 .no-reports {
   text-align: center;
-  padding: 40px 20px 100px 20px; // Extra bottom padding to prevent tab bar overlap
+  padding: 40px 20px 100px 20px; 
   color: #94a3b8;
   
   ion-icon {
@@ -1461,7 +1456,6 @@
   }
 }
 
-// Alert modal styling
 ::ng-deep .report-details-alert {
   .alert-message {
     white-space: pre-wrap;

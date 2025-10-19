@@ -23,8 +23,8 @@ export class HomePage implements OnInit, OnDestroy {
   currentLocation: { lat: number; lng: number } | null = null;
   zones: DangerZone[] = [];
   zoneLayers: string[] = [];
-  reportMarkers: mapboxgl.Marker[] = []; // For individual report markers
-  validatedReports: any[] = []; // Store validated reports directly
+  reportMarkers: mapboxgl.Marker[] = [];
+  validatedReports: any[] = [];
   isHeatmapVisible = false;
   isPanicActive = false;
   inDangerZone = false;
@@ -34,7 +34,6 @@ export class HomePage implements OnInit, OnDestroy {
   currentAddress: string = '';
   private lastAddressUpdate: number = 0;
   
-  // Safety and zone alert properties
   nearbyZoneAlert: string = '';
   nearestZoneDistance: number | null = null;
   safetyStatus: 'safe' | 'warning' | 'danger' = 'safe';
@@ -45,28 +44,24 @@ export class HomePage implements OnInit, OnDestroy {
   private wasInDangerZone: boolean = false;
   private subscriptions: any[] = [];
   private lastNotificationTime: number = 0;
-  // Track current risk level when inside a heatmap zone (1-5). Null when safe/outside
   private currentZoneRiskLevel: number | null = null;
   @ViewChild('edgeHandle', { static: false }) edgeHandleRef?: ElementRef<HTMLDivElement>;
   private dragData: { dragging: boolean; startY: number; offsetY: number } = { dragging: false, startY: 0, offsetY: 200 };
   uiMode: 'sidebar' | 'buttons' = 'buttons';
   
-  // Real-time tracking properties
   private realTimeLocationSubscription: any = null;
   private userMarker: mapboxgl.Marker | null = null;
   isRealTimeTracking = false;
-  private trackingInterval = 3000; // 3 seconds for real-time updates
+  private trackingInterval = 3000;
   batteryOptimizationMode = false;
   private trackingMode: 'high' | 'medium' | 'low' = 'medium';
   @ViewChild(IonContent, { static: false }) content?: IonContent;
   
-  // Zone notification properties
   activeZoneAlerts: ZoneAlert[] = [];
   currentZoneInfo: DangerZone | null = null;
-  private reportsLoaded = false; // Guard to prevent multiple report loading
+  private reportsLoaded = false;
   private lastKnownReports: Set<string> = new Set(); // Track known reports for new report detection
   
-  // Alert sound properties
   private alertSoundInterval: any = null;
   private currentAlertSound: any = null;
 
@@ -95,24 +90,18 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   ionViewWillEnter() {
-    // Ensure content starts at the top whenever this tab becomes active
     this.content?.scrollToTop(0);
     this.zoneEngine.initializeZones();
     
-    // Check for navigation from notifications
     this.checkForNotificationNavigation();
     
-    // Clear all notification banners on successful login
     this.notificationService.dismissAll();
     
-    // CRITICAL FIX: Reset heatmap visibility state FIRST to ensure clean initialization
     this.isHeatmapVisible = false;
     
-    // CRITICAL FIX: Ensure completely clean state - remove ALL existing markers and heatmap layers
     this.removeReportMarkers();
     this.removeHeatmapLayer();
     
-    // CRITICAL FIX: Force cleanup of any remaining visual elements
     if (this.map) {
       this.removeHeatmapLayer();
       this.removeReportMarkers();
@@ -126,37 +115,24 @@ export class HomePage implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.subscriptions.forEach(sub => sub.unsubscribe());
     this.stopRealTimeTracking();
-    this.stopAlertSound(); // Stop any playing alert sounds
-    this.reportsLoaded = false; // Reset guard for next load
-    // Remove report markers
+    this.stopAlertSound();
+    this.reportsLoaded = false;
+
     this.reportMarkers.forEach(marker => marker.remove());
     this.reportMarkers = [];
     if (this.map) {
       this.map.remove();
     }
-    // Remove resize listener
+
     window.removeEventListener('resize', this.handleResize);
   }
 
-  // Zone Notification Methods
-  private initializeZoneNotifications() {
-    // Zone notification service disabled - using main zone detection logic only
-    // this.subscriptions.push(
-    //   this.zoneNotificationService.activeAlerts$.subscribe(alerts => {
-    //     this.activeZoneAlerts = alerts;
-    //     
-    //     // Trigger notifications for new alerts
-    //     alerts.forEach(alert => {
-    //       this.triggerZoneNotification(alert);
-    //     });
-    //   })
-    // );
 
-    // Request notification permissions
+  private initializeZoneNotifications() {
+
     this.requestNotificationPermissions();
   }
 
-  // Load validated reports directly from report service
   private loadValidatedReportsDirectly() {
     if (this.reportsLoaded) {
       console.log('📍 LOADING REPORTS: Already loaded, skipping to prevent duplicates');
@@ -169,7 +145,6 @@ export class HomePage implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.reportService.getAllReports().subscribe({
         next: (allReports) => {
-          // Filter only validated reports (same as admin approach)
           const reports = allReports.filter(r => r.status === 'Validated');
           console.log(`📍 LOADING REPORTS: Loaded ${allReports.length} total reports, ${reports.length} validated reports`);
           console.log('📍 LOADING REPORTS: All reports:', allReports.map(r => ({
@@ -184,20 +159,16 @@ export class HomePage implements OnInit, OnDestroy {
             status: r.status
           })));
           
-          // On first load after sign-in, initialize baseline and DO NOT notify
           if (!this.reportsLoaded) {
             const definedIds = reports.map(r => r.id).filter((id: any) => typeof id === 'string') as string[];
             this.lastKnownReports = new Set(definedIds);
             this.reportsLoaded = true;
           } else {
-            // Check for new admin-validated reports and trigger notifications
             this.checkForNewValidatedReports(reports);
             
-            // Trigger notification for new reports in user's area
             this.checkForNearbyNewReports(reports);
           }
           
-          // Store the original reports with their exact locations
           this.validatedReports = reports.map(report => ({
             id: report.id,
             type: report.type,
@@ -210,7 +181,7 @@ export class HomePage implements OnInit, OnDestroy {
             },
             locationAddress: report.locationAddress,
             riskLevel: report.riskLevel,
-            level: report.level, // Admin validation level
+            level: report.level,
             createdAt: report.createdAt,
             status: report.status,
             reporterName: report.reporterName,
@@ -220,14 +191,10 @@ export class HomePage implements OnInit, OnDestroy {
             anonymous: report.anonymous
           }));
           
-          // Update markers and heatmap with the original report locations
           if (this.isHeatmapVisible) {
-            // When heatmap is visible, only update heatmap layers, not individual markers
             this.updateHeatmapLayer();
           } else {
-            // When heatmap is NOT visible, ensure no markers are shown and heatmap is completely removed
             this.removeReportMarkers();
-            // CRITICAL FIX: Completely remove heatmap layers when not visible
             this.removeHeatmapLayer();
           }
         },
@@ -251,37 +218,21 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   private checkZoneNotifications(location: { lat: number; lng: number }) {
-    // Zone notification service disabled - using main zone detection logic only
-    // this.zoneNotificationService.checkZoneEntry(location);
-    // this.zoneNotificationService.checkZoneLevelChanges();
   }
 
-  // Public method to dismiss zone alerts
   dismissZoneAlert(alertId: string) {
     this.zoneNotificationService.dismissAlert(alertId);
   }
 
-  // Trigger notification for zone alerts
   private triggerZoneNotification(alert: ZoneAlert) {
-    // Trigger sound notifications for all zone levels (risk levels 1, 2, 3, 4, 5)
     const priority = this.getNotificationPriority(alert.zoneLevel);
     const title = this.getAlertTitle(alert.type);
-    
-    // Disabled to prevent repeated zone alert notifications
-    // this.notificationManager.addSafetyNotification(
-    //   title,
-    //   alert.message,
-    //   priority
-    // );
-    
-    // Show 5-second notification toast when entering a zone
     if (alert.type === 'zone_entry') {
       this.showZoneEntryNotification(alert);
       this.showZoneEntryAlert(alert);
     }
   }
   
-  // Show 5-second notification when entering a zone
   private showZoneEntryNotification(alert: ZoneAlert) {
     const notificationType = this.getNotificationType(alert.zoneLevel);
     const emoji = this.getZoneEmoji(alert.zoneLevel);
@@ -291,11 +242,10 @@ export class HomePage implements OnInit, OnDestroy {
       title: `${emoji} Zone Alert`,
       message: `You've entered ${alert.zoneName} (${alert.zoneLevel} zone)`,
       actionText: 'OK',
-      duration: 5000 // 5 seconds
+      duration: 5000
     });
   }
   
-  // Show alert dialog when entering a zone
   private async showZoneEntryAlert(alert: ZoneAlert) {
     const emoji = this.getZoneEmoji(alert.zoneLevel);
     const alertDialog = await this.alertController.create({
@@ -320,7 +270,6 @@ export class HomePage implements OnInit, OnDestroy {
     await alertDialog.present();
   }
   
-  // Show zone recommendations in a separate alert
   private async showZoneRecommendations(alert: ZoneAlert) {
     const recommendations = alert.recommendations.join('\n\n');
     const recommendationAlert = await this.alertController.create({
@@ -334,7 +283,6 @@ export class HomePage implements OnInit, OnDestroy {
     await recommendationAlert.present();
   }
   
-  // Get emoji based on zone level
   private getZoneEmoji(zoneLevel: string): string {
     switch (zoneLevel.toLowerCase()) {
       case 'danger':
@@ -350,7 +298,6 @@ export class HomePage implements OnInit, OnDestroy {
     }
   }
   
-  // Get alert message based on zone level
   private getZoneAlertMessage(zoneLevel: string): string {
     switch (zoneLevel.toLowerCase()) {
       case 'danger':
@@ -366,7 +313,6 @@ export class HomePage implements OnInit, OnDestroy {
     }
   }
   
-  // Get notification type based on zone level
   private getNotificationType(zoneLevel: string): 'success' | 'warning' | 'error' | 'info' {
     switch (zoneLevel.toLowerCase()) {
       case 'danger':
@@ -382,7 +328,6 @@ export class HomePage implements OnInit, OnDestroy {
     }
   }
 
-  // Get notification priority based on zone level
   private getNotificationPriority(zoneLevel: string): 'medium' | 'high' | 'critical' {
     switch (zoneLevel.toLowerCase()) {
       case 'danger':
@@ -397,11 +342,9 @@ export class HomePage implements OnInit, OnDestroy {
     }
   }
 
-  // Check for new admin-validated reports and trigger detailed notifications
   private checkForNewValidatedReports(reports: any[]) {
     const currentReportIds = new Set(reports.map(r => r.id));
     
-    // Find new reports that weren't in our last known set
     const newReports = reports.filter(report => 
       !this.lastKnownReports.has(report.id) && 
       report.status === 'validated'
@@ -411,7 +354,6 @@ export class HomePage implements OnInit, OnDestroy {
 
     newReports.forEach(report => {
       if (report.status === 'validated') {
-        // Calculate distance from user if location is available
         let distanceFromUser: number | undefined;
         if (this.currentLocation && report.location?.lat && report.location?.lng) {
           distanceFromUser = this.calculateDistance(
@@ -422,9 +364,7 @@ export class HomePage implements OnInit, OnDestroy {
           );
         }
 
-        // Check if the new report is in user's immediate vicinity (within 500m)
         if (distanceFromUser && distanceFromUser <= 500) {
-          // This is a NEW report near the user - trigger full alert with sound
           const riskLevel = report.riskLevel || report.level || 1;
           let zoneLevel = 'Caution';
           let icon = '🟠';
@@ -438,13 +378,10 @@ export class HomePage implements OnInit, OnDestroy {
             message = `🚨 A new ${report.type.toLowerCase()} incident has been reported ${Math.round(distanceFromUser)}m away!\n\n📍 Location: ${report.locationAddress || report.location?.fullAddress || report.location?.simplifiedAddress || 'Unknown location'}\n\n⚠️ This is a HIGH RISK incident that was just validated by admin. Consider avoiding this area.`;
           }
           
-          // Start continuous alert sound for NEW incidents using specific risk level
-          // Play sound for all risk levels (1, 2, 3, 4, 5)
           if (this.inDangerZone || this.currentZoneRiskLevel) {
             this.startContinuousAlertSoundForRiskLevel(riskLevel);
           }
           
-          // Show full-screen alert dialog
           this.showZoneAlert(icon, title, message, zoneLevel);
           
           console.log(`🚨 NEW INCIDENT ALERT triggered for nearby report:`, {
@@ -456,15 +393,6 @@ export class HomePage implements OnInit, OnDestroy {
             zoneLevel: zoneLevel
           });
         } else {
-          // Report is far away - just show regular notification
-          // Disabled to prevent repeated zone alert notifications
-          // this.notificationManager.addAdminValidatedReportNotification({
-          //   type: report.type,
-          //   locationAddress: report.locationAddress || report.location?.fullAddress || report.location?.simplifiedAddress || 'Unknown Location',
-          //   riskLevel: report.riskLevel || report.level || 1,
-          //   validatedAt: new Date(report.createdAt || Date.now()),
-          //   distanceFromUser: distanceFromUser
-          // });
         }
 
         console.log(`🔔 Admin validation notification triggered for report:`, {
@@ -477,17 +405,15 @@ export class HomePage implements OnInit, OnDestroy {
       }
     });
 
-    // Update our known reports set
     this.lastKnownReports = currentReportIds;
   }
 
-  // Check for new reports in user's vicinity
   private checkForNearbyNewReports(newReports: any[]) {
     if (!this.currentLocation) return;
 
     const userLat = this.currentLocation.lat;
     const userLng = this.currentLocation.lng;
-    const nearbyRadius = 1000; // 1km radius
+    const nearbyRadius = 1000;
 
     newReports.forEach(report => {
       if (report.location?.lat && report.location?.lng) {
@@ -498,19 +424,11 @@ export class HomePage implements OnInit, OnDestroy {
 
         if (distance <= nearbyRadius) {
           const priority = this.getReportNotificationPriority(report.riskLevel || report.level);
-          
-          // Disabled to prevent repeated zone alert notifications
-          // this.notificationManager.addLocationNotification(
-          //   'New Incident Nearby',
-          //   `${report.type} reported ${Math.round(distance)}m away`,
-          //   priority
-          // );
         }
       }
     });
   }
 
-  // Get notification priority based on report risk level
   private getReportNotificationPriority(riskLevel: any): 'low' | 'medium' | 'high' {
     if (!riskLevel) return 'medium';
     
@@ -521,34 +439,26 @@ export class HomePage implements OnInit, OnDestroy {
     return 'low';
   }
 
-
-  // Get current zone information
   getCurrentZoneInfo(): DangerZone | null {
     return this.zoneNotificationService.getCurrentZone();
   }
 
-  // Casual Notification Methods
   onNotificationClick(notification: any) {
     console.log('Notification clicked:', notification);
-    // Mark as read is handled by the component
-    // You can add additional logic here if needed
   }
 
   private async getPresentingElement() {
     return document.querySelector('ion-app') || undefined;
   }
 
-  // Start monitoring for new admin-validated reports
   private startReportValidationMonitoring() {
     console.log('🔔 Starting report validation monitoring...');
     
-    // Check for new validated reports every 30 seconds
     setInterval(() => {
       if (this.isRealTimeTracking) {
         console.log('🔔 Checking for new admin-validated reports...');
         this.reportService.getAllReports().subscribe({
           next: (allReports) => {
-            // Filter only validated reports (same as admin approach)
             const reports = allReports.filter(r => r.status === 'Validated');
             this.checkForNewValidatedReports(reports);
           },
@@ -557,18 +467,12 @@ export class HomePage implements OnInit, OnDestroy {
           }
         });
       }
-    }, 30000); // Check every 30 seconds
-
-    // Add sample notifications for testing (remove in production)
-    // this.addSampleNotifications();
+    }, 30000);
   }
 
-  // Add sample notifications for testing
   private addSampleNotifications() {
-    // no-op in production
   }
 
-  // Helper methods for alert display
   getAlertIcon(level: string): string {
     switch (level) {
       case 'Danger': return 'warning';
@@ -589,7 +493,6 @@ export class HomePage implements OnInit, OnDestroy {
     }
   }
 
-  // Real-time location tracking methods
   startRealTimeTracking() {
     if (this.isRealTimeTracking) {
       console.log('Real-time tracking already active');
@@ -599,7 +502,6 @@ export class HomePage implements OnInit, OnDestroy {
     console.log('Starting real-time location tracking...');
     this.isRealTimeTracking = true;
 
-    // Adjust tracking interval based on mode
     const interval = this.getTrackingInterval();
     console.log(`Using tracking interval: ${interval}ms (${this.trackingMode} mode)`);
 
@@ -611,16 +513,13 @@ export class HomePage implements OnInit, OnDestroy {
           this.currentLocation = location;
           this.zoneEngine.updateCurrentLocation(location);
           
-          // Check for zone notifications
           this.checkZoneNotifications(location);
           
-          // Update address for new location (throttled to avoid too many API calls)
-          if (!this.lastAddressUpdate || Date.now() - this.lastAddressUpdate > 10000) { // Update every 10 seconds
+          if (!this.lastAddressUpdate || Date.now() - this.lastAddressUpdate > 10000) {
             this.getCurrentAddress(location.lat, location.lng);
             this.lastAddressUpdate = Date.now();
           }
           
-          // Check if we should adjust tracking frequency based on movement
           this.optimizeTrackingFrequency(location);
         },
         error: (error) => {
@@ -634,7 +533,6 @@ export class HomePage implements OnInit, OnDestroy {
         }
       });
 
-    // Start monitoring for new admin-validated reports
     this.startReportValidationMonitoring();
   }
 
@@ -642,22 +540,22 @@ export class HomePage implements OnInit, OnDestroy {
     if (this.batteryOptimizationMode) {
       switch (this.trackingMode) {
         case 'high':
-          return 5000; // 5 seconds
+          return 5000;
         case 'medium':
-          return 10000; // 10 seconds
+          return 10000;
         case 'low':
-          return 30000; // 30 seconds
+          return 30000;
         default:
           return 10000;
       }
     } else {
       switch (this.trackingMode) {
         case 'high':
-          return 1000; // 1 second
+          return 1000;
         case 'medium':
-          return 3000; // 3 seconds
+          return 3000;
         case 'low':
-          return 10000; // 10 seconds
+          return 10000;
         default:
           return 3000;
       }
@@ -667,7 +565,6 @@ export class HomePage implements OnInit, OnDestroy {
   private optimizeTrackingFrequency(location: { lat: number; lng: number }) {
     if (!this.currentLocation) return;
 
-    // Calculate distance moved
     const distance = this.locationService.calculateDistance(
       this.currentLocation.lat,
       this.currentLocation.lng,
@@ -675,12 +572,11 @@ export class HomePage implements OnInit, OnDestroy {
       location.lng
     );
 
-    // Adjust tracking frequency based on movement
-    if (distance > 100) { // Moving fast (>100m)
+    if (distance > 100) {
       this.trackingMode = 'high';
-    } else if (distance > 10) { // Moving moderately (>10m)
+    } else if (distance > 10) {
       this.trackingMode = 'medium';
-    } else { // Stationary or slow movement
+    } else {
       this.trackingMode = 'low';
     }
   }
@@ -689,7 +585,6 @@ export class HomePage implements OnInit, OnDestroy {
     this.trackingMode = mode;
     console.log(`Tracking mode changed to: ${mode}`);
     
-    // Restart tracking with new interval if currently tracking
     if (this.isRealTimeTracking) {
       this.stopRealTimeTracking();
       setTimeout(() => {
@@ -702,7 +597,6 @@ export class HomePage implements OnInit, OnDestroy {
     this.batteryOptimizationMode = !this.batteryOptimizationMode;
     console.log(`Battery optimization: ${this.batteryOptimizationMode ? 'ON' : 'OFF'}`);
     
-    // Restart tracking with new settings if currently tracking
     if (this.isRealTimeTracking) {
       this.stopRealTimeTracking();
       setTimeout(() => {
@@ -710,7 +604,6 @@ export class HomePage implements OnInit, OnDestroy {
       }, 100);
     }
 
-    // Battery optimization notification banner removed as requested
   }
 
   stopRealTimeTracking() {
@@ -724,7 +617,6 @@ export class HomePage implements OnInit, OnDestroy {
 
   updateUserMarker(location: { lat: number; lng: number; heading?: number }) {
     if (this.map) {
-      // Robustness: if marker is missing (e.g., after style swap), recreate it
       if (!this.userMarker || !this.userMarker.getElement()?.isConnected) {
         if (this.currentLocation) {
           const markerElement = document.createElement('div');
@@ -747,41 +639,32 @@ export class HomePage implements OnInit, OnDestroy {
       }
     }
     if (this.userMarker && this.map) {
-      // Smoothly animate marker movement
       this.userMarker.setLngLat([location.lng, location.lat]);
       
-      // Update heatmap with new location if visible
       if (this.isHeatmapVisible) {
         this.updateRealTimeUserLocationInHeatmap(location);
-        // When heatmap is ON - DO NOT move camera, user controls it freely
         return;
       }
       
-      // WAZE-STYLE NAVIGATION - Camera follows ONLY when heatmap is OFF
       const currentZoom = this.map.getZoom();
       const currentBearing = this.map.getBearing();
       
-      // Use heading if available for map rotation (heading = direction user is facing/moving)
       const targetBearing = location.heading !== undefined && location.heading !== null 
         ? location.heading 
         : currentBearing;
       
-      // Waze-style camera animation - smooth and fluid following
       const animationOptions = {
         center: [location.lng, location.lat] as [number, number],
-        zoom: Math.max(currentZoom, 17.5), // Waze's optimal street-level zoom
-        pitch: 55, // Waze's 3D perspective angle
-        bearing: targetBearing, // Rotate map to match direction of travel
-        duration: 800, // Smooth 800ms animation (feels natural for navigation)
-        essential: true, // Animation not affected by prefers-reduced-motion
-        easing: (t: number) => t * (2 - t) // Ease-out for smooth deceleration
+        zoom: Math.max(currentZoom, 17.5),
+        pitch: 55,
+        bearing: targetBearing,
+        duration: 800,
+        essential: true,
+        easing: (t: number) => t * (2 - t)
       };
       
       this.map.easeTo(animationOptions);
       
-      // Keep arrow pointing up relative to screen. Important: do NOT set
-      // transform on the marker root element because Mapbox uses it to
-      // position the marker via translate(). Changing it hides the marker.
       if (location.heading !== undefined && location.heading !== null) {
         const markerElement = this.userMarker.getElement();
         const arrowEl = markerElement?.querySelector('.waze-arrow') as HTMLElement | null;
@@ -790,19 +673,16 @@ export class HomePage implements OnInit, OnDestroy {
         }
       }
       
-      // Check for nearby zones and update safety status
       this.checkNearbyZones(location);
     }
   }
 
-  // Heatmap real-time location methods
   addRealTimeUserLocationToHeatmap() {
     if (!this.map || !this.currentLocation) return;
 
     const sourceId = 'real-time-user-location';
     const layerId = 'real-time-user-location-layer';
 
-    // Add source for real-time user location
     if (!this.map.getSource(sourceId)) {
       this.map.addSource(sourceId, {
         type: 'geojson',
@@ -823,7 +703,6 @@ export class HomePage implements OnInit, OnDestroy {
       });
     }
 
-    // Add heatmap layer for user location
     if (!this.map.getLayer(layerId)) {
       this.map.addLayer({
         id: layerId,
@@ -923,7 +802,6 @@ export class HomePage implements OnInit, OnDestroy {
     };
     window.addEventListener('resize', this.handleResize);
     
-    // Handle orientation changes on mobile
     window.addEventListener('orientationchange', () => {
       setTimeout(() => {
         if (this.map) {
@@ -934,30 +812,24 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   private handleResize = () => {
-    // This will be bound to the instance
   };
 
   private async initializeApp() {
     try {
-      // Request location permissions first
       await this.requestLocationPermissions();
       
       const location = await this.locationService.getCurrentLocation();
       this.currentLocation = location;
       console.log('Current location set:', this.currentLocation);
       
-      // Get readable address for initial location
       await this.getCurrentAddress(location.lat, location.lng);
       
       this.zoneEngine.updateCurrentLocation(location);
       
-      // Check for zone notifications
       this.checkZoneNotifications(location);
       
-      // Check GPS accuracy
       await this.checkGPSAccuracy();
       
-      // Check nearby zones for initial safety status
       this.checkNearbyZones(location);
       
       this.initializeMap();
@@ -980,13 +852,11 @@ export class HomePage implements OnInit, OnDestroy {
         return;
       }
 
-      // Check if permissions are already granted
       if (navigator.permissions) {
         navigator.permissions.query({ name: 'geolocation' }).then((result) => {
           if (result.state === 'granted') {
             resolve(true);
           } else if (result.state === 'prompt') {
-            // Permission will be requested when getCurrentPosition is called
             resolve(true);
           } else {
             this.notificationService.warning(
@@ -998,11 +868,9 @@ export class HomePage implements OnInit, OnDestroy {
             resolve(false);
           }
         }).catch(() => {
-          // Fallback if permissions API is not supported
           resolve(true);
         });
       } else {
-        // Fallback for browsers without permissions API
         resolve(true);
       }
     });
@@ -1014,7 +882,7 @@ export class HomePage implements OnInit, OnDestroy {
 
     if (error.code) {
       switch (error.code) {
-        case 1: // PERMISSION_DENIED
+        case 1:
           errorMessage = 'Location access denied. Please enable location permissions in your browser settings.';
           this.notificationService.error(
             'Location Permission Denied',
@@ -1023,7 +891,7 @@ export class HomePage implements OnInit, OnDestroy {
             5000
           );
           break;
-        case 2: // POSITION_UNAVAILABLE
+        case 2:
           errorMessage = 'Location information is unavailable. Please check your GPS settings.';
           this.notificationService.warning(
             'Location Unavailable',
@@ -1032,7 +900,7 @@ export class HomePage implements OnInit, OnDestroy {
             5000
           );
           break;
-        case 3: // TIMEOUT
+        case 3:
           errorMessage = 'Location request timed out. Please try again.';
           this.notificationService.warning(
             'Location Timeout',
@@ -1057,14 +925,11 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   ionViewDidEnter() {
-    // Resize map when returning to this tab
     setTimeout(() => {
       if (this.map) {
         this.map.resize();
-        // Force map to recalculate its size
         this.map.getContainer().style.height = '100%';
         
-        // CRITICAL FIX: Ensure heatmap layers are completely removed on initial load
         if (!this.isHeatmapVisible) {
           this.removeHeatmapLayer();
         }
@@ -1118,7 +983,6 @@ export class HomePage implements OnInit, OnDestroy {
     handle.addEventListener('pointermove', onPointerMove);
     handle.addEventListener('pointerup', onPointerUp);
 
-    // Clean up when leaving
     this.subscriptions.push({ unsubscribe: () => {
       handle.removeEventListener('pointerdown', onPointerDown);
       handle.removeEventListener('pointermove', onPointerMove);
@@ -1147,18 +1011,14 @@ export class HomePage implements OnInit, OnDestroy {
       this.currentLocation = location;
       this.zoneEngine.updateCurrentLocation(location);
       
-      // Check for zone notifications
       this.checkZoneNotifications(location);
       
-      // Get readable address using reverse geocoding
       await this.getCurrentAddress(location.lat, location.lng);
       
-      // Update map center if map exists
       if (this.map) {
         this.map.setCenter([location.lng, location.lat]);
       }
-      
-      // Check GPS accuracy
+
       await this.checkGPSAccuracy();
       
       this.notificationService.success('Location Updated', 'Your location has been refreshed with high accuracy!', 'OK', 2000);
@@ -1172,7 +1032,6 @@ export class HomePage implements OnInit, OnDestroy {
 
   async getCurrentAddress(lat: number, lng: number) {
     try {
-      // Using Mapbox Geocoding API for reverse geocoding
       const accessToken = 'pk.eyJ1IjoidG9taWthemUxIiwiYSI6ImNtY25rM3NxazB2ZG8ybHFxeHVoZWthd28ifQ.Vnf9pMEQAryEI2rMJeMQGQ';
       const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${accessToken}&types=address,poi,place,locality,neighborhood&limit=1`;
       
@@ -1182,15 +1041,12 @@ export class HomePage implements OnInit, OnDestroy {
       if (data.features && data.features.length > 0) {
         const feature = data.features[0];
         
-        // Extract readable address components
         const context = feature.context || [];
         const placeName = feature.place_name || '';
-        
-        // Try to get a shorter, more readable address
+
         let readableAddress = '';
         
         if (feature.properties && feature.properties.address) {
-          // Use specific address if available
           readableAddress = `${feature.properties.address}`;
           if (context.length > 0) {
             const locality = context.find((c: any) => c.id.startsWith('locality'));
@@ -1199,16 +1055,13 @@ export class HomePage implements OnInit, OnDestroy {
             if (region) readableAddress += `, ${region.text}`;
           }
         } else if (placeName) {
-          // Parse the full place name to get a shorter version
           const parts = placeName.split(',');
           if (parts.length >= 2) {
-            // Take first 2 parts for a more readable address
             readableAddress = parts.slice(0, 2).join(', ').trim();
           } else {
             readableAddress = placeName;
           }
         } else {
-          // Fallback to coordinates
           readableAddress = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
         }
         
@@ -1276,28 +1129,24 @@ export class HomePage implements OnInit, OnDestroy {
     if (!this.currentLocation) return;
     (mapboxgl as any).accessToken = 'pk.eyJ1IjoidG9taWthemUxIiwiYSI6ImNtY25rM3NxazB2ZG8ybHFxeHVoZWthd28ifQ.Vnf9pMEQAryEI2rMJeMQGQ';
     
-    // Waze-style clean streets map (no incidents layer = no 404 errors)
-    const mapStyle = 'mapbox://styles/mapbox/streets-v12'; // Clean Waze-like street view
+    const mapStyle = 'mapbox://styles/mapbox/streets-v12';
     
-    // WAZE-STYLE NAVIGATION VIEW - Exact 3D perspective matching Waze
     this.map = new mapboxgl.Map({
       container: 'map',
       style: mapStyle,
       center: [this.currentLocation.lng, this.currentLocation.lat],
-      zoom: 17.5, // Waze's street-level zoom (slightly zoomed out for context)
-      pitch: 55, // Waze uses ~55° tilt for optimal street view
-      bearing: 0, // Rotates based on heading (direction of travel)
+      zoom: 17.5,
+      pitch: 55,
+      bearing: 0,
       interactive: true,
       trackResize: true,
       attributionControl: false,
       maxPitch: 85,
-      antialias: true, // Smooth 3D rendering
-      // Optimize for navigation performance
+      antialias: true,
       preserveDrawingBuffer: false,
       refreshExpiredTiles: true
     });
 
-    // Create EXACT Waze-style navigation marker - solid blue triangle (like screenshot)
     const markerElement = document.createElement('div');
     markerElement.className = 'waze-navigation-marker';
     markerElement.innerHTML = `
@@ -1328,7 +1177,6 @@ export class HomePage implements OnInit, OnDestroy {
       </svg>
     `;
 
-    // Waze-style CSS - arrow bottom point at exact GPS location
     const style = document.createElement('style');
     style.textContent = `
       .waze-navigation-marker {
@@ -1357,9 +1205,9 @@ export class HomePage implements OnInit, OnDestroy {
 
     this.userMarker = new mapboxgl.Marker({
       element: markerElement,
-      anchor: 'bottom', // Bottom of triangle at exact GPS location (like Waze)
-      rotationAlignment: 'map', // Rotate with map
-      pitchAlignment: 'map' // Tilt with map pitch
+      anchor: 'bottom',
+      rotationAlignment: 'map',
+      pitchAlignment: 'map'
     })
       .setLngLat([this.currentLocation.lng, this.currentLocation.lat])
       .addTo(this.map);
@@ -1367,11 +1215,7 @@ export class HomePage implements OnInit, OnDestroy {
     this.map.on('load', () => {
       console.log('Map loaded in HomePage - Simple Waze-like navigation');
       
-      // Resize map to ensure it fills the container properly
       this.map!.resize();
-      
-      // Keep it simple - just streets, no 3D buildings
-      // Clean Waze-like experience with flat streets and navigation arrow
       
       setTimeout(() => {
         this.map!.addControl(new mapboxgl.NavigationControl({
@@ -1379,7 +1223,6 @@ export class HomePage implements OnInit, OnDestroy {
           showZoom: true
         }), 'top-right');
         
-        // Add Geolocate (recenter) control to quickly return to user's location
         this.map!.addControl(new mapboxgl.GeolocateControl({
           positionOptions: { enableHighAccuracy: true },
           trackUserLocation: true,
@@ -1394,17 +1237,14 @@ export class HomePage implements OnInit, OnDestroy {
       this.startRealTimeTracking();
     });
 
-    // Refresh markers visibility when zoom changes (matching admin)
     this.map.on('zoomend', () => {
       const currentZoom = this.map?.getZoom() || 0;
       console.log(`📍 ZOOM EVENT: Zoom level changed to ${currentZoom}, heatmap visible: ${this.isHeatmapVisible}`);
       
       if (this.isHeatmapVisible) {
         console.log('📍 ZOOM EVENT: Heatmap mode - using heatmap layers, not individual markers');
-        // Don't call updateReportMarkers() in heatmap mode - use heatmap layers instead
       } else {
         console.log('📍 ZOOM EVENT: Navigation mode - keeping map completely clean, no markers');
-        // Navigation mode should be completely clean - no markers or heatmap elements
       }
     });
   }
@@ -1618,11 +1458,7 @@ export class HomePage implements OnInit, OnDestroy {
       next: (zones) => {
         console.log('Zones loaded for notifications:', zones.length);
         
-        // Store zones for zone notifications only
         this.zones = zones || [];
-        
-        // Don't modify validatedReports here - they're loaded directly from database
-        // This prevents location precision loss from zone conversion
       },
       error: (error) => {
         console.error('Error loading zones:', error);
@@ -1630,8 +1466,6 @@ export class HomePage implements OnInit, OnDestroy {
       }
     });
   }
-
-  // Removed hardcoded sample zones - now using validated reports from admin
 
   updateHeatmap() {
     if (!this.map) {
@@ -1642,19 +1476,15 @@ export class HomePage implements OnInit, OnDestroy {
     console.log('Updating heatmap with validated reports:', this.validatedReports?.length || 0);
     
     if (this.isHeatmapVisible) {
-      // Only add heatmap layer, not individual markers to avoid duplicates
       this.updateHeatmapLayer();
       
-      // Real-time user location removed from heatmap to prevent user location glow
     } else {
-      // CRITICAL FIX: Completely remove heatmap layers when turned off
       this.removeHeatmapLayer();
       
-      // Remove ALL markers when heatmap is OFF
       this.removeReportMarkers();
       this.removeRealTimeUserLocationFromHeatmap();
       
-      // Also ensure no individual report markers are visible
+
       this.reportMarkers.forEach(marker => marker.remove());
       this.reportMarkers = [];
     }
@@ -1665,11 +1495,9 @@ export class HomePage implements OnInit, OnDestroy {
   private updateReportMarkers() {
     if (!this.map) return;
 
-    // Only show individual markers at high zoom to avoid color stacking (matching admin)
     const zoom = this.map.getZoom();
     const shouldShowMarkers = zoom >= 14;
 
-    // AGGRESSIVE CLEANUP: Remove ALL existing markers first
     console.log(`📍 AGGRESSIVE CLEANUP: Removing ${this.reportMarkers.length} existing markers`);
     this.reportMarkers.forEach((marker, index) => {
       console.log(`📍 Removing marker ${index + 1}`);
@@ -1679,12 +1507,9 @@ export class HomePage implements OnInit, OnDestroy {
 
     if (!shouldShowMarkers) {
       console.log('📍 Not showing markers due to zoom level:', zoom);
-      return; // keep map clean at lower zooms; heat layers convey density
+      return;
     }
 
-    // CRITICAL FIX: Navigation mode should be completely clean - NO markers or heatmap elements
-    // Individual markers should NEVER be created in navigation mode
-    // Heatmap elements should ONLY appear when heatmap toggle is explicitly ON
     console.log('📍 Navigation mode - no markers or heatmap elements should be created');
     return;
 
@@ -1699,10 +1524,7 @@ export class HomePage implements OnInit, OnDestroy {
       riskLevel: r.riskLevel
     })));
 
-    // Add markers for each validated report (same as admin)
-        // NO DEDUPLICATION - show all reports as they come from admin
         const validReports = this.validatedReports.filter(report => {
-          // Only check for valid coordinates
           const lat = Number(report.location?.lat);
           const lng = Number(report.location?.lng);
           if (isNaN(lat) || isNaN(lng)) {
@@ -1716,7 +1538,6 @@ export class HomePage implements OnInit, OnDestroy {
     console.log('📍 All validated reports:', this.validatedReports.map(r => ({ id: r.id, type: r.type, location: r.location, status: r.status })));
     console.log('📍 Valid reports after filtering:', validReports.map(r => ({ id: r.id, type: r.type, location: r.location, status: r.status })));
     
-    // Additional debugging for marker creation
     console.log('📍 About to create markers for these reports:', validReports.length);
     
     validReports.forEach((report, index) => {
@@ -1732,7 +1553,6 @@ export class HomePage implements OnInit, OnDestroy {
       
       if (isNaN(lat) || isNaN(lng)) return;
       
-      // Skip reports without valid risk level
       const hasRiskLevel = (report.riskLevel !== null && report.riskLevel !== undefined) || 
                            (report.level !== null && report.level !== undefined);
       if (!hasRiskLevel) {
@@ -1740,7 +1560,6 @@ export class HomePage implements OnInit, OnDestroy {
         return;
       }
 
-      // Create custom marker element with proper centering
       const el = document.createElement('div');
       el.className = 'custom-marker';
       el.style.width = '30px';
@@ -1750,14 +1569,12 @@ export class HomePage implements OnInit, OnDestroy {
       el.style.border = '3px solid white';
       el.style.boxShadow = '0 2px 8px rgba(0,0,0,0.4)';
       el.style.position = 'absolute';
-      el.style.left = '-15px'; // Half of width to center horizontally
-      el.style.top = '-15px';  // Half of height to center vertically
+      el.style.left = '-15px';
+      el.style.top = '-15px';
       
-      // Color based on risk level - PRIORITY: level (admin validation) > riskLevel (auto-calculated)
       const color = this.getReportRiskColor(report.level || report.riskLevel || 1);
       el.style.backgroundColor = color;
 
-      // Create popup (same as admin)
       const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
         <div style="padding: 10px; min-width: 200px;">
           <h3 style="margin: 0 0 10px 0; color: #333; font-size: 16px;">
@@ -1781,7 +1598,6 @@ export class HomePage implements OnInit, OnDestroy {
         </div>
       `);
 
-      // Debug: Log coordinates for verification
       console.log(`📍 Creating marker for report ${report.id}:`, {
         reportId: report.id,
         reportLocation: {
@@ -1803,7 +1619,6 @@ export class HomePage implements OnInit, OnDestroy {
         reportType: report.type
       });
 
-      // Add marker to map
       const marker = new mapboxgl.Marker(el)
         .setLngLat([lng, lat])
         .setPopup(popup)
@@ -1827,10 +1642,10 @@ export class HomePage implements OnInit, OnDestroy {
   private updateHeatmapLayer() {
     if (!this.map || !this.isHeatmapVisible) return;
 
-    // CRITICAL FIX: Always remove existing layers first to prevent duplicates
+
     console.log('📍 Heatmap: Updating heatmap layer with validated reports');
     
-    // Remove any existing heatmap layers before creating new ones
+
     const existingHeatLayers = ['heat-l1', 'heat-l2', 'heat-l3', 'heat-l4', 'heat-l5'];
     const existingClusterLayers = ['cluster-count', 'cluster-circles', 'unclustered-points'];
     
@@ -1841,10 +1656,9 @@ export class HomePage implements OnInit, OnDestroy {
       }
     });
 
-    // Create GeoJSON from validated reports (matching admin implementation)
-        // NO DEDUPLICATION - show all 8 reports as they come from admin
+
         const validReports = this.validatedReports.filter(report => {
-          // Only check for valid coordinates
+
           const lat = Number(report.location?.lat);
           const lng = Number(report.location?.lng);
           if (isNaN(lat) || isNaN(lng)) {
@@ -1862,20 +1676,19 @@ export class HomePage implements OnInit, OnDestroy {
       type: 'FeatureCollection',
       features: validReports
         .filter(r => {
-          // Only include reports with valid location and risk level
+
           const hasLocation = r.location?.lat && r.location?.lng;
           const hasRiskLevel = (r.riskLevel !== null && r.riskLevel !== undefined) || 
                                (r.level !== null && r.level !== undefined);
           return hasLocation && hasRiskLevel;
         })
         .map(r => {
-          // Get risk level - PRIORITY: level (admin validation) > riskLevel (auto-calculated)
-          const adminLevel = r.level; // Admin's 1-5 star validation
-          const autoRiskLevel = r.riskLevel; // Auto-calculated from incident type
+          const adminLevel = r.level;
+          const autoRiskLevel = r.riskLevel;
           const finalLevel = adminLevel ?? autoRiskLevel ?? 1;
           const numLevel = Number(finalLevel);
           
-          // Debug logging to check risk levels and coordinates
+
           console.log(`📍 Heatmap point: ${r.locationAddress || 'Unknown'}`, {
             reportId: r.id,
             coordinates: [r.location.lng, r.location.lat],
@@ -1888,7 +1701,7 @@ export class HomePage implements OnInit, OnDestroy {
           return {
             type: 'Feature',
             properties: {
-              weight: numLevel // Ensure weight is always a number
+              weight: numLevel 
             },
             geometry: {
               type: 'Point',
@@ -1898,7 +1711,6 @@ export class HomePage implements OnInit, OnDestroy {
         })
     };
 
-    // Log cluster statistics
     console.log(`🗺️ Heatmap Update: ${geojson.features.length} total validated incidents`);
     console.log(`🎯 Cluster Settings: radius=25px, maxZoom=14 (tighter clustering for accuracy)`);
     console.log(`📊 Zoom behavior:
@@ -1911,7 +1723,6 @@ export class HomePage implements OnInit, OnDestroy {
       weight: f.properties.weight
     })));
 
-    // Add or update main source (matching admin)
     const sourceId = 'validated-incidents';
     const source = this.map.getSource(sourceId) as mapboxgl.GeoJSONSource;
     if (source) {
@@ -1923,7 +1734,6 @@ export class HomePage implements OnInit, OnDestroy {
       });
     }
 
-    // Add clustered source for low-zoom visualization (matching admin)
     const clusterSourceId = 'validated-incidents-cluster';
     const clusterSource = this.map.getSource(clusterSourceId) as mapboxgl.GeoJSONSource;
     if (clusterSource) {
@@ -1933,8 +1743,8 @@ export class HomePage implements OnInit, OnDestroy {
         type: 'geojson',
         data: geojson as any,
         cluster: true,
-        clusterRadius: 25, // Reduced from 40 - only cluster very close incidents
-        clusterMaxZoom: 20, // CRITICAL FIX: Keep clusters visible at high zoom levels
+        clusterRadius: 25,
+        clusterMaxZoom: 20,
         clusterProperties: {
           level1: ['+', ['case', ['==', ['get', 'weight'], 1], 1, 0]],
           level2: ['+', ['case', ['==', ['get', 'weight'], 2], 1, 0]],
@@ -1946,41 +1756,41 @@ export class HomePage implements OnInit, OnDestroy {
       } as any);
     }
 
-    // Multi-layer heatmap approach (matching admin exactly) - one layer per risk level
+
     const heatLayers = [
       {
-        id: 'heat-l1', level: 1, rgba: [16, 185, 129], // Green
+        id: 'heat-l1', level: 1, rgba: [16, 185, 129],
         weight: 0.5,
         radiusStops: [5, 28, 10, 40, 15, 56],
         intensityStops: [5, 0.8, 10, 1.0, 15, 1.2]
       },
       {
-        id: 'heat-l2', level: 2, rgba: [251, 191, 36], // Yellow - should show as yellow/orange, NOT red
+        id: 'heat-l2', level: 2, rgba: [251, 191, 36],
         weight: 0.7,
         radiusStops: [5, 26, 10, 38, 15, 52],
         intensityStops: [5, 0.9, 10, 1.1, 15, 1.3]
       },
       {
-        id: 'heat-l3', level: 3, rgba: [249, 115, 22], // Orange
+        id: 'heat-l3', level: 3, rgba: [249, 115, 22],
         weight: 0.9,
         radiusStops: [5, 24, 10, 36, 15, 48],
         intensityStops: [5, 1.0, 10, 1.2, 15, 1.5]
       },
       {
-        id: 'heat-l4', level: 4, rgba: [239, 68, 68], // Red
+        id: 'heat-l4', level: 4, rgba: [239, 68, 68],
         weight: 1.1,
         radiusStops: [5, 22, 10, 34, 15, 44],
         intensityStops: [5, 1.2, 10, 1.5, 15, 1.8]
       },
       {
-        id: 'heat-l5', level: 5, rgba: [220, 38, 38], // Dark Red
+        id: 'heat-l5', level: 5, rgba: [220, 38, 38],
         weight: 1.3,
         radiusStops: [5, 20, 10, 32, 15, 40],
         intensityStops: [5, 1.4, 10, 1.7, 15, 2.0]
       }
     ];
 
-    // Add per-level heatmap layers (matching admin exactly) - ALL 5 LEVELS
+
     heatLayers.forEach(layer => {
       if (!this.map!.getLayer(layer.id)) {
         console.log(`📍 Heatmap: Adding layer ${layer.id} for level ${layer.level} (${layer.rgba.join(',')} color)`);
@@ -1989,10 +1799,9 @@ export class HomePage implements OnInit, OnDestroy {
           type: 'heatmap',
           source: sourceId,
           minzoom: 5,
-          maxzoom: 22, // CRITICAL FIX: Allow heatmap to be visible at all zoom levels
+          maxzoom: 22,
           filter: ['==', ['get', 'weight'], layer.level],
           layout: {
-            // CRITICAL FIX: Always visible when heatmap is on - show all zone levels
             visibility: 'visible'
           },
           paint: {
@@ -2007,7 +1816,7 @@ export class HomePage implements OnInit, OnDestroy {
               layer.intensityStops[2], layer.intensityStops[3],
               layer.intensityStops[4], layer.intensityStops[5]
             ],
-            'heatmap-opacity': 0.6, // CRITICAL FIX: Always visible when heatmap is on
+            'heatmap-opacity': 0.6,
             'heatmap-color': [
               'interpolate', ['linear'], ['heatmap-density'],
               0.00, 'rgba(0,0,0,0)',
@@ -2021,16 +1830,14 @@ export class HomePage implements OnInit, OnDestroy {
       }
     });
 
-    // Add cluster circles to show numbered markers (like in screenshot)
     if (!this.map.getLayer('cluster-circles')) {
       this.map.addLayer({
         id: 'cluster-circles',
         type: 'circle',
         source: clusterSourceId,
         filter: ['has', 'point_count'],
-        maxzoom: 22, // CRITICAL FIX: Allow circles to be visible at all zoom levels
+        maxzoom: 22,
         layout: {
-          // CRITICAL FIX: Always visible when heatmap is on - show all zone levels
           visibility: 'visible'
         },
         paint: {
@@ -2047,26 +1854,24 @@ export class HomePage implements OnInit, OnDestroy {
             5, '#dc2626',
             '#10b981'
           ],
-          'circle-opacity': 0.9, // CRITICAL FIX: Make circles highly visible like in screenshot
+          'circle-opacity': 0.9,
           'circle-stroke-width': 2,
           'circle-stroke-color': 'white'
         }
       } as any);
     }
 
-    // Add cluster count labels to show numbers (like in screenshot)
     if (!this.map.getLayer('cluster-count')) {
       this.map.addLayer({
         id: 'cluster-count',
         type: 'symbol',
         source: clusterSourceId,
         filter: ['has', 'point_count'],
-        maxzoom: 22, // CRITICAL FIX: Allow labels to be visible at all zoom levels
+        maxzoom: 22,
         layout: {
           'text-field': ['get', 'point_count_abbreviated'],
           'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
           'text-size': 14,
-          // CRITICAL FIX: Always visible when heatmap is on - show all zone levels
           visibility: 'visible'
         },
         paint: {
@@ -2091,11 +1896,9 @@ export class HomePage implements OnInit, OnDestroy {
     
     console.log('📍 Heatmap: Starting comprehensive layer removal...');
     
-    // DEBUG: List all existing layers before removal
     const allLayers = this.map.getStyle().layers;
     console.log('📍 Heatmap: All existing layers before removal:', allLayers.map(l => l.id));
     
-    // Remove all per-level heatmap layers (matching admin)
     const heatLayers = ['heat-l1', 'heat-l2', 'heat-l3', 'heat-l4', 'heat-l5'];
     heatLayers.forEach(layerId => {
       if (this.map!.getLayer(layerId)) {
@@ -2106,7 +1909,6 @@ export class HomePage implements OnInit, OnDestroy {
       }
     });
 
-    // Remove cluster layers (matching admin)
     const clusterLayers = ['cluster-count', 'cluster-circles', 'unclustered-points'];
     clusterLayers.forEach(layerId => {
       if (this.map!.getLayer(layerId)) {
@@ -2117,7 +1919,6 @@ export class HomePage implements OnInit, OnDestroy {
       }
     });
     
-    // Remove sources - CRITICAL FIX: Remove sources AFTER removing layers
     const clusterSourceId = 'validated-incidents-cluster';
     const sourceId = 'validated-incidents';
     
@@ -2134,15 +1935,12 @@ export class HomePage implements OnInit, OnDestroy {
       console.log(`📍 Heatmap: Main source ${sourceId} does not exist`);
     }
     
-    // CRITICAL FIX: Also remove any individual report markers when removing heatmap
     this.removeReportMarkers();
     
-    // DEBUG: List all remaining layers after removal
     const remainingLayers = this.map.getStyle().layers;
     console.log('📍 Heatmap: Remaining layers after removal:', remainingLayers.map(l => l.id));
     
-    // CRITICAL FIX: Force map to refresh/render after layer removal
-    // This ensures the map properly updates its display
+
     if (this.map.isStyleLoaded()) {
       this.map.resize();
     }
@@ -2155,13 +1953,10 @@ export class HomePage implements OnInit, OnDestroy {
     
     console.log('📍 NAVIGATION: Ensuring completely clean navigation mode...');
     
-    // Remove all heatmap layers
     this.removeHeatmapLayer();
-    
-    // Remove all report markers
+
     this.removeReportMarkers();
     
-    // Remove any other potential visual elements
     const allLayers = this.map.getStyle().layers;
     const heatmapRelatedLayers = allLayers.filter(layer => 
       layer.id.includes('heat') || 
@@ -2190,8 +1985,6 @@ export class HomePage implements OnInit, OnDestroy {
     
     console.log(`📍 Heatmap: Updating visibility to ${isVisible}`);
     
-    // CRITICAL FIX: Use layout visibility property instead of just opacity for complete hiding
-    // Update per-level heatmap layers - use both layout visibility and paint opacity
     const heatLayers = ['heat-l1', 'heat-l2', 'heat-l3', 'heat-l4', 'heat-l5'];
     heatLayers.forEach(layerId => {
       if (this.map!.getLayer(layerId)) {
@@ -2200,7 +1993,6 @@ export class HomePage implements OnInit, OnDestroy {
       }
     });
 
-    // Update cluster layers visibility - use layout visibility for complete hiding
     if (this.map.getLayer('cluster-circles')) {
       this.map.setLayoutProperty('cluster-circles', 'visibility', isVisible as any);
       this.map.setPaintProperty('cluster-circles', 'circle-opacity', clusterOpacity);
@@ -2209,7 +2001,6 @@ export class HomePage implements OnInit, OnDestroy {
       this.map.setLayoutProperty('cluster-count', 'visibility', isVisible as any);
     }
     
-    // Update unclustered points visibility - use layout visibility for complete hiding
     if (this.map.getLayer('unclustered-points')) {
       this.map.setLayoutProperty('unclustered-points', 'visibility', isVisible as any);
       this.map.setPaintProperty('unclustered-points', 'circle-opacity', unclusteredOpacity);
@@ -2219,7 +2010,7 @@ export class HomePage implements OnInit, OnDestroy {
   private ensureHeatmapLayersExist() {
     if (!this.map || !this.isHeatmapVisible) return;
     
-    // Check if heatmap layers already exist
+
     const heatLayers = ['heat-l1', 'heat-l2', 'heat-l3', 'heat-l4', 'heat-l5'];
     const hasAllLayers = heatLayers.every(layerId => this.map!.getLayer(layerId));
     
@@ -2232,19 +2023,15 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   private getReportRiskColor(level: number): string {
-    // Exact match with admin's getRiskColor logic
-    // 5-level color system based on validation levels
     const numLevel = Number(level);
-    if (numLevel <= 1) return '#10b981'; // Green (low)
-    if (numLevel === 2) return '#fbbf24'; // Yellow (moderate)
-    if (numLevel === 3) return '#f97316'; // Orange (high)
-    if (numLevel === 4) return '#ef4444'; // Red (critical)
-    return '#dc2626'; // Dark Red (extreme)
+    if (numLevel <= 1) return '#10b981';
+    if (numLevel === 2) return '#fbbf24'; 
+    if (numLevel === 3) return '#f97316';
+    if (numLevel === 4) return '#ef4444'; 
+    return '#dc2626';
   }
 
   private getReportRiskLabel(level: number): string {
-    // Match admin's getRiskLabel popup labels
-    // Convert to number to handle string values from Firebase
     const numLevel = Number(level);
     switch (numLevel) {
       case 1: return 'LEVEL 1 - LOW';
@@ -2267,7 +2054,6 @@ export class HomePage implements OnInit, OnDestroy {
     });
   }
 
-  // Old zone visualization methods removed - now using individual report markers like admin
 
   toggleHeatmap() {
     console.log('Toggle heatmap called, current state:', this.isHeatmapVisible);
@@ -2280,42 +2066,34 @@ export class HomePage implements OnInit, OnDestroy {
       return;
     }
     
-    // Save current location for reference
     const currentCenter = this.currentLocation 
       ? [this.currentLocation.lng, this.currentLocation.lat] as [number, number]
       : this.map.getCenter();
     
-    // Switch map style based on heatmap visibility
     if (this.isHeatmapVisible) {
       console.log('🗺️ HEATMAP MODE: Disabling navigation, enabling free map control...');
       
-      // CRITICAL FIX: Always remove any existing heatmap layers first to prevent duplicates
       this.removeHeatmapLayer();
       
-      // Plain white/light map for better heatmap visibility
       this.map.setStyle('mapbox://styles/mapbox/light-v11');
       
-      // Wait for style to load before adding heatmap layers
       this.map.once('styledata', () => {
         if (!this.map) return;
         
-        // Set camera for heatmap mode - flat top-down view, user controls freely
+
         this.map.jumpTo({
           center: currentCenter,
-          zoom: 13, // Zoom out for heatmap overview
-          bearing: 0, // Reset rotation to north-up
-          pitch: 0 // Flat top-down view (no tilt)
+          zoom: 13,
+          bearing: 0,
+          pitch: 0
         });
         
-        // Hide user marker in heatmap mode - only show heatmap data
         if (this.userMarker) {
           this.userMarker.remove();
         }
         
-        // CRITICAL FIX: Remove any existing heatmap layers before creating new ones
         this.removeHeatmapLayer();
         
-        // Create fresh heatmap layers
         this.updateHeatmapLayer();
         
         console.log('✅ Heatmap mode active - navigation disabled, map is user-controlled');
@@ -2323,20 +2101,16 @@ export class HomePage implements OnInit, OnDestroy {
     } else {
       console.log('🧭 NAVIGATION MODE: Restoring Waze-style camera following...');
       
-      // CRITICAL FIX: Remove heatmap layers BEFORE switching styles to ensure complete cleanup
       console.log('📍 NAVIGATION: Removing heatmap layers before style switch');
       this.removeHeatmapLayer();
       
-      // Restore Waze-style clean streets map
       this.map.setStyle('mapbox://styles/mapbox/streets-v12');
       
-      // Wait for style to load before restoring navigation
       this.map.once('styledata', () => {
         if (!this.map) return;
         
         console.log('📍 NAVIGATION: Style loaded, cleaning up any remaining heatmap elements');
         
-        // Re-add or recreate the blue navigation arrow marker
         if (this.currentLocation && this.map) {
           if (this.userMarker) {
             this.userMarker.addTo(this.map);
@@ -2351,7 +2125,6 @@ export class HomePage implements OnInit, OnDestroy {
               </svg>
             `;
 
-            // Ensure required CSS exists (idempotent)
             if (!document.querySelector('style[data-nav-arrow="1"]')) {
               const style = document.createElement('style');
               style.setAttribute('data-nav-arrow', '1');
@@ -2374,20 +2147,17 @@ export class HomePage implements OnInit, OnDestroy {
           }
         }
         
-        // CRITICAL FIX: Ensure completely clean navigation mode
         this.ensureCleanNavigationMode();
         
-        // DEBUG: Final check - list all layers after complete cleanup
         const finalLayers = this.map.getStyle().layers;
         console.log('📍 NAVIGATION: Final layers after complete cleanup:', finalLayers.map(l => l.id));
         
-        // Resume Waze-style navigation camera following
         if (this.currentLocation && this.map) {
           this.map.easeTo({
             center: [this.currentLocation.lng, this.currentLocation.lat],
-            zoom: 17.5, // Waze's street-level zoom
-            pitch: 55, // Waze's 3D tilt
-            bearing: this.map.getBearing(), // Keep current rotation
+            zoom: 17.5,
+            pitch: 55,
+            bearing: this.map.getBearing(),
             duration: 1000
           });
         }
@@ -2698,7 +2468,6 @@ export class HomePage implements OnInit, OnDestroy {
   
   async testIncidentAlerts() {
     try {
-      // Simulation disabled - no test incidents
       await this.notificationService.success(
         '🧪 TEST INCIDENTS DISABLED',
         'Test incident simulation has been disabled. No test incidents will be created.',
@@ -2866,15 +2635,11 @@ export class HomePage implements OnInit, OnDestroy {
     }
   }
 
-  // Check for nearby zones and update safety status
   private checkNearbyZones(location: { lat: number; lng: number }) {
-    // Store previous state for change detection
     const previousStatus = this.safetyStatus;
     const wasInZone = this.inDangerZone;
     
-    // Check if there are any validated reports first
     if (!this.validatedReports || this.validatedReports.length === 0) {
-      // No reports at all - completely safe
       this.safetyStatus = 'safe';
       this.nearbyZoneAlert = '';
       this.nearestZoneDistance = null;
@@ -2883,13 +2648,11 @@ export class HomePage implements OnInit, OnDestroy {
       this.inDangerZone = false;
       this.locationSafetyMessage = '✓ Your location is SAFE - No incidents reported in this area';
       
-      // Update previous state
       this.previousSafetyStatus = this.safetyStatus;
       this.wasInDangerZone = this.inDangerZone;
       return;
     }
 
-    // Calculate distance to each validated report
     const reportsWithDistance = this.validatedReports.map(report => {
       const distance = this.calculateDistance(
         location.lat,
@@ -2900,14 +2663,11 @@ export class HomePage implements OnInit, OnDestroy {
       return { report, distance };
     });
 
-    // Sort by distance
     reportsWithDistance.sort((a, b) => a.distance - b.distance);
 
-    // Check if user is at exact location of a report (within 50m)
     const reportsAtLocation = reportsWithDistance.filter(r => r.distance * 1000 <= 50);
     
     if (reportsAtLocation.length > 0) {
-      // User is at a location with reports
       const highestRiskReport = reportsAtLocation.reduce((prev, current) => 
         (current.report.level || current.report.riskLevel || 0) > (prev.report.level || prev.report.riskLevel || 0) ? current : prev
       );
@@ -2941,30 +2701,25 @@ export class HomePage implements OnInit, OnDestroy {
       this.nearbyReportsCount = reportsAtLocation.length;
       this.nearestZoneDistance = 0;
       
-      // Check for state changes and show notifications
+
       this.checkAndNotifyZoneChanges(previousStatus, wasInZone);
       
-      // Update previous state
       this.previousSafetyStatus = this.safetyStatus;
       this.wasInDangerZone = this.inDangerZone;
       return;
     }
 
-    // Get the nearest report
     const nearest = reportsWithDistance[0];
     const distanceInMeters = Math.round(nearest.distance * 1000);
     this.nearestZoneDistance = distanceInMeters;
 
-    // Determine zone radius for nearest report level
     const nearestRiskLevel = nearest.report.level || nearest.report.riskLevel || 1;
     const zoneRadius = this.getZoneRadiusMeters(nearestRiskLevel);
 
-    // Check proximity alerts
-    const nearbyReports = reportsWithDistance.filter(r => r.distance * 1000 <= 1000); // within 1km
+    const nearbyReports = reportsWithDistance.filter(r => r.distance * 1000 <= 1000);
     this.nearbyReportsCount = nearbyReports.length;
     this.hasNearbyReports = nearbyReports.length > 0;
 
-    // Only treat as inside a zone if within the zone radius
     if (distanceInMeters <= zoneRadius) {
       const riskLevel = nearestRiskLevel;
       this.currentZoneRiskLevel = riskLevel;
@@ -2993,19 +2748,15 @@ export class HomePage implements OnInit, OnDestroy {
 
       this.inDangerZone = true;
       
-      // Check for state changes and show notifications
       this.checkAndNotifyZoneChanges(previousStatus, wasInZone);
       
-      // Update previous state
       this.previousSafetyStatus = this.safetyStatus;
       this.wasInDangerZone = this.inDangerZone;
       return;
     }
 
-    // Outside zone radius => safe, clear in-zone risk level
     this.currentZoneRiskLevel = null;
 
-    // If outside zone radius but still within 1km, show nearby info but keep safe unless high levels within 100m handled above
     if (distanceInMeters <= 1000) {
       this.safetyStatus = 'safe';
       this.locationSafetyMessage = `✓ Your location is SAFE - Nearest incident is ${distanceInMeters}m away`;
@@ -3013,16 +2764,13 @@ export class HomePage implements OnInit, OnDestroy {
       this.inDangerZone = false;
       this.stopAlertSound();
 
-      // Check for state changes and show notifications
       this.checkAndNotifyZoneChanges(previousStatus, wasInZone);
       
-      // Update previous state
       this.previousSafetyStatus = this.safetyStatus;
       this.wasInDangerZone = this.inDangerZone;
       return;
     }
 
-    // No reports nearby (>1km away)
     this.safetyStatus = 'safe';
     this.nearbyZoneAlert = '';
     this.nearestZoneDistance = distanceInMeters;
@@ -3030,15 +2778,12 @@ export class HomePage implements OnInit, OnDestroy {
     this.locationSafetyMessage = `✓ Your location is SAFE - No incidents reported nearby (nearest: ${(distanceInMeters/1000).toFixed(1)}km)`;
     this.inDangerZone = false;
     
-    // Check for state changes and show notifications
     this.checkAndNotifyZoneChanges(previousStatus, wasInZone);
     
-    // Update previous state
     this.previousSafetyStatus = this.safetyStatus;
     this.wasInDangerZone = this.inDangerZone;
   }
 
-  // Get risk level text description
   private getRiskLevelText(riskLevel: number): string {
     switch (riskLevel) {
       case 1: return 'Low';
@@ -3050,33 +2795,28 @@ export class HomePage implements OnInit, OnDestroy {
     }
   }
 
-  // Heatmap radius per level (meters)
   private getZoneRadiusMeters(riskLevel: number): number {
     switch (riskLevel) {
-      case 1: return 25;   // low risk - very small radius
-      case 2: return 35;   // moderate
-      case 3: return 50;   // high
-      case 4: return 70;   // critical
-      case 5: return 90;   // extreme
+      case 1: return 25;  
+      case 2: return 35;   
+      case 3: return 50;  
+      case 4: return 70;   
+      case 5: return 90;   
       default: return 40;
     }
   }
 
-  // Check for zone changes and show appropriate notifications
   private checkAndNotifyZoneChanges(previousStatus: 'safe' | 'warning' | 'danger', wasInZone: boolean) {
     const now = Date.now();
-    // Throttle notifications to avoid spam (minimum 10 seconds between notifications)
     if (now - this.lastNotificationTime < 10000) {
       return;
     }
 
     console.log('📍 Zone detection active - checking for zone entry alerts');
 
-    // SCENARIO 1: User entered any heatmap zone (within 100m of ANY incident with risk level 1-5)
     if (!wasInZone && this.inDangerZone && this.safetyStatus === 'danger') {
       this.lastNotificationTime = now;
       
-      // Find the nearest report to get details (ANY risk level 1-5)
       const nearestIncident = this.validatedReports
         .filter(report => {
           const distance = this.calculateDistance(
@@ -3084,7 +2824,7 @@ export class HomePage implements OnInit, OnDestroy {
             report.location.lat, report.location.lng
           );
           const riskLevel = report.level || report.riskLevel || 1;
-          return distance * 1000 <= 100 && riskLevel >= 1 && riskLevel <= 5; // ALL risk levels 1-5
+          return distance * 1000 <= 100 && riskLevel >= 1 && riskLevel <= 5;
         })
         .sort((a, b) => {
           const distA = this.calculateDistance(this.currentLocation!.lat, this.currentLocation!.lng, a.location.lat, a.location.lng);
@@ -3095,12 +2835,10 @@ export class HomePage implements OnInit, OnDestroy {
       if (nearestIncident) {
         const riskLevel = nearestIncident.level || nearestIncident.riskLevel || 1;
         
-        // Start continuous alert sound only if inside zone radius
         if (this.inDangerZone || this.currentZoneRiskLevel) {
           this.startContinuousAlertSoundForRiskLevel(riskLevel);
         }
         
-        // Show full-screen alert for any heatmap zone
         const alertTitle = riskLevel >= 4 ? `🚨 DANGER ZONE ENTERED!` : 
                           riskLevel >= 3 ? `⚠️ CAUTION ZONE ENTERED!` : 
                           `📍 HEATMAP ZONE ENTERED!`;
@@ -3133,11 +2871,9 @@ export class HomePage implements OnInit, OnDestroy {
       return;
     }
 
-    // SCENARIO 2: User entered any heatmap zone (within 100m of ANY incident with risk level 1-5) - Warning status
     if (!wasInZone && this.inDangerZone && this.safetyStatus === 'warning') {
       this.lastNotificationTime = now;
       
-      // Find the nearest incident (ANY risk level 1-5)
       const nearestIncident = this.validatedReports
         .filter(report => {
           const distance = this.calculateDistance(
@@ -3145,7 +2881,7 @@ export class HomePage implements OnInit, OnDestroy {
             report.location.lat, report.location.lng
           );
           const riskLevel = report.level || report.riskLevel || 1;
-          return distance * 1000 <= 100 && riskLevel >= 1 && riskLevel <= 5; // ALL risk levels 1-5
+          return distance * 1000 <= 100 && riskLevel >= 1 && riskLevel <= 5;
         })
         .sort((a, b) => {
           const distA = this.calculateDistance(this.currentLocation!.lat, this.currentLocation!.lng, a.location.lat, a.location.lng);
@@ -3156,12 +2892,10 @@ export class HomePage implements OnInit, OnDestroy {
       if (nearestIncident) {
         const riskLevel = nearestIncident.level || nearestIncident.riskLevel || 1;
         
-        // Start continuous alert sound only if inside zone radius
         if (this.inDangerZone || this.currentZoneRiskLevel) {
           this.startContinuousAlertSoundForRiskLevel(riskLevel);
         }
         
-        // Show full-screen alert for any heatmap zone
         const alertTitle = riskLevel >= 4 ? `🚨 DANGER ZONE ENTERED!` : 
                           riskLevel >= 3 ? `⚠️ CAUTION ZONE ENTERED!` : 
                           `📍 HEATMAP ZONE ENTERED!`;
@@ -3194,7 +2928,6 @@ export class HomePage implements OnInit, OnDestroy {
       return;
     }
 
-    // SCENARIO 3: User's status changed to warning (nearby zones detected)
     if (previousStatus === 'safe' && this.safetyStatus === 'warning' && !this.inDangerZone) {
       this.lastNotificationTime = now;
       
@@ -3209,9 +2942,7 @@ export class HomePage implements OnInit, OnDestroy {
       return;
     }
 
-    // SCENARIO 4: User has nearby reports (within 1km) but location is safe
     if (this.hasNearbyReports && this.safetyStatus === 'safe' && !this.wasInDangerZone && this.nearbyReportsCount > 0) {
-      // Only notify once when nearby reports are first detected
       if (previousStatus !== 'safe' || !this.hasNearbyReports) {
         this.lastNotificationTime = now;
         
@@ -3227,150 +2958,125 @@ export class HomePage implements OnInit, OnDestroy {
     }
   }
 
-  // Start continuous alert sound for zone entry using ringtone
   private startContinuousAlertSound(zoneLevel: string) {
-    // Stop any existing alert sound first
     this.stopAlertSound();
     
     try {
-      // Use ringtone file instead of generated sound
       const audio = new Audio();
       
-      // Set ringtone file path based on zone level
       let ringtoneFile: string;
       let interval: number;
       
-      // Use the same ringtone file for all zone levels but vary the interval
       ringtoneFile = '/assets/sounds/GuardianCare - Ringtone.mp3';
       
       switch (zoneLevel.toLowerCase()) {
         case 'danger':
-          interval = 2500; // Play every 2.5 seconds - critical alert
+          interval = 2500;
           break;
         case 'caution':
-          interval = 3500; // Play every 3.5 seconds - moderate alert
+          interval = 3500;
           break;
         default:
-          interval = 4500; // Play every 4.5 seconds - gentle alert
+          interval = 4500;
       }
       
       audio.src = ringtoneFile;
-      audio.volume = 0.8; // Set volume to 80%
-      audio.loop = false; // Don't loop the file itself
+      audio.volume = 0.8;
+      audio.loop = false;
       
-      // Function to play the ringtone
       const playRingtone = () => {
         if (audio.paused || audio.ended) {
-          audio.currentTime = 0; // Reset to beginning
+          audio.currentTime = 0;
           audio.play().catch(error => {
             console.warn('Could not play ringtone:', error);
-            // No fallback sound - only use GuardianCare ringtone
           });
         }
       };
       
-      // Play initial ringtone
       playRingtone();
       
-      // Vibrate on initial alert
       this.vibrateDevice();
       
-      // Set up continuous ringtone playing
       this.alertSoundInterval = setInterval(() => {
         playRingtone();
-        // Vibrate occasionally with ringtone
-        if (Math.random() < 0.4) { // 40% chance to vibrate with each ringtone
+        if (Math.random() < 0.4) { 
           this.vibrateDevice();
         }
       }, interval);
       
-      // Store audio reference for cleanup
+
       this.currentAlertSound = audio;
       
       console.log('🔊 Continuous ringtone alert started:', zoneLevel, `(${ringtoneFile}, ${interval}ms interval)`);
     } catch (error) {
       console.warn('Could not start ringtone alert:', error);
-      // No fallback sound - only use GuardianCare ringtone
     }
   }
   
-  // Start continuous alert sound based on specific risk level (1-5)
   private startContinuousAlertSoundForRiskLevel(riskLevel: number) {
-    // Stop any existing alert sound first
     this.stopAlertSound();
     
     try {
-      // Use ringtone file based on specific risk level
       const audio = new Audio();
       
       let ringtoneFile: string;
       let interval: number;
       
-      // Use the same ringtone file for all risk levels but vary the interval
       ringtoneFile = '/assets/sounds/GuardianCare - Ringtone.mp3';
       
       switch (riskLevel) {
         case 1:
-          interval = 10000; // Play every 10 seconds - low risk, gentle reminder
+          interval = 10000; 
           break;
         case 2:
-          interval = 8000; // Play every 8 seconds - moderate risk, regular alert
+          interval = 8000; 
           break;
         case 3:
-          interval = 6000; // Play every 6 seconds - high risk, frequent alert
+          interval = 6000; 
           break;
         case 4:
-          interval = 4000; // Play every 4 seconds - critical risk, urgent alert
+          interval = 4000; 
           break;
         case 5:
-          interval = 2000; // Play every 2 seconds - extreme risk, continuous alert
+          interval = 2000; 
           break;
         default:
-          interval = 8000; // Default to moderate
+          interval = 8000; 
       }
       
       audio.src = ringtoneFile;
-      audio.volume = 0.8; // Set volume to 80%
-      audio.loop = false; // Don't loop the file itself
+      audio.volume = 0.8;
+      audio.loop = false; 
       
-      // Function to play the ringtone
+
       const playRingtone = () => {
         if (audio.paused || audio.ended) {
-          audio.currentTime = 0; // Reset to beginning
+          audio.currentTime = 0; 
           audio.play().catch(error => {
             console.warn('Could not play ringtone:', error);
-            // No fallback sound - only use GuardianCare ringtone
           });
         }
       };
       
-      // Play initial ringtone
       playRingtone();
       
-      // Vibrate on initial alert
       this.vibrateDevice();
       
-      // Set up continuous ringtone playing
       this.alertSoundInterval = setInterval(() => {
         playRingtone();
-        // Vibrate occasionally with ringtone
-        if (Math.random() < 0.4) { // 40% chance to vibrate with each ringtone
+        if (Math.random() < 0.4) {
           this.vibrateDevice();
         }
       }, interval);
       
-      // Store audio reference for cleanup
       this.currentAlertSound = audio;
       
       console.log('🔊 Continuous ringtone alert started for risk level:', riskLevel, `(${ringtoneFile}, ${interval}ms interval)`);
     } catch (error) {
       console.warn('Could not start ringtone alert for risk level:', riskLevel, error);
-      // No fallback sound - only use GuardianCare ringtone
     }
   }
   
-  
-  // Stop continuous alert sound
   private stopAlertSound() {
     if (this.alertSoundInterval) {
       clearInterval(this.alertSoundInterval);
@@ -3378,7 +3084,6 @@ export class HomePage implements OnInit, OnDestroy {
       console.log('🔇 Alert sound stopped');
     }
     
-    // Stop ringtone audio if playing
     if (this.currentAlertSound) {
       try {
         this.currentAlertSound.pause();
@@ -3390,10 +3095,8 @@ export class HomePage implements OnInit, OnDestroy {
       }
     }
     
-    // Audio context cleanup no longer needed - only using ringtone file
   }
   
-  // Show full-screen zone alert dialog
   private async showZoneAlert(icon: string, title: string, message: string, zoneLevel: string) {
     const alert = await this.alertController.create({
       header: `${icon} ${title}`,
@@ -3409,7 +3112,6 @@ export class HomePage implements OnInit, OnDestroy {
           text: 'OK',
           role: 'cancel',
           handler: () => {
-            // Stop the alert sound when user clicks OK
             this.stopAlertSound();
             console.log('🔇 Alert dismissed - sound stopped');
           }
@@ -3425,7 +3127,6 @@ export class HomePage implements OnInit, OnDestroy {
     console.log('🚨 Full-screen zone alert dialog shown:', title);
   }
   
-  // Show safety tips based on zone level
   private async showZoneSafetyTips(zoneLevel: string) {
     let tips = '';
     
@@ -3466,7 +3167,6 @@ export class HomePage implements OnInit, OnDestroy {
     await tipsAlert.present();
   }
 
-  // Check if a point is inside a polygon using ray casting algorithm
   private isPointInPolygon(lat: number, lng: number, coordinates: [number, number][]): boolean {
     let inside = false;
     for (let i = 0, j = coordinates.length - 1; i < coordinates.length; j = i++) {
@@ -3480,9 +3180,8 @@ export class HomePage implements OnInit, OnDestroy {
     return inside;
   }
 
-  // Calculate distance between two coordinates (returns km)
   private calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-    const R = 6371; // Earth's radius in km
+    const R = 6371; 
     const dLat = this.toRadians(lat2 - lat1);
     const dLng = this.toRadians(lng2 - lng1);
     
@@ -3499,7 +3198,6 @@ export class HomePage implements OnInit, OnDestroy {
     return degrees * (Math.PI / 180);
   }
 
-  // Get risk level from zone level
   private getZoneRiskLevel(level: 'Safe' | 'Neutral' | 'Caution' | 'Danger'): 'low' | 'medium' | 'high' {
     switch (level) {
       case 'Danger':
@@ -3514,7 +3212,6 @@ export class HomePage implements OnInit, OnDestroy {
     }
   }
 
-  // Safety Status Methods
   getSafetyStatusClass(): string {
     return this.safetyStatus;
   }
@@ -3557,7 +3254,6 @@ export class HomePage implements OnInit, OnDestroy {
     }
   }
 
-  // Helper: formatted nearest distance text (e.g., 250m or 1.2km)
   getNearestDistanceText(): string {
     if (this.nearestZoneDistance == null) return '';
     const d = this.nearestZoneDistance;
@@ -3565,7 +3261,6 @@ export class HomePage implements OnInit, OnDestroy {
     return `${(d / 1000).toFixed(1)}km`;
   }
 
-  // Handle navigation from notifications
   checkForNotificationNavigation() {
     const navigationData = localStorage.getItem('guardian_care_navigate_to_location');
     if (navigationData) {
@@ -3573,10 +3268,8 @@ export class HomePage implements OnInit, OnDestroy {
         const locationData = JSON.parse(navigationData);
         console.log('🗺️ Received navigation data from notification:', locationData);
         
-        // Clear the navigation data
         localStorage.removeItem('guardian_care_navigate_to_location');
         
-        // Navigate to the location after a short delay to ensure map is ready
         setTimeout(() => {
           this.navigateToNotificationLocation(locationData);
         }, 1000);
@@ -3589,17 +3282,14 @@ export class HomePage implements OnInit, OnDestroy {
 
   navigateToNotificationLocation(locationData: any) {
     if (this.map && locationData.lat && locationData.lng) {
-      // Fly to the location with animation
       this.map.flyTo({
         center: [locationData.lng, locationData.lat],
         zoom: 16,
         duration: 2000
       });
       
-      // Add a marker for the notification location
       this.addNotificationMarker(locationData);
       
-      // Show a toast notification
       this.notificationService.info(
         'Location Found', 
         `Showing ${locationData.reportType || 'incident'} location`,
@@ -3613,13 +3303,11 @@ export class HomePage implements OnInit, OnDestroy {
 
   addNotificationMarker(locationData: any) {
     if (this.map) {
-      // Remove any existing notification markers
       const existingMarker = document.getElementById('notification-marker');
       if (existingMarker) {
         existingMarker.remove();
       }
       
-      // Create a custom marker element
       const markerEl = document.createElement('div');
       markerEl.id = 'notification-marker';
       markerEl.className = 'notification-marker';
@@ -3631,12 +3319,10 @@ export class HomePage implements OnInit, OnDestroy {
         </div>
       `;
       
-      // Add marker to map
       new mapboxgl.Marker(markerEl)
         .setLngLat([locationData.lng, locationData.lat])
         .addTo(this.map);
       
-      // Remove marker after 10 seconds
       setTimeout(() => {
         const marker = document.getElementById('notification-marker');
         if (marker) {

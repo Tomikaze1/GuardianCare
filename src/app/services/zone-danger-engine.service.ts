@@ -8,7 +8,7 @@ export interface DangerZone {
   id: string;
   name: string;
   level: 'Safe' | 'Neutral' | 'Caution' | 'Danger';
-  riskLevel?: number; // Numeric risk level (1-5) from admin validation
+  riskLevel?: number; 
   coordinates: [number, number][]; 
   timeSlots: TimeSlot[];
   incidents: ZoneIncident[];
@@ -32,8 +32,8 @@ interface ZoneIncident {
   severity: number;
   type: 'theft' | 'assault' | 'vandalism' | 'harassment' | 'other';
   description?: string;
-  level?: number; // Admin's 1-5 star validation level
-  riskLevel?: number; // Auto-calculated risk level from incident type
+  level?: number; 
+  riskLevel?: number; 
 }
 
 interface CrimeFrequency {
@@ -86,8 +86,6 @@ export class ZoneDangerEngineService {
     private firebaseService: FirebaseService,
     private reportService: ReportService
   ) {
-    // Don't start periodic updates in constructor to avoid injection context issues
-    // They will be started when initializeZones() is called
   }
 
   private startPeriodicUpdates() {
@@ -103,7 +101,6 @@ export class ZoneDangerEngineService {
 
     console.log('ZoneDangerEngineService: Loading validated reports for heatmap...');
     
-    // Load validated reports from the report service
     setTimeout(() => {
       this.loadValidatedReportsAsZones();
       this.startPeriodicUpdates();
@@ -113,13 +110,11 @@ export class ZoneDangerEngineService {
 
   private loadValidatedReportsAsZones() {
     try {
-      // Subscribe to validated reports and convert them to heatmap zones
       this.reportService.getValidatedReports().subscribe({
         next: (validatedReports) => {
           console.log('ZoneDangerEngineService: Validated reports loaded:', validatedReports.length);
           
           if (validatedReports && validatedReports.length > 0) {
-            // Convert validated reports to danger zones for heatmap
             const reportZones: DangerZone[] = validatedReports.map(report => {
               return this.convertReportToZone(report);
             });
@@ -144,11 +139,8 @@ export class ZoneDangerEngineService {
   }
 
   private convertReportToZone(report: any): DangerZone {
-    // Get the risk level set by admin (this is the numeric 1-5 level)
-    // Priority: riskLevel (admin's PRIMARY field) > level (compatibility) > validationLevel (legacy)
     const riskLevel = Number(report.riskLevel || report.level || report.validationLevel || 1);
     
-    // Debug logging to verify correct level is being used
     console.log(`🔍 convertReportToZone: ${report.locationAddress || report.location?.simplifiedAddress || 'Unknown'}`, {
       reportId: report.id,
       riskLevel: report.riskLevel,
@@ -159,10 +151,8 @@ export class ZoneDangerEngineService {
       status: report.status
     });
     
-    // Map risk level to severity (1-5 to 0-10)
     const currentSeverity = (riskLevel / 5) * 10;
     
-    // Determine danger level based on risk level
     let level: 'Safe' | 'Neutral' | 'Caution' | 'Danger';
     if (riskLevel <= 1) {
       level = 'Safe';
@@ -174,7 +164,6 @@ export class ZoneDangerEngineService {
       level = 'Danger';
     }
     
-    // Create a small area around the report location (0.001 degrees ≈ 111 meters)
     const radius = 0.002;
     const lat = report.location.lat;
     const lng = report.location.lng;
@@ -183,7 +172,7 @@ export class ZoneDangerEngineService {
       id: report.id || `report-${Date.now()}`,
       name: report.location.simplifiedAddress || report.locationAddress || 'Reported Incident',
       level: level,
-      riskLevel: riskLevel, // Store the numeric risk level for heatmap
+      riskLevel: riskLevel, 
       coordinates: [
         [lng - radius, lat - radius],
         [lng + radius, lat - radius],
@@ -195,7 +184,7 @@ export class ZoneDangerEngineService {
       incidents: [{
         id: report.id || `incident-${Date.now()}`,
         timestamp: report.createdAt?.toDate ? report.createdAt.toDate() : new Date(report.createdAt),
-        severity: riskLevel * 2, // Convert 1-5 to 2-10
+        severity: riskLevel * 2, 
         type: this.mapReportTypeToIncidentType(report.type),
         description: report.description
       }],
@@ -250,7 +239,7 @@ export class ZoneDangerEngineService {
         console.warn(`ZoneDangerEngineService: Retry ${retryCount + 1}/${maxRetries} due to injection error`);
         setTimeout(() => {
           this.loadZonesWithRetry(retryCount + 1, maxRetries);
-        }, Math.pow(2, retryCount) * 100); // Exponential backoff
+        }, Math.pow(2, retryCount) * 100); 
       } else {
         console.error('ZoneDangerEngineService: Max retries reached, using fallback zones');
         this.loadFallbackZones();
@@ -273,9 +262,8 @@ export class ZoneDangerEngineService {
         return;
       }
 
-      // Check if we're in a proper injection context before attempting Firebase operations
+
       try {
-        // Test if we can access Firebase without injection context issues
         const testDoc = firestoreInstance.collection('dangerZones').doc('test');
         if (!testDoc) {
           throw new Error('Cannot access Firestore document');
@@ -289,7 +277,7 @@ export class ZoneDangerEngineService {
         throw injectionError;
       }
 
-      // Use a more robust approach to handle Firebase operations
+
       this.safeFirebaseOperation(() => {
         try {
           this.firebaseService.getDocuments('dangerZones').subscribe({
@@ -336,7 +324,6 @@ export class ZoneDangerEngineService {
 
   private loadFallbackZones() {
     console.log('ZoneDangerEngineService: No fallback zones - using only validated reports from admin');
-    // No hardcoded zones anymore - heatmap is based purely on validated user reports
     this.zones.next([]);
   }
 
@@ -359,7 +346,6 @@ export class ZoneDangerEngineService {
   }
 
   public simulateRecentIncidents() {
-    // Simulation disabled - no test incidents will be created
     console.log('🧪 Incident simulation disabled - no test incidents created');
     return;
   }
@@ -436,7 +422,6 @@ export class ZoneDangerEngineService {
   }
 
   private triggerSoundAlert(soundType: 'beep' | 'siren' | 'chime') {
-    // Disable sounds in localhost/development environment
     const isLocalhost = window.location.hostname === 'localhost' || 
                        window.location.hostname === '127.0.0.1' ||
                        window.location.hostname.includes('localhost');
@@ -501,7 +486,6 @@ export class ZoneDangerEngineService {
   }
 
   private triggerPushNotification(alertData: any) {
-    // Disable push notifications in localhost/development environment
     const isLocalhost = window.location.hostname === 'localhost' || 
                        window.location.hostname === '127.0.0.1' ||
                        window.location.hostname.includes('localhost');
@@ -684,7 +668,6 @@ export class ZoneDangerEngineService {
       this.triggerVibrationAlert(vibrationPattern);
     }
     
-    // Trigger sound for all incidents (risk levels 1-5)
     if (this.shouldTriggerSound()) {
       this.triggerSoundAlert(soundType);
     }
@@ -781,10 +764,7 @@ export class ZoneDangerEngineService {
   }
 
   private shouldTriggerSound(): boolean {
-    // Only allow sound for high-risk scenarios
-    // This method is used for nearby incidents and time-based alerts
-    // Sound should be limited to the most critical situations
-    return true; // Keep true for now, but individual methods can override with more specific logic
+    return true; 
   }
 
   private shouldTriggerNotification(): boolean {
@@ -944,10 +924,10 @@ export class ZoneDangerEngineService {
 
   private getLevelColor(level: string): string {
     switch (level) {
-      case 'Safe': return '#10B981'; // Emerald-500
-      case 'Neutral': return '#F59E0B'; // Amber-500
-      case 'Caution': return '#F59E0B'; // Amber-500
-      case 'Danger': return '#EF4444'; // Red-500
+      case 'Safe': return '#10B981';
+      case 'Neutral': return '#F59E0B'; 
+      case 'Caution': return '#F59E0B'; 
+      case 'Danger': return '#EF4444'; 
       default: return '#9E9E9E';
     }
   }
@@ -1067,8 +1047,6 @@ export class ZoneDangerEngineService {
   }
 
   private async syncToFirestore(zones: DangerZone[]) {
-    // No longer syncing zones to Firestore - zones are now read-only from validated reports
-    // This prevents injection context errors and is not needed for the new system
     console.log('Skipping Firestore sync - zones are derived from validated reports');
   }
 }

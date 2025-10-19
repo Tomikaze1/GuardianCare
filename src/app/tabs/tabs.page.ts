@@ -30,13 +30,11 @@ export class TabsPage implements OnInit, OnDestroy {
   ngOnInit() {
     this.clearStuckHoverStates();
     
-    // Clear any existing test notifications
+
     this.clearTestNotifications();
     
-    // Calculate badge count based on NEW notifications (not all unread)
     this.updateBadgeCount();
     
-    // Listen for storage changes to update badge in real-time
     window.addEventListener('storage', () => {
       this.updateBadgeCount();
     });
@@ -50,7 +48,6 @@ export class TabsPage implements OnInit, OnDestroy {
 
   private clearTestNotifications() {
     try {
-      // Clear localStorage to remove test notifications
       localStorage.removeItem('guardian_care_notifications');
       console.log('🧹 Cleared test notifications from tabs');
     } catch (error) {
@@ -60,12 +57,10 @@ export class TabsPage implements OnInit, OnDestroy {
 
   private updateBadgeCount() {
     try {
-      // Get notifications from localStorage (same source as notifications page)
       const stored = localStorage.getItem('guardian_care_notifications');
       if (stored) {
         const notifications = JSON.parse(stored);
         
-        // Count only NEW notifications (not seen by user)
         this.unreadCount = notifications.filter((n: any) => {
           return !n.read && !n.data?.seenByUser;
         }).length;

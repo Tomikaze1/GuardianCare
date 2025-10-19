@@ -1,4 +1,4 @@
-// Clean & Simple Tab Bar Design for GuardianCare
+
 ion-tab-bar {
   --background: #ffffff;
   position: fixed;
@@ -8,10 +8,10 @@ ion-tab-bar {
   z-index: 99;
   height: 60px;
   padding: 0;
-  padding-bottom: env(safe-area-inset-bottom); // Handle devices with home indicator
+  padding-bottom: env(safe-area-inset-bottom); 
   box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.08);
   border-top: 1px solid rgba(124, 58, 237, 0.08);
-  min-height: 60px; // Ensure minimum height
+  min-height: 60px; 
   
   ion-tab-button {
     --background: transparent;
@@ -22,7 +22,7 @@ ion-tab-bar {
     --padding-bottom: 8px;
     position: relative;
     font-family: 'DM Sans', sans-serif;
-    overflow: visible; // Allow badge to extend beyond button bounds
+    overflow: visible; 
     
     ion-icon {
       font-size: 1.5rem;
@@ -40,7 +40,7 @@ ion-tab-bar {
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
-    // Default state - inactive tabs
+
     &:not(.tab-selected) {
       ion-icon {
         color: #94a3b8;
@@ -51,7 +51,7 @@ ion-tab-bar {
       }
     }
     
-    // Selected/Active state
+
     &.tab-selected {
       ion-icon {
         color: var(--primary-purple);
@@ -64,7 +64,6 @@ ion-tab-bar {
         font-weight: 700;
       }
       
-      // Bottom indicator line
       &::before {
         content: '';
         position: absolute;
@@ -79,7 +78,6 @@ ion-tab-bar {
       }
     }
     
-    // Ripple effect on tap
     &::part(native) {
       overflow: visible;
     }
@@ -106,25 +104,21 @@ ion-tab-bar {
   z-index: 10;
   animation: badgePulse 2s ease-in-out infinite;
   
-  // Ensure single digits are centered
   &:not([class*="double-digit"]) {
     padding: 0 6px;
   }
   
-  // For double digits, adjust padding
   &[class*="double-digit"] {
     padding: 0 4px;
     min-width: 20px;
   }
   
-  // For triple digits, show 99+
   &[class*="triple-digit"] {
     padding: 0 3px;
     min-width: 22px;
   }
 }
 
-// Page transitions
 ion-router-outlet > * {
   display: block;
   animation: pageTransition 0.25s ease-out;
@@ -152,7 +146,6 @@ ion-router-outlet > * {
   }
 }
 
-// Mobile responsive improvements
 @media (max-width: 480px) {
   .notif-badge {
     top: 3px;

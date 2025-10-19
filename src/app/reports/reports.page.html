@@ -11,7 +11,6 @@
     <div class="app-subtitle">{{ 'REPORTS.SUBTITLE' | translate }}</div>
     <div class="title-underline"></div>
     
-    <!-- Toggle History Button -->
     <ion-button 
       expand="block" 
       fill="outline" 
@@ -22,7 +21,6 @@
     </ion-button>
   </div>
 
-  <!-- Report History Section -->
   <div class="report-history-section" *ngIf="showHistory">
     <div class="section-header">
       <span>My Report History</span>
@@ -76,7 +74,6 @@
           <p>{{ report.description }}</p>
         </div>
 
-        <!-- Media Preview -->
         <div class="report-media" *ngIf="report.media && report.media.length > 0">
           <div class="media-preview-grid">
             <img 
@@ -90,7 +87,6 @@
           </div>
         </div>
 
-        <!-- Admin Risk Level -->
         <div class="report-validation" *ngIf="report.status === 'Validated'">
           <div class="validation-header">
             <ion-icon name="shield-checkmark-outline"></ion-icon>
@@ -105,7 +101,6 @@
           </div>
         </div>
 
-        <!-- Rejection Info -->
         <div class="report-rejection" *ngIf="report.isRejected">
           <ion-chip color="danger" class="rejection-chip">
             <ion-icon name="alert-circle-outline"></ion-icon>
@@ -135,7 +130,6 @@
     </div>
   </div>
 
-  <!-- Report Form (only shown when showHistory is false) -->
   <form [formGroup]="reportForm" (ngSubmit)="onSubmit()" class="report-form" *ngIf="!showHistory">
     <div class="section-header">
       <span>{{ 'REPORTS.INCIDENT_DETAILS' | translate }}</span>
@@ -310,7 +304,6 @@
           </button>
         </div>
         
-        <!-- Map Display Card -->
         <div class="map-card" *ngIf="selectedLocation">
           <div class="map-container">
             <div id="reports-map" class="reports-map"></div>
@@ -322,7 +315,6 @@
             </div>
           </div>
           
-          <!-- Enhanced Address Display -->
           <div class="address-display" *ngIf="locationAddress">
             <ion-icon name="location-outline" class="address-icon"></ion-icon>
             <div class="address-content">
@@ -410,7 +402,6 @@
       </div>
     </div>
 
-    <!-- Rate Limit Status -->
     <div class="rate-limit-status" *ngIf="rateLimitStatus.remainingReports < 5">
       <ion-chip [color]="rateLimitStatus.isBlocked ? 'danger' : 'warning'">
         <ion-icon name="time-outline"></ion-icon>

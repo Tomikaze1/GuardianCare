@@ -20,10 +20,8 @@ export class UserService {
     return this.firestore.doc(`users/${uid}`).valueChanges();
   }
 
-  // New method to get user data as a Promise to avoid injection context issues
   async getUserDataOnce(uid: string): Promise<any> {
     try {
-      // Use native Firebase instead of AngularFire to avoid injection context issues
       const { getFirestore, doc, getDoc } = await import('firebase/firestore');
       const firestore = getFirestore();
       const userDocRef = doc(firestore, 'users', uid);
@@ -54,7 +52,6 @@ export class UserService {
 
   async updateUserData(uid: string, data: any): Promise<void> {
     try {
-      // Use native Firebase instead of AngularFire to avoid injection context issues
       const { getFirestore, doc, updateDoc } = await import('firebase/firestore');
       const firestore = getFirestore();
       const userDocRef = doc(firestore, 'users', uid);
@@ -68,7 +65,6 @@ export class UserService {
 
   async createUserData(uid: string, data: any): Promise<void> {
     try {
-      // Use native Firebase instead of AngularFire to avoid injection context issues
       const { getFirestore, doc, setDoc } = await import('firebase/firestore');
       const firestore = getFirestore();
       const userDocRef = doc(firestore, 'users', uid);

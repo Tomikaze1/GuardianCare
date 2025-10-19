@@ -25,7 +25,6 @@ export class AppComponent implements OnInit {
   private initializeApp(): void {
     this.platform.ready().then(() => {
       console.log('Platform ready, initializing Firebase auth');
-      // Apply saved language globally at app start
       const savedLanguage = localStorage.getItem('userLanguage') || 'en';
       this.translate.use(savedLanguage);
       this.setupAuthStateMonitoring();

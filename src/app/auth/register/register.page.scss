@@ -6,7 +6,6 @@
   padding-bottom: 120px;
 }
 
-// Logo/Title Section
 .logo-container {
   text-align: center;
   margin-top: 20px;
@@ -84,7 +83,6 @@
   }
 }
 
-// Section Headers
 .section-header {
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 1.07rem;
@@ -128,7 +126,6 @@
   margin-bottom: 12px;
 }
 
-// Input Boxes
 .input-box {
   background: #fff;
   border-radius: 14px;
@@ -192,7 +189,6 @@
   }
 }
 
-// Terms Section
 .terms-section {
   margin: 20px 0;
   
@@ -238,7 +234,6 @@
   }
 }
 
-// Button Styling
 .button-wrapper {
   margin: 24px 0;
   
@@ -301,7 +296,6 @@
   }
 }
 
-// Login Section
 .login-section {
   text-align: center;
   margin-top: 20px;
@@ -342,7 +336,6 @@
   }
 }
 
-// Animations
 @keyframes logoFloat {
   0%, 100% { transform: translateY(0px) scale(1); }
   50% { transform: translateY(-8px) scale(1.02); }
@@ -368,7 +361,6 @@
   100% { width: 58px; }
 }
 
-// Responsive Design
 @media (max-width: 768px) {
   .logo-container {
     margin-top: 15px;

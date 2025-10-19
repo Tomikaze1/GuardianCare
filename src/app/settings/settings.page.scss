@@ -1,4 +1,4 @@
-// Modern Settings Page Styles - Matching Profile Design
+
 .settings-content {
   --background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);
   --padding-start: 0;
@@ -10,7 +10,6 @@
   padding-bottom: calc(env(safe-area-inset-bottom) + 100px);
 }
 
-// Modern Header Section
 .settings-header {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 24px 20px 32px 20px;
@@ -86,7 +85,6 @@
   }
 }
 
-// Enhanced Profile Section
 .profile-section {
   margin: -16px 20px 24px 20px;
   position: relative;
@@ -257,7 +255,6 @@
   }
 }
 
-// Settings Container - Improved Alignment
 .settings-container {
   padding: 0 20px;
   display: flex;
@@ -267,13 +264,12 @@
   margin: 0 auto;
 }
 
-// Settings Category
 .settings-category {
   background: #ffffff;
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  border: 1.5px solid #e7eef7; // match reports
+  border: 1.5px solid #e7eef7;
   transition: box-shadow 0.2s ease, transform 0.2s ease;
   margin-bottom: 16px;
   
@@ -332,7 +328,7 @@
           color: #1f2937;
           letter-spacing: -0.2px;
           flex: 1;
-          white-space: nowrap; // keep arrow on the same row
+          white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
         }
@@ -373,24 +369,23 @@
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.3s ease, padding 0.3s ease;
-    background: white; // blend rows with container
+    background: white;
     
     &.expanded {
       max-height: 1000px;
-      padding: 4px 20px 12px 20px; // inner spacing like report
+      padding: 4px 20px 12px 20px; 
       border-top: 1px solid #e2e8f0;
     }
   }
 }
 
-// Setting Cards - Matching Reports Page Design
 .setting-card {
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
   gap: 16px;
-  padding: 14px 0; // simple row spacing
-  background: transparent; // remove card look
+  padding: 14px 0; 
+  background: transparent; 
   border-radius: 0;
   margin-bottom: 0;
   cursor: pointer;
@@ -404,14 +399,14 @@
   }
 
   & + .setting-card {
-    border-top: 1px solid #e7eef7; // simple divider between rows
+    border-top: 1px solid #e7eef7; 
   }
   
   &.toggle-card {
     cursor: default;
     display: flex;
     align-items: center;
-    justify-content: flex-start; // keep items on one line; push toggle with margin-left:auto
+    justify-content: flex-start; 
     
     &:hover {
       transform: none;
@@ -420,7 +415,7 @@
     .setting-content {
       flex: 1;
       margin-right: 16px;
-      min-width: 0; // allow text to truncate instead of pushing toggle
+      min-width: 0; 
     }
   }
   
@@ -486,10 +481,10 @@
     gap: 8px;
     
     .setting-value {
-      display: inline-flex; // keep vertical alignment with chevron
+      display: inline-flex; 
       align-items: center;
-      height: 28px; // consistent chip height
-      line-height: 1; // avoid baseline misalignment
+      height: 28px; 
+      line-height: 1; 
       font-size: 13px;
       font-weight: 700;
       color: var(--primary-purple);
@@ -502,7 +497,7 @@
     ion-icon {
       font-size: 18px;
       color: var(--primary-purple);
-      align-self: center; // center chevron to chip
+      align-self: center; 
     }
   }
   
@@ -511,7 +506,7 @@
     align-items: center;
     justify-content: flex-end;
     flex-shrink: 0;
-    margin-left: auto; // push toggle to the far right
+    margin-left: auto; 
     
     ion-toggle {
       --background: #e7eef7;
@@ -542,7 +537,6 @@
   }
 }
 
-// Subpanel Styles - Enhanced Purple Theme
 .subpanel {
   background: white;
   border-radius: 12px;
@@ -602,7 +596,6 @@
   }
 }
 
-// About Section
 .about-section {
   margin: 24px 20px 0 20px;
   
@@ -700,7 +693,6 @@
   }
 }
 
-// Animations
 @keyframes shimmer {
   0% {
     background-position: -200% 0;
@@ -721,7 +713,6 @@
   }
 }
 
-// Responsive Design
 @media (max-width: 480px) {
   .settings-header {
     padding: 20px 16px 28px 16px;
@@ -762,7 +753,6 @@
   }
 }
 
-// Custom Alert Styles (keeping existing ones)
 ::ng-deep .terms-alert,
 ::ng-deep .privacy-alert,
 ::ng-deep .support-alert {

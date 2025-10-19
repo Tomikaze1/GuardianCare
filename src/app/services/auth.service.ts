@@ -3,7 +3,6 @@ import { FacebookLogin } from '@capacitor-community/facebook-login';
 import { Subscription, Observable, BehaviorSubject } from 'rxjs';
 import { map, take } from 'rxjs/operators';
 
-// Native Firebase imports
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
@@ -45,7 +44,6 @@ export class AuthService {
   private authStateSubject = new BehaviorSubject<User | null>(null);
 
   constructor() {
-    // Initialize Firebase if not already initialized
     try {
       initializeApp(environment.firebaseConfig);
       console.log('✅ Firebase initialized in AuthService');
@@ -56,7 +54,6 @@ export class AuthService {
     this.auth = getAuth();
     this.firestore = getFirestore();
     
-    // Initialize auth state monitoring
     this.initializeAuthState();
   }
 
@@ -172,7 +169,6 @@ export class AuthService {
     }
   }
 
-  // Alternative method using Observable for better performance
   isAuthenticatedObservable(): Observable<boolean> {
     console.log('AuthService: Using observable auth check');
     return this.authStateSubject.pipe(
@@ -202,9 +198,8 @@ export class AuthService {
     }
   }
 
-  // Cleanup method to prevent memory leaks
+
   ngOnDestroy(): void {
-    // No explicit unsubscribe needed for onAuthStateChanged as it's a global listener
   }
 
   private getErrorMessage(errorCode: string): string {

@@ -163,7 +163,6 @@
         </div>
       </div>
 
-      <!-- Action Buttons (Edit or Save/Cancel in same position) -->
       <div class="button-row">
         <div *ngIf="!isEditing">
           <ion-button 
@@ -201,13 +200,11 @@
         </div>
       </div>
 
-      <!-- Settings Section -->
       <div class="section-header">
         <span>Settings</span>
         <div class="section-underline"></div>
       </div>
 
-      <!-- Account & Security Settings -->
       <div class="form-row">
         <div class="section-header" (click)="toggleSection('account')">
           <div class="section-title-row">
@@ -256,7 +253,6 @@
         </div>
       </div>
 
-      <!-- Location & Alerts Settings -->
       <div class="form-row">
         <div class="section-header" (click)="toggleSection('location')">
           <div class="section-title-row">
@@ -305,7 +301,6 @@
         </div>
       </div>
 
-      <!-- Notifications Settings -->
       <div class="form-row">
         <div class="section-header" (click)="toggleSection('notifications')">
           <div class="section-title-row">
@@ -359,7 +354,6 @@
         </div>
       </div>
 
-      <!-- Localization Settings -->
       <div class="form-row">
         <div class="section-header" (click)="toggleSection('localization')">
           <div class="section-title-row">
@@ -398,7 +392,6 @@
         </div>
       </div>
 
-      <!-- Legal & Support -->
       <div class="form-row">
         <div class="section-header" (click)="toggleSection('legal')">
           <div class="section-title-row">
@@ -449,7 +442,6 @@
     </form>
   </div>
 
-  <!-- Logout button anchored at bottom -->
   <div class="profile-logout">
     <ion-button 
       expand="block" 

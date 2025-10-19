@@ -33,7 +33,6 @@ export class FirebaseService {
         console.error('FirebaseService: Firestore instance is not available');
         throw new Error('Firestore instance not available');
       }
-      // Use snapshotChanges() instead of valueChanges() to avoid injection context issues
       return this.firestore.collection(collectionName).snapshotChanges().pipe(
         map(actions => actions.map(a => {
           const data = a.payload.doc.data();

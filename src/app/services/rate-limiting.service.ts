@@ -16,27 +16,20 @@ export interface RateLimitInfo {
 })
 export class RateLimitingService {
   private readonly MAX_REPORTS_PER_HOUR = 5;
-  private readonly WINDOW_DURATION_MS = 60 * 60 * 1000; // 1 hour in milliseconds
+  private readonly WINDOW_DURATION_MS = 60 * 60 * 1000;
   private readonly STORAGE_KEY = 'guardian_care_rate_limit';
   
   constructor() {}
 
-  /**
-   * Check if IP address can submit a report
-   * @param ipAddress - IP address to check
-   * @returns Observable<RateLimitInfo> - Rate limit information
-   */
+
   checkRateLimit(ipAddress: string): Observable<RateLimitInfo> {
     try {
       const currentTime = Date.now();
       const rateLimitData = this.getRateLimitData(ipAddress);
       
-      // Clean up expired entries
       this.cleanupExpiredEntries();
       
-      // Check if we have data for this IP
       if (!rateLimitData) {
-        // First time submission from this IP
         const newRateLimitData = {
           ipAddress,
           reportCount: 0,
@@ -51,9 +44,8 @@ export class RateLimitingService {
         return of(newRateLimitData);
       }
       
-      // Check if current window has expired
+
       if (currentTime >= rateLimitData.windowEnd) {
-        // Reset the window
         const resetData = {
           ipAddress,
           reportCount: 0,
@@ -68,7 +60,7 @@ export class RateLimitingService {
         return of(resetData);
       }
       
-      // Check if limit is exceeded
+
       const isBlocked = rateLimitData.reportCount >= this.MAX_REPORTS_PER_HOUR;
       const remainingReports = Math.max(0, this.MAX_REPORTS_PER_HOUR - rateLimitData.reportCount);
       
@@ -83,7 +75,6 @@ export class RateLimitingService {
       
     } catch (error) {
       console.error('Error checking rate limit:', error);
-      // If there's an error, allow the request (fail open)
       return of({
         ipAddress,
         reportCount: 0,
@@ -96,18 +87,13 @@ export class RateLimitingService {
     }
   }
 
-  /**
-   * Record a report submission for an IP address
-   * @param ipAddress - IP address that submitted the report
-   * @returns Observable<boolean> - Success status
-   */
+
   recordReportSubmission(ipAddress: string): Observable<boolean> {
     try {
       const currentTime = Date.now();
       const rateLimitData = this.getRateLimitData(ipAddress);
       
       if (!rateLimitData) {
-        // Create new entry
         const newData = {
           ipAddress,
           reportCount: 1,
@@ -122,9 +108,7 @@ export class RateLimitingService {
         return of(true);
       }
       
-      // Check if window has expired
       if (currentTime >= rateLimitData.windowEnd) {
-        // Reset window
         const resetData = {
           ipAddress,
           reportCount: 1,
@@ -139,7 +123,6 @@ export class RateLimitingService {
         return of(true);
       }
       
-      // Increment report count
       const newCount = rateLimitData.reportCount + 1;
       const isBlocked = newCount >= this.MAX_REPORTS_PER_HOUR;
       const remainingReports = Math.max(0, this.MAX_REPORTS_PER_HOUR - newCount);
@@ -161,27 +144,16 @@ export class RateLimitingService {
     }
   }
 
-  /**
-   * Get client's IP address (simplified for browser environment)
-   * In a real implementation, this would be handled server-side
-   */
   getClientIPAddress(): string {
-    // For browser environment, we'll use a combination of factors
-    // In production, this should be handled server-side
     const userAgent = navigator.userAgent;
     const language = navigator.language;
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     
-    // Create a pseudo-IP based on browser characteristics
-    // This is not secure for production - use server-side IP detection
     const pseudoIP = btoa(`${userAgent}-${language}-${timezone}`).substring(0, 16);
     
     return pseudoIP;
   }
 
-  /**
-   * Get rate limit data for an IP address
-   */
   private getRateLimitData(ipAddress: string): RateLimitInfo | null {
     try {
       const stored = localStorage.getItem(`${this.STORAGE_KEY}_${ipAddress}`);
@@ -192,9 +164,7 @@ export class RateLimitingService {
     }
   }
 
-  /**
-   * Save rate limit data for an IP address
-   */
+
   private saveRateLimitData(ipAddress: string, data: RateLimitInfo): void {
     try {
       localStorage.setItem(`${this.STORAGE_KEY}_${ipAddress}`, JSON.stringify(data));
@@ -203,9 +173,6 @@ export class RateLimitingService {
     }
   }
 
-  /**
-   * Clean up expired rate limit entries
-   */
   private cleanupExpiredEntries(): void {
     try {
       const currentTime = Date.now();
@@ -229,11 +196,7 @@ export class RateLimitingService {
     }
   }
 
-  /**
-   * Get remaining time until rate limit resets
-   * @param ipAddress - IP address to check
-   * @returns Time in milliseconds until reset
-   */
+
   getTimeUntilReset(ipAddress: string): number {
     const rateLimitData = this.getRateLimitData(ipAddress);
     if (!rateLimitData) {
@@ -244,11 +207,7 @@ export class RateLimitingService {
     return Math.max(0, rateLimitData.windowEnd - currentTime);
   }
 
-  /**
-   * Format time until reset as human-readable string
-   * @param ipAddress - IP address to check
-   * @returns Human-readable time string
-   */
+
   getTimeUntilResetString(ipAddress: string): string {
     const timeUntilReset = this.getTimeUntilReset(ipAddress);
     

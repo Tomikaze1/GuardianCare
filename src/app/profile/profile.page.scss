@@ -3,15 +3,13 @@
   min-height: 100vh;
   font-family: 'DM Sans', 'Plus Jakarta Sans', Arial, sans-serif;
   padding: 0;
-  padding-bottom: 180px; // ensure content clears tab bar for tappable logout
+  padding-bottom: 180px;
 }
 
-// Improve overall typography for better visibility
 .profile-content {
   --ion-text-color: #0f172a;
 }
 
-// Logo/Title Section
 .logo-container {
   text-align: center;
   margin-top: 20px;
@@ -98,7 +96,6 @@
   }
 }
 
-// Section Headers
 .section-header {
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 1.12rem;
@@ -164,7 +161,6 @@
   margin-bottom: 12px;
 }
 
-// Profile Picture Section
 .profile-picture-container {
   display: flex;
   justify-content: center;
@@ -239,7 +235,6 @@
   }
 }
 
-// Input Boxes
 .input-box {
   background: #fff;
   border-radius: 14px;
@@ -287,7 +282,6 @@
   }
 }
 
-// Toasts on top with smooth animation
 ion-toast.toast-top {
   --border-radius: 12px;
   --box-shadow: 0 10px 24px rgba(0,0,0,0.15);
@@ -297,7 +291,6 @@ ion-toast.toast-top {
   font-weight: 600;
 }
 
-// Emergency Contacts Section
 .emergency-contacts-container {
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   border-radius: 16px;
@@ -466,7 +459,6 @@ ion-toast.toast-top {
   }
 }
 
-// Button Row
 .button-row {
   display: flex;
   flex-direction: column;
@@ -543,17 +535,15 @@ ion-toast.toast-top {
   }
 }
 
-// Bottom anchored logout container
 .profile-logout {
-  position: static; // not sticky; scrolls with content
+  position: static; 
   padding: 0 16px 0 16px;
   background: transparent;
   backdrop-filter: none;
   max-width: 420px;
-  margin: 12px auto calc(env(safe-area-inset-bottom) + 96px) auto; // add extra clearance above tabs
+  margin: 12px auto calc(env(safe-area-inset-bottom) + 96px) auto; 
 }
 
-// Animations
 @keyframes textShimmer {
   0%, 100% {
     background-position: 0% 50%;
@@ -603,7 +593,6 @@ ion-toast.toast-top {
   }
 }
 
-// Responsive Design
 @media (max-width: 768px) {
   
   .emergency-contacts-container {
@@ -654,7 +643,6 @@ ion-toast.toast-top {
   }
 }
 
-// Settings Styles - Matching Reports Page Design
 .form-row {
   width: 100%;
   margin-bottom: 20px;
@@ -737,7 +725,7 @@ ion-toast.toast-top {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-left: auto; // push toggles/value to far right
+  margin-left: auto; 
   justify-content: flex-end;
 }
 
@@ -762,7 +750,6 @@ ion-toast.toast-top {
 }
 
 
-// Toggle and Select Styling - Matching Original
 ion-toggle {
   --background: #e2e8f0;
   --background-checked: var(--primary-purple);
@@ -796,11 +783,10 @@ ion-segment-button {
   }
 }
 
-// Responsive Design for Settings
 @media (max-width: 480px) {
   .setting-item {
     padding: 14px 16px;
-    flex-direction: row; // keep single line layout on mobile
+    flex-direction: row; 
     align-items: center;
     gap: 12px;
   }
@@ -811,11 +797,10 @@ ion-segment-button {
   
   .setting-right {
     align-self: center;
-    margin-left: auto; // ensure right alignment
+    margin-left: auto; 
   }
 }
 
-// Dark mode support for settings
 @media (prefers-color-scheme: dark) {
   .setting-item {
     background: #2d3748;

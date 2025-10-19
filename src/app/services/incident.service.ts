@@ -170,7 +170,6 @@ export class IncidentService {
       const fileName = `incidents/${user.uid}/${Date.now()}.jpg`;
       const storageRef = this.firebaseService.getStorageInstance().ref(fileName);
       
-      // Convert base64 to blob
       const response = await fetch(imageData);
       const blob = await response.blob();
       

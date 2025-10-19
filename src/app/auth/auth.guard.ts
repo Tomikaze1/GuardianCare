@@ -19,7 +19,7 @@ export class AuthGuard implements CanActivate {
     
     return this.authService.isAuthenticatedObservable().pipe(
       take(1),
-      timeout(5000), // 5 second timeout
+      timeout(5000),
       map(authenticated => {
         console.log('AuthGuard: Authentication result:', authenticated);
         if (authenticated) {

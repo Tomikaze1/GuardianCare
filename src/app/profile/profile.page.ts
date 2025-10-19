@@ -34,7 +34,6 @@ export class ProfilePage implements OnInit {
   isEditingContact = false;
   editingContactId: string | null = null;
 
-  // Settings properties
   currentLanguage = 'en';
   twoFactorEnabled = false;
   gpsEnabled = true;
@@ -45,14 +44,12 @@ export class ProfilePage implements OnInit {
   selectedVibrationPattern: 'gentle' | 'default' | 'strong' = 'default';
   selectedUnit = 'Metric';
   
-  // Settings UI state
   expandAccountSecurity = false;
   expandLocationAlerts = false;
   expandNotifications = false;
   expandLocalization = false;
   expandLegalSupport = false;
 
-  // Settings options
   languages = [
     { code: 'en', name: 'English' },
     { code: 'es', name: 'Español' },
@@ -97,9 +94,7 @@ export class ProfilePage implements OnInit {
 
   ngOnInit() {
     console.log('ProfilePage: ngOnInit called');
-    // Load happens on ionViewWillEnter to avoid duplicate calls
-    
-    // Expose debug methods to global scope for testing
+
     (window as any).profileDebug = {
       refreshProfile: () => this.refreshProfile(),
       checkProfileData: () => this.checkProfileData(),
@@ -110,25 +105,20 @@ export class ProfilePage implements OnInit {
 
   ionViewWillEnter() {
     console.log('ProfilePage: ionViewWillEnter called');
-    // Ensure view starts at the top when entering
+
     this.content?.scrollToTop(0);
-    // Reload profile data when entering the page
+
     this.loadUserProfile();
   }
 
-  // (Removed temporary logout button; keep logic minimal here)
-
-  // Pull-to-refresh handler
   async handleRefresh(event: any) {
     try {
       await this.loadUserProfile();
     } finally {
-      // Finish refresher promptly for snappy UX
       setTimeout(() => event.target.complete(), 400);
     }
   }
 
-  // Debug method to check user data - you can call this from browser console
   async debugUserData() {
     try {
       const currentUser = await this.authService.getCurrentUser();
@@ -145,10 +135,10 @@ export class ProfilePage implements OnInit {
     }
   }
 
-  // Method to manually refresh profile data
+
   async refreshProfile() {
     console.log('Manually refreshing profile...');
-    // Brief loader for manual refresh only
+
     const loading = await this.loadingController.create({
       message: 'Refreshing profile...'
     });
@@ -156,12 +146,11 @@ export class ProfilePage implements OnInit {
     try {
       await this.loadUserProfile();
     } finally {
-      // Ensure dismiss quickly to avoid long blocking loader
+
       setTimeout(() => loading.dismiss(), 400);
     }
   }
 
-  // Method to check if profile data is properly loaded
   checkProfileData() {
     console.log('=== PROFILE DATA CHECK ===');
     console.log('User Profile Object:', this.userProfile);
@@ -181,10 +170,9 @@ export class ProfilePage implements OnInit {
     try {
       console.log('=== PROFILE LOADING START ===');
       
-      // Try multiple ways to get current user
+
       let currentUser = null;
       
-      // Method 1: Direct from auth service
       try {
         currentUser = await this.authService.getCurrentUser();
         console.log('Method 1 - AuthService getCurrentUser:', currentUser);
@@ -192,7 +180,6 @@ export class ProfilePage implements OnInit {
         console.log('Method 1 failed:', error);
       }
       
-      // Method 2: From AngularFireAuth
       if (!currentUser) {
         try {
           currentUser = await this.userService.getCurrentUser();
@@ -202,7 +189,6 @@ export class ProfilePage implements OnInit {
         }
       }
       
-      // Method 3: Check if user is already logged in via Firebase auth state
       if (!currentUser) {
         try {
           const auth = (window as any).firebase?.auth?.();
@@ -220,7 +206,7 @@ export class ProfilePage implements OnInit {
       if (currentUser && currentUser.uid) {
         console.log('User UID:', currentUser.uid);
         
-        // Use the Promise approach to avoid injection context issues
+
         const userData = await this.userService.getUserDataOnce(currentUser.uid);
         
         console.log('=== USER DATA FROM FIRESTORE ===');
@@ -229,7 +215,6 @@ export class ProfilePage implements OnInit {
         console.log('Data keys:', userData ? Object.keys(userData) : 'null');
         
         if (userData) {
-          // Handle both registration data format and profile format
           const displayName = userData.displayName || 
                             (userData.firstName && userData.lastName ? 
                              `${userData.firstName} ${userData.lastName}` : '');
@@ -243,7 +228,7 @@ export class ProfilePage implements OnInit {
           console.log('Emergency contact name:', userData.emergencyContactName);
           console.log('Emergency contact phone:', userData.emergencyContact);
           
-          // Update form with user data
+
           this.profileForm.patchValue({
             displayName: displayName,
             phone: userData.phone || '',
@@ -253,13 +238,11 @@ export class ProfilePage implements OnInit {
 
           this.profileImage = userData.photoURL || null;
           
-          // Handle emergency contacts - convert single emergency contact to array format
+
           if (userData.emergencyContacts && Array.isArray(userData.emergencyContacts)) {
-            // Already in array format
             this.emergencyContacts = userData.emergencyContacts;
             console.log('Using existing emergency contacts array:', this.emergencyContacts);
           } else if (userData.emergencyContact && userData.emergencyContactName) {
-            // Convert single emergency contact from registration to array format
             this.emergencyContacts = [{
               id: '1',
               name: userData.emergencyContactName,
@@ -276,7 +259,6 @@ export class ProfilePage implements OnInit {
           
           this.userProfile = userData;
           
-          // Force form update to ensure data is displayed
           this.profileForm.updateValueAndValidity();
           
           console.log('=== FORM VALUES AFTER UPDATE ===');
@@ -286,18 +268,15 @@ export class ProfilePage implements OnInit {
           console.log('Emergency contacts count:', this.emergencyContacts.length);
           console.log('=== END USER DATA PROCESSING ===');
           
-          // Optional toast disabled by default
+
         } else {
           console.log('No user data found in Firestore');
-          // Optional toast disabled by default
         }
       } else {
         console.log('No current user found');
-        // Optional toast disabled by default
       }
     } catch (error) {
       console.error('Error in loadUserProfile:', error);
-      // Optional toast disabled by default
     }
   }
 
@@ -311,17 +290,15 @@ export class ProfilePage implements OnInit {
       try {
         const currentUser = await this.authService.getCurrentUser();
         if (currentUser) {
-          // Split displayName into firstName and lastName if needed
           const fullName = this.profileForm.value.displayName;
           const nameParts = fullName.trim().split(' ');
           const firstName = nameParts[0] || '';
           const lastName = nameParts.slice(1).join(' ') || '';
 
-          // Validate image size before saving
           let photoURL = this.profileImage;
           if (photoURL && photoURL.startsWith('data:')) {
-            const sizeInBytes = (photoURL.length * 3) / 4; // Approximate byte size
-            const maxSize = 1000000; // 1MB limit
+            const sizeInBytes = (photoURL.length * 3) / 4;
+            const maxSize = 1000000;
             
             if (sizeInBytes > maxSize) {
               console.warn('Image size exceeds Firebase limit, compressing further...');
@@ -338,7 +315,6 @@ export class ProfilePage implements OnInit {
             address: this.profileForm.value.address || '',
             photoURL: photoURL,
             emergencyContacts: this.emergencyContacts,
-            // Keep the original single emergency contact format for backward compatibility
             emergencyContact: this.emergencyContacts.length > 0 ? this.emergencyContacts[0].phone : '',
             emergencyContactName: this.emergencyContacts.length > 0 ? this.emergencyContacts[0].name : '',
             updatedAt: new Date()
@@ -346,11 +322,9 @@ export class ProfilePage implements OnInit {
 
           await this.userService.updateUserData(currentUser.uid, updateData);
           this.isEditing = false;
-          // Notification disabled per request
         }
       } catch (error) {
         console.error('Error updating profile:', error);
-        // Notification disabled per request
       } finally {
         await loading.dismiss();
       }
@@ -360,27 +334,23 @@ export class ProfilePage implements OnInit {
   async selectProfileImage() {
     try {
       const image = await Camera.getPhoto({
-        quality: 60, // Reduced quality to reduce file size
+        quality: 60,
         allowEditing: true,
         resultType: CameraResultType.DataUrl,
         source: CameraSource.Photos
       });
 
       if (image.dataUrl) {
-        // Compress the image to reduce base64 size
         const compressedImage = await this.compressImage(image.dataUrl);
         this.profileImage = compressedImage;
-        // Notification disabled per request
       }
     } catch (error: any) {
-      // Handle user cancellation gracefully
       if (error.message && error.message.includes('User cancelled')) {
         console.log('User cancelled image selection');
-        return; // Don't show error toast for user cancellation
+        return; 
       }
       
       console.error('Error selecting image:', error);
-      // Notification disabled per request
     }
   }
 
@@ -391,12 +361,10 @@ export class ProfilePage implements OnInit {
       const img = new Image();
       
       img.onload = () => {
-        // Calculate new dimensions to reduce file size
         let { width, height } = img;
-        const maxWidth = 300; // Maximum width
-        const maxHeight = 300; // Maximum height
+        const maxWidth = 300; 
+        const maxHeight = 300;
         
-        // Calculate scaling factor
         const scaleFactor = Math.min(maxWidth / width, maxHeight / height);
         
         if (scaleFactor < 1) {
@@ -407,18 +375,17 @@ export class ProfilePage implements OnInit {
         canvas.width = width;
         canvas.height = height;
         
-        // Draw and compress
+
         ctx?.drawImage(img, 0, 0, width, height);
         
-        // Convert to base64 with compression
-        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7); // 70% quality
+
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7); 
         
-        // Check if compressed image is still too large
-        const sizeInBytes = (compressedDataUrl.length * 3) / 4; // Approximate byte size
-        const maxSize = 800000; // 800KB limit (leaving some buffer under 1MB)
+
+        const sizeInBytes = (compressedDataUrl.length * 3) / 4; 
+        const maxSize = 800000; 
         
         if (sizeInBytes > maxSize) {
-          // Further compress if still too large
           canvas.toBlob((blob) => {
             if (blob) {
               const reader = new FileReader();
@@ -429,7 +396,7 @@ export class ProfilePage implements OnInit {
             } else {
               resolve(compressedDataUrl);
             }
-          }, 'image/jpeg', 0.5); // Even lower quality
+          }, 'image/jpeg', 0.5); 
         } else {
           resolve(compressedDataUrl);
         }
@@ -476,7 +443,6 @@ export class ProfilePage implements OnInit {
               };
               this.emergencyContacts.push(newContact);
             } else {
-              // Notification disabled per request
             }
           }
         }
@@ -528,7 +494,6 @@ export class ProfilePage implements OnInit {
                 };
               }
             } else {
-              // Notification disabled per request
             }
           }
         }
@@ -563,7 +528,6 @@ export class ProfilePage implements OnInit {
   toggleEdit() {
     this.isEditing = !this.isEditing;
     if (!this.isEditing) {
-      // Reset form if cancelled - use the original user data
       const displayName = this.userProfile?.displayName || 
                          (this.userProfile?.firstName && this.userProfile?.lastName ? 
                           `${this.userProfile.firstName} ${this.userProfile.lastName}` : '');
@@ -613,7 +577,6 @@ export class ProfilePage implements OnInit {
     }
   }
 
-  // Settings Methods
   toggleSection(section: string) {
     switch (section) {
       case 'account':
@@ -634,9 +597,8 @@ export class ProfilePage implements OnInit {
     }
   }
 
-  // Account & Security
+
   async toggleTwoFactor() {
-    // Implementation for two-factor authentication
     console.log('Two-factor authentication toggled:', this.twoFactorEnabled);
     await this.showToast('Two-factor authentication setting updated', 'success');
   }
@@ -659,7 +621,6 @@ export class ProfilePage implements OnInit {
     await alert.present();
   }
 
-  // Location & Alerts
   async toggleGPS() {
     console.log('GPS tracking toggled:', this.gpsEnabled);
     await this.showToast('GPS setting updated', 'success');
@@ -675,7 +636,7 @@ export class ProfilePage implements OnInit {
     await this.showToast('Time-based alerts setting updated', 'success');
   }
 
-  // Notifications
+
   async toggleSmartVibration() {
     console.log('Smart vibration toggled:', this.smartVibration);
     await this.showToast('Smart vibration setting updated', 'success');
@@ -691,7 +652,6 @@ export class ProfilePage implements OnInit {
     await this.showToast(`Vibration pattern changed to ${event.detail.value}`, 'success');
   }
 
-  // Localization
   async changeLanguage(event: any) {
     const newLanguage = event.detail.value;
     this.currentLanguage = newLanguage;
@@ -705,7 +665,6 @@ export class ProfilePage implements OnInit {
     await this.showToast(`Unit system changed to ${event.detail.value}`, 'success');
   }
 
-  // Legal & Support
   async showPrivacyPolicy() {
     const alert = await this.alertController.create({
       header: 'Privacy Policy',
@@ -733,7 +692,6 @@ export class ProfilePage implements OnInit {
     await alert.present();
   }
 
-  // Additional settings methods to match original functionality
   async alertSounds() {
     const alert = await this.alertController.create({
       header: 'Alert Sounds',

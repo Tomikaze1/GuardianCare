@@ -1,7 +1,6 @@
 
 <ion-content class="settings-content">
   
-  <!-- Modern Header Section -->
   <div class="settings-header">
     <div class="header-content">
       <div class="header-icon">
@@ -15,7 +14,6 @@
     <div class="header-accent"></div>
   </div>
 
-  <!-- Enhanced User Profile Section -->
   <div class="profile-section" *ngIf="userProfile">
     <div class="profile-card">
       <div class="profile-header">
@@ -83,10 +81,8 @@
     </div>
   </div>
 
-  <!-- Settings Categories -->
   <div class="settings-container">
     
-    <!-- Account & Security Section -->
     <div class="settings-category">
       <div class="category-header" (click)="toggleSection('account')">
         <div class="category-icon">
@@ -160,7 +156,6 @@
     </div>
 
     
-    <!-- Location & Alerts Section -->
     <div class="settings-category">
       <div class="category-header" (click)="toggleSection('location')">
         <div class="category-icon">
@@ -234,7 +229,6 @@
     </div>
 
     
-    <!-- Notifications Section -->
     <div class="settings-category">
       <div class="category-header" (click)="toggleSection('notifications')">
         <div class="category-icon">
@@ -266,7 +260,7 @@
           </div>
         </div>
 
-        <!-- Smart Vibration subpanel -->
+
         <div class="subpanel" [class.open]="smartVibrationOptionsOpen">
           <div class="subpanel-content">
             <div class="subpanel-item">
@@ -330,8 +324,6 @@
       </div>
     </div>
 
-    
-    <!-- Localization Section -->
     <div class="settings-category">
       <div class="category-header" (click)="toggleSection('localization')">
         <div class="category-icon">
@@ -414,7 +406,6 @@
     </div>
 
     
-    <!-- Legal & Support Section -->
     <div class="settings-category">
       <div class="category-header" (click)="toggleSection('legal')">
         <div class="category-icon">
@@ -487,7 +478,6 @@
       </div>
     </div>
 
-    <!-- About Section -->
     <div class="about-section">
       <div class="about-card">
         <div class="about-header">

@@ -39,12 +39,10 @@ export class ReportsPage implements OnInit, OnDestroy {
   };
   @ViewChild(IonContent, { static: false }) content?: IonContent;
 
-  // Time and Date functionality
   customDateTime: Date | null = null;
   isCustomTimeEnabled = false;
   currentDateTime: Date = new Date();
 
-  // Report History
   showHistory = false;
   userReports: Report[] = [];
   private reportsSubscription?: Subscription;
@@ -71,7 +69,7 @@ export class ReportsPage implements OnInit, OnDestroy {
     this.reportForm = this.formBuilder.group({
       type: ['', Validators.required],
       description: ['', [Validators.required, Validators.minLength(5)]],
-      severity: ['medium'], // Default value, not required since there's no UI for it
+      severity: ['medium'], 
       media: [[]],
       anonymous: [false]
     });
@@ -86,19 +84,16 @@ export class ReportsPage implements OnInit, OnDestroy {
     this.updateCurrentDateTime();
     this.loadUserReports();
     
-    // Update current time every minute
     setInterval(() => {
       this.updateCurrentDateTime();
     }, 60000);
   }
 
   ionViewWillEnter() {
-    // Always start at top when entering this tab
     this.content?.scrollToTop(0);
   }
 
   ionViewDidEnter() {
-    // Reinitialize map when view is fully rendered
     if (this.selectedLocation && !this.map) {
       setTimeout(() => {
         this.initializeMap();
@@ -130,7 +125,6 @@ export class ReportsPage implements OnInit, OnDestroy {
         );
       }
     } catch (error: any) {
-      // Ignore "not implemented on web" errors
       if (error?.message?.includes('Not implemented')) {
         console.log('Camera permissions check not available on web platform');
       } else {
@@ -144,10 +138,9 @@ export class ReportsPage implements OnInit, OnDestroy {
       const permissions = await Camera.requestPermissions();
       return permissions.camera === 'granted';
     } catch (error: any) {
-      // Ignore "not implemented on web" errors - web doesn't need permission requests
       if (error?.message?.includes('Not implemented')) {
         console.log('Camera permission request not needed on web platform');
-        return true; // Return true for web since it doesn't need permissions
+        return true; 
       }
       console.error('Error requesting camera permissions:', error);
       return false;
@@ -156,7 +149,6 @@ export class ReportsPage implements OnInit, OnDestroy {
 
   private async initializeLocation() {
     try {
-      // Try to get the exact device location with multiple attempts
       try {
         this.currentLocation = await this.locationService.getDeviceExactLocation();
         this.notificationService.success('Location Found', 'Your exact device location has been pinpointed!', 'OK', 2000);
@@ -176,13 +168,11 @@ export class ReportsPage implements OnInit, OnDestroy {
       await this.saveLastKnownLocation();
       this.initializeMap();
       
-      // Start real-time location tracking for reports
       this.startRealTimeLocationTracking();
     } catch (error) {
       console.error('Error getting location:', error);
       this.isOffline = true;
       
-      // Use last known location if available
       if (this.lastKnownLocation) {
         this.currentLocation = this.lastKnownLocation;
         this.selectedLocation = this.lastKnownLocation;
@@ -194,7 +184,6 @@ export class ReportsPage implements OnInit, OnDestroy {
           5000
         );
       } else {
-        // Fallback to default location
         this.currentLocation = { lat: 10.3111, lng: 123.8931 };
         this.selectedLocation = this.currentLocation;
         await this.updateLocationAddress();
@@ -210,16 +199,13 @@ export class ReportsPage implements OnInit, OnDestroy {
   }
 
   private startRealTimeLocationTracking() {
-    // Subscribe to real-time location updates
     this.locationService.currentLocation$.subscribe(location => {
       if (location) {
-        // Always update current location for reference
         this.currentLocation = location;
         
-        // Only update selected location if user hasn't manually edited it
+
         if (!this.isLocationEditMode && !this.isLocationManuallyEdited) {
           this.selectedLocation = location;
-          // Only update map if it's initialized
           if (this.map) {
             this.updateMapLocation();
           }
@@ -234,20 +220,19 @@ export class ReportsPage implements OnInit, OnDestroy {
 
   async refreshLocation() {
     try {
-      // Use the exact device location method for the most accurate results
       this.currentLocation = await this.locationService.getDeviceExactLocation();
       
-      // Only update selected location if user hasn't manually chosen a different location
+
       if (!this.isLocationManuallyEdited) {
         this.selectedLocation = this.currentLocation;
-        // Only update map if it's initialized
+
         if (this.map) {
           this.updateMapLocation();
         }
         await this.updateLocationAddress();
         this.notificationService.success('Location Updated', 'Your exact device location has been refreshed with maximum precision!', 'OK', 2000);
       } else {
-        // Just update current location in background, keep selected location
+
         this.notificationService.info('GPS Updated', 'Device GPS refreshed. Your custom report location is still set.', 'OK', 2000);
       }
       
@@ -295,7 +280,6 @@ export class ReportsPage implements OnInit, OnDestroy {
   }
 
   private initializeMap() {
-    // Don't initialize map if we're in history view
     if (this.showHistory) {
       console.log('Skipping map initialization - in history view');
       return;
@@ -303,12 +287,10 @@ export class ReportsPage implements OnInit, OnDestroy {
     
     if (!this.selectedLocation) return;
     
-    // Check if container exists and has dimensions
     const container = document.getElementById('reports-map');
     if (!container) {
       this.mapInitRetryCount++;
       if (this.mapInitRetryCount < this.maxMapInitRetries) {
-        // Only retry if NOT in history view
         if (!this.showHistory) {
           console.warn(`Map container not found, retry ${this.mapInitRetryCount}/${this.maxMapInitRetries}...`);
           setTimeout(() => this.initializeMap(), 500);
@@ -323,7 +305,6 @@ export class ReportsPage implements OnInit, OnDestroy {
     if (rect.width === 0 || rect.height === 0) {
       this.mapInitRetryCount++;
       if (this.mapInitRetryCount < this.maxMapInitRetries) {
-        // Only retry if NOT in history view
         if (!this.showHistory) {
           console.warn(`Map container has zero size, retry ${this.mapInitRetryCount}/${this.maxMapInitRetries}...`);
           setTimeout(() => this.initializeMap(), 500);
@@ -334,21 +315,15 @@ export class ReportsPage implements OnInit, OnDestroy {
       return;
     }
     
-    // Prevent multiple initialization attempts
     if (this.map) {
       console.log('Map already initialized, skipping...');
       return;
     }
     
-    // Reset retry counter on successful initialization
     this.mapInitRetryCount = 0;
     
-    // Set Mapbox access token
     (mapboxgl as any).accessToken = 'pk.eyJ1IjoidG9taWthemUxIiwiYSI6ImNtY25rM3NxazB2ZG8ybHFxeHVoZWthd28ifQ.Vnf9pMEQAryEI2rMJeMQGQ';
     
-    // Map is already null at this point, no need to remove
-    
-    // Clear container content
     container.innerHTML = '';
     
     try {
@@ -367,15 +342,13 @@ export class ReportsPage implements OnInit, OnDestroy {
       return;
     }
 
-    // Add marker for current location with higher precision
     const marker = new mapboxgl.Marker({
       color: this.isOffline ? '#ff6b35' : '#4CAF50',
-      scale: 1.5 // Larger marker for better visibility
+      scale: 1.5 
     })
       .setLngLat([this.selectedLocation.lng, this.selectedLocation.lat])
       .addTo(this.map);
 
-    // Add popup with precise location info
     const popup = new mapboxgl.Popup({
       offset: 25,
       closeButton: false
@@ -389,13 +362,12 @@ export class ReportsPage implements OnInit, OnDestroy {
 
     marker.setPopup(popup);
     
-    // More precise map bounds for exact location
     this.map.fitBounds([
       [this.selectedLocation.lng - 0.0001, this.selectedLocation.lat - 0.0001],
       [this.selectedLocation.lng + 0.0001, this.selectedLocation.lat + 0.0001]
     ], {
       padding: 20,
-      maxZoom: 20 // Allow higher zoom for precision
+      maxZoom: 20 
     });
   }
 
@@ -409,7 +381,6 @@ export class ReportsPage implements OnInit, OnDestroy {
       this.map.setCenter([this.selectedLocation.lng, this.selectedLocation.lat]);
       this.map.setZoom(18);
       
-      // Update marker
       const markers = document.querySelectorAll('.mapboxgl-marker');
       markers.forEach(marker => marker.remove());
       
@@ -420,7 +391,6 @@ export class ReportsPage implements OnInit, OnDestroy {
         .setLngLat([this.selectedLocation.lng, this.selectedLocation.lat])
         .addTo(this.map);
 
-      // Update popup with precise coordinates
       const popup = new mapboxgl.Popup({
         offset: 25,
         closeButton: false
@@ -441,7 +411,6 @@ export class ReportsPage implements OnInit, OnDestroy {
   private async updateLocationAddress() {
     if (this.selectedLocation) {
       try {
-        // Use Nominatim (OpenStreetMap) for reverse geocoding - FREE and no API key required
         const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${this.selectedLocation.lat}&lon=${this.selectedLocation.lng}&addressdetails=1&zoom=18`;
         
         const response = await fetch(url);
@@ -458,7 +427,6 @@ export class ReportsPage implements OnInit, OnDestroy {
         }
       } catch (error) {
         console.error('Error fetching address:', error);
-        // Fallback to coordinates if geocoding fails
         this.locationAddress = `${this.selectedLocation.lat.toFixed(6)}, ${this.selectedLocation.lng.toFixed(6)}`;
       }
     }
@@ -502,10 +470,8 @@ export class ReportsPage implements OnInit, OnDestroy {
         this.notificationService.success('Success!', 'Photo captured successfully!', 'OK', 2000);
       }
     } catch (error: any) {
-      // User cancelled - this is normal, don't show error
       if (error?.message?.includes('User cancelled') || error === 'User cancelled photos app') {
         console.log('User cancelled photo capture');
-        // Don't show any notification - user intentionally cancelled
         return;
       }
       
@@ -553,19 +519,16 @@ export class ReportsPage implements OnInit, OnDestroy {
   }
 
   async onSubmit() {
-    // Check incident type selection
     if (!this.selectedIncidentType) {
       await this.showAlert('Error', 'Please select an incident type.');
       return;
     }
 
-    // Check location
     if (!this.selectedLocation) {
       await this.showAlert('Error', 'Please select a location on the map.');
       return;
     }
 
-    // Detailed form validation with helpful error messages
     if (this.reportForm.invalid) {
       const errors: string[] = [];
       
@@ -595,7 +558,6 @@ export class ReportsPage implements OnInit, OnDestroy {
     await loading.present();
 
     try {
-      // Ensure location address is up-to-date before submission
       if (this.selectedLocation) {
         await this.updateLocationAddress();
         console.log('📍 Submitting report with location:', this.selectedLocation);
@@ -606,14 +568,12 @@ export class ReportsPage implements OnInit, OnDestroy {
       
       const formData = this.reportForm.value;
       
-      // Convert media files to File objects for Cloudinary upload
       const mediaFiles: File[] = [];
       if (formData.media && formData.media.length > 0) {
         for (const mediaItem of formData.media) {
           if (mediaItem.file) {
             mediaFiles.push(mediaItem.file);
           } else if (mediaItem.webPath) {
-            // Convert webPath to File object for Cloudinary
             try {
               const response = await fetch(mediaItem.webPath);
               const blob = await response.blob();
@@ -636,7 +596,6 @@ export class ReportsPage implements OnInit, OnDestroy {
         anonymous: formData.anonymous,
         media: mediaFiles,
         isSilent: false,
-        // Include custom time/date if set
         customDateTime: this.isCustomTimeEnabled ? this.customDateTime : null
       };
 
@@ -647,7 +606,6 @@ export class ReportsPage implements OnInit, OnDestroy {
       this.selectedLocation = this.currentLocation;
       this.selectedIncidentType = '';
       this.isLocationManuallyEdited = false;
-      // Reset time settings
       this.customDateTime = null;
       this.isCustomTimeEnabled = false;
 
@@ -656,7 +614,6 @@ export class ReportsPage implements OnInit, OnDestroy {
       await this.showAlert('Error', 'Failed to submit report. Please try again.');
     } finally {
       await loading.dismiss();
-      // Refresh rate limit status after submission attempt
       await this.loadRateLimitStatus();
     }
   }
@@ -676,7 +633,6 @@ export class ReportsPage implements OnInit, OnDestroy {
     this.selectedIncidentType = type;
     this.reportForm.patchValue({ type: type });
     
-    // Remove focus from button after selection to prevent border staying
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
@@ -762,7 +718,6 @@ export class ReportsPage implements OnInit, OnDestroy {
     }
   }
 
-  // Test method to simulate offline mode (for development/testing)
   async testOfflineMode() {
     this.isOffline = true;
     if (this.lastKnownLocation) {
@@ -827,11 +782,9 @@ export class ReportsPage implements OnInit, OnDestroy {
   private enableLocationEditing() {
     if (!this.map) return;
 
-    // Remove existing markers
     const markers = document.querySelectorAll('.mapboxgl-marker');
     markers.forEach(marker => marker.remove());
 
-    // Add draggable marker at current location
     this.editableMarker = new mapboxgl.Marker({
       color: '#ff6b35',
       scale: 1.5,
@@ -840,7 +793,6 @@ export class ReportsPage implements OnInit, OnDestroy {
       .setLngLat([this.selectedLocation!.lng, this.selectedLocation!.lat])
       .addTo(this.map);
 
-    // Add popup for editable marker
     const popup = new mapboxgl.Popup({
       offset: 25,
       closeButton: false
@@ -854,7 +806,6 @@ export class ReportsPage implements OnInit, OnDestroy {
 
     this.editableMarker.setPopup(popup);
 
-    // Handle marker drag end
     this.editableMarker.on('dragend', async () => {
       const lngLat = this.editableMarker!.getLngLat();
       this.selectedLocation = { lat: lngLat.lat, lng: lngLat.lng };
@@ -864,7 +815,6 @@ export class ReportsPage implements OnInit, OnDestroy {
       console.log('📍 Report location manually edited:', this.selectedLocation, 'Address:', this.locationAddress);
     });
 
-    // Handle map clicks to move marker
     this.handleMapClick = async (e: mapboxgl.MapMouseEvent) => {
       const lngLat = e.lngLat;
       this.selectedLocation = { lat: lngLat.lat, lng: lngLat.lng };
@@ -877,26 +827,23 @@ export class ReportsPage implements OnInit, OnDestroy {
     
     this.map.on('click', this.handleMapClick);
 
-    // Change cursor to indicate editing mode
+
     this.map.getCanvas().style.cursor = 'crosshair';
   }
 
   private disableLocationEditing() {
     if (!this.map) return;
 
-    // Remove click event listener
+
     this.map.off('click', this.handleMapClick);
     
-    // Change cursor back to normal
     this.map.getCanvas().style.cursor = '';
 
-    // Remove editable marker
     if (this.editableMarker) {
       this.editableMarker.remove();
       this.editableMarker = null;
     }
 
-    // Add back the regular marker
     this.addRegularMarker();
   }
 
@@ -943,15 +890,13 @@ export class ReportsPage implements OnInit, OnDestroy {
 
   async resetToCurrentLocation() {
     try {
-      // Get fresh current location
       this.currentLocation = await this.locationService.getDeviceExactLocation();
       this.selectedLocation = this.currentLocation;
-      this.isLocationManuallyEdited = false; // Reset manual edit flag
+      this.isLocationManuallyEdited = false; 
       this.isOffline = false;
       await this.updateLocationAddress();
       await this.saveLastKnownLocation();
       
-      // Update the editable marker position
       if (this.editableMarker) {
         this.editableMarker.setLngLat([this.selectedLocation.lng, this.selectedLocation.lat]);
         this.updateEditableMarkerPopup();
@@ -965,7 +910,6 @@ export class ReportsPage implements OnInit, OnDestroy {
     }
   }
 
-  // Time and Date methods
   updateCurrentDateTime() {
     this.currentDateTime = new Date();
   }
@@ -1078,7 +1022,6 @@ export class ReportsPage implements OnInit, OnDestroy {
     }
   }
 
-  // Anonymous toggle methods
   toggleAnonymous() {
     const currentValue = this.reportForm.get('anonymous')?.value;
     this.reportForm.patchValue({ anonymous: !currentValue });
@@ -1099,7 +1042,6 @@ export class ReportsPage implements OnInit, OnDestroy {
     );
   }
 
-  // Report History Methods
   toggleHistory() {
     this.showHistory = !this.showHistory;
     if (this.showHistory) {
@@ -1110,14 +1052,12 @@ export class ReportsPage implements OnInit, OnDestroy {
   loadUserReports() {
     this.reportsSubscription = this.reportService.getUserReports().subscribe(
       reports => {
-        // Sort by creation date, newest first
         this.userReports = reports.sort((a, b) => {
           const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt);
           const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt);
           return dateB.getTime() - dateA.getTime();
         });
         
-        // Add test validated reports if no reports exist
         if (this.userReports.length === 0) {
           this.addTestValidatedReports();
         }
@@ -1160,12 +1100,10 @@ export class ReportsPage implements OnInit, OnDestroy {
     return Array(5).fill(0).map((_, i) => i < level ? 'star' : 'star-outline');
   }
 
-  // Helper method to get the correct risk level from a report
-  // Priority: riskLevel (admin's PRIMARY field) > level (compatibility) > validationLevel (legacy)
+
   getReportRiskLevel(report: Report): number {
     const riskLevel = report.riskLevel || report.level || report.validationLevel || 1;
     
-    // Debug logging to verify correct risk level is being used
     if (report.status === 'Validated') {
       console.log(`📊 Report Risk Level for "${report.locationAddress || 'Unknown'}":`, {
         reportId: report.id,
@@ -1182,12 +1120,12 @@ export class ReportsPage implements OnInit, OnDestroy {
 
   getRiskLevelColor(level: number): string {
     switch (level) {
-      case 1: return 'linear-gradient(90deg, #22c55e, #16a34a)'; // Green gradient
-      case 2: return 'linear-gradient(90deg, #eab308, #ca8a04)'; // Yellow gradient
-      case 3: return 'linear-gradient(90deg, #f97316, #ea580c)'; // Orange gradient
-      case 4: return 'linear-gradient(90deg, #ef4444, #dc2626)'; // Red gradient
-      case 5: return 'linear-gradient(90deg, #991b1b, #7f1d1d)'; // Dark red gradient
-      default: return 'linear-gradient(90deg, #6b7280, #4b5563)'; // Gray gradient
+      case 1: return 'linear-gradient(90deg, #22c55e, #16a34a)'; 
+      case 2: return 'linear-gradient(90deg, #eab308, #ca8a04)'; 
+      case 3: return 'linear-gradient(90deg, #f97316, #ea580c)'; 
+      case 4: return 'linear-gradient(90deg, #ef4444, #dc2626)'; 
+      case 5: return 'linear-gradient(90deg, #991b1b, #7f1d1d)'; 
+      default: return 'linear-gradient(90deg, #6b7280, #4b5563)'; 
     }
   }
 
@@ -1211,10 +1149,10 @@ export class ReportsPage implements OnInit, OnDestroy {
         location: { lat: 10.3157, lng: 123.8854, simplifiedAddress: 'Babag, Cebu City' },
         locationAddress: 'Babag, Cebu City',
         userId: 'test-user-1',
-        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-        validatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), 
+        validatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), 
         status: 'Validated',
-        level: 3, // Admin's validation: Level 3 - High (Orange)
+        level: 3,
         riskLevel: 3,
         media: [],
         anonymous: false,
@@ -1229,10 +1167,10 @@ export class ReportsPage implements OnInit, OnDestroy {
         location: { lat: 10.3257, lng: 123.8954, simplifiedAddress: 'Lahug, Cebu City' },
         locationAddress: 'Lahug, Cebu City',
         userId: 'test-user-2',
-        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
-        validatedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000), // 4 days ago
+        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), 
+        validatedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000), 
         status: 'Validated',
-        level: 2, // Admin's validation: Level 2 - Moderate (Yellow)
+        level: 2, 
         riskLevel: 2,
         media: [],
         anonymous: false,
@@ -1247,10 +1185,10 @@ export class ReportsPage implements OnInit, OnDestroy {
         location: { lat: 10.2957, lng: 123.8754, simplifiedAddress: 'Downtown Cebu' },
         locationAddress: 'Downtown Cebu',
         userId: 'test-user-3',
-        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
-        validatedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000), // 6 days ago
+        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), 
+        validatedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000), 
         status: 'Validated',
-        level: 5, // Admin's validation: Level 5 - Extreme (Dark Red)
+        level: 5, 
         riskLevel: 5,
         media: [],
         anonymous: false,
@@ -1266,12 +1204,10 @@ export class ReportsPage implements OnInit, OnDestroy {
   }
 
   updateNewValidatedReportsCount() {
-    // Get the last time user viewed validated reports
     const lastViewedTime = localStorage.getItem('guardian_care_last_validated_reports_view') 
       ? new Date(localStorage.getItem('guardian_care_last_validated_reports_view')!)
-      : new Date(0); // If never viewed, use epoch time
+      : new Date(0); 
 
-    // Count validated reports that were validated after last view
     this.newValidatedReportsCount = this.userReports.filter(report => 
       report.status === 'Validated' && 
       report.validatedAt && 
@@ -1282,7 +1218,6 @@ export class ReportsPage implements OnInit, OnDestroy {
   }
 
   markValidatedReportsAsViewed() {
-    // Update the last viewed time to now
     localStorage.setItem('guardian_care_last_validated_reports_view', new Date().toISOString());
     this.newValidatedReportsCount = 0;
     console.log('📊 Marked validated reports as viewed');
@@ -1316,7 +1251,6 @@ export class ReportsPage implements OnInit, OnDestroy {
   }
 
   async viewReportDetails(report: Report) {
-    // Build clean, readable message
     let message = `📋 Report Information\n\n`;
     message += `Type: ${this.getIncidentTypeLabel(report.type)}\n`;
     message += `Status: ${report.status}\n`;
@@ -1328,14 +1262,13 @@ export class ReportsPage implements OnInit, OnDestroy {
     message += `📝 Description\n`;
     message += `${report.description}\n\n`;
     
-    // Media info
+
     if (report.media && report.media.length > 0) {
       message += `📸 Media: ${report.media.length} photo(s) attached\n\n`;
     } else {
       message += `📸 Media: No photos attached\n\n`;
     }
     
-    // Validation info
     const reportLevel = this.getReportRiskLevel(report);
     if (reportLevel && reportLevel > 0) {
       message += `✅ Admin Validation\n`;
@@ -1346,7 +1279,6 @@ export class ReportsPage implements OnInit, OnDestroy {
       message += `✅ Status: Validated by admin\n\n`;
     }
     
-    // Rejection info
     if (report.isRejected && report.rejectionReason) {
       message += `❌ Report Rejected\n`;
       message += `Reason: ${report.rejectionReason}\n`;

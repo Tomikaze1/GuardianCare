@@ -25,7 +25,7 @@ export class AdminNotificationService {
 
   private subscriptions: Subscription[] = [];
   private lastProcessedValidationTime: Date | null = null;
-  private processedReportIds = new Set<string>(); // Track processed reports to avoid duplicates
+  private processedReportIds = new Set<string>();
 
   constructor(
     private reportService: ReportService,
@@ -43,10 +43,8 @@ export class AdminNotificationService {
     console.log('🔔 Initializing AdminNotificationService listener...');
     const db = getFirestore();
     
-    // Listen to ALL incidents, filter for Validated status in real-time
     const allIncidentsQuery = query(
       collection(db, 'incidents')
-      // Removed orderBy to avoid index requirement - we'll sort in memory
     );
 
     this.subscriptions.push(
@@ -57,7 +55,6 @@ export class AdminNotificationService {
           const reports = snapshot.docs.map(doc => {
             const data = doc.data();
             
-            // Parse location data
             const locationData = data['location'];
             const locationObj = typeof locationData === 'object' ? locationData : {
               lat: data['lat'] || 0,
@@ -103,19 +100,15 @@ export class AdminNotificationService {
 
         const newEvents: AdminValidationEvent[] = [];
         
-        // Filter for ALL validated reports (not just recent ones)
-        // This ensures all admin-validated reports appear in notifications
         const newlyValidatedReports = reports.filter(report => {
           return report.status === 'Validated' && 
                  report.validatedAt && 
                  !this.processedReportIds.has(report.id!);
-                 // Removed time filter - show ALL validated reports
         });
         
         console.log('✅ Found newly validated reports:', newlyValidatedReports.length);
         
         newlyValidatedReports.forEach(report => {
-          // Mark as processed to avoid duplicate notifications
           this.processedReportIds.add(report.id!);
           
           const isForCurrentUser = report.userId === currentUser.uid;
@@ -131,12 +124,9 @@ export class AdminNotificationService {
           };
           newEvents.push(event);
 
-          // Create notification for ALL users (not just report owner)
           const timeStr = this.formatTimeAgo(report.validatedAt!);
           const riskText = this.getRiskLevelText(report.level || report.riskLevel || 1);
           
-          // Disabled NotificationManager notifications to prevent duplicates
-          // Notifications are now loaded directly from Firestore in notifications.page.ts
           console.log('🔔 Admin validation detected for report:', report.id, '- notifications loaded from Firestore');
         });
 
@@ -145,7 +135,6 @@ export class AdminNotificationService {
           console.log('📊 Admin validation events updated:', newEvents.length, 'new events');
         }
         
-        // Clean up old processed IDs (keep only last 100 to prevent memory issues)
         if (this.processedReportIds.size > 100) {
           const idsArray = Array.from(this.processedReportIds);
           this.processedReportIds.clear();
@@ -156,7 +145,6 @@ export class AdminNotificationService {
   }
 
   private formatTimeAgo(date: Date): string {
-    // Show the exact validation date/time like admin interface
     return date.toLocaleString('en-US', {
       day: '2-digit',
       month: '2-digit', 
@@ -179,33 +167,24 @@ export class AdminNotificationService {
     }
   }
 
-  // Method to manually trigger notification check (useful for testing)
   public checkForNewValidations() {
     console.log('🔍 Manual validation check triggered');
-    // The listener will automatically pick up any new validations
   }
 
-  /**
-   * Get recent validation events
-   */
+
   getRecentValidations(limit: number = 10): Observable<AdminValidationEvent[]> {
     return this.validationEvents$.pipe(
       map(events => events.slice(0, limit))
     );
   }
 
-  /**
-   * Get validation events for a specific user
-   */
   getUserValidations(userId: string): Observable<AdminValidationEvent[]> {
     return this.validationEvents$.pipe(
       map(events => events.filter(event => event.userId === userId))
     );
   }
 
-  /**
-   * Clear old validation events (older than 24 hours)
-   */
+
   clearOldEvents() {
     const oneDayAgo = new Date();
     oneDayAgo.setDate(oneDayAgo.getDate() - 1);
@@ -216,9 +195,7 @@ export class AdminNotificationService {
     this.validationEventsSubject.next(recentEvents);
   }
 
-  /**
-   * Clear all processed report IDs to start fresh
-   */
+
   clearProcessedReports() {
     this.processedReportIds.clear();
     this.lastProcessedValidationTime = null;

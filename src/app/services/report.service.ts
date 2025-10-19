@@ -7,7 +7,6 @@ import { Observable, from, of, throwError, BehaviorSubject } from 'rxjs';
 import { map, switchMap, catchError, tap } from 'rxjs/operators';
 import { Haptics } from '@capacitor/haptics';
 
-// Native Firebase imports
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, serverTimestamp, getDoc } from 'firebase/firestore';
 import { User } from 'firebase/auth';
@@ -55,12 +54,11 @@ export interface Report {
   reporterEmail?: string;
   emergencyContact?: string;
   
-  // Admin validation fields
-  level?: number; // Admin's 1-5 star validation level (CRITICAL: admin saves to this field!)
-  validationLevel?: number; // 1-5 star rating from admin (legacy)
-  isRejected?: boolean; // True when report is rejected by admin
-  rejectionReason?: string; // Admin's reason for rejection
-  validatedAt?: any; // Timestamp when admin validated/rejected
+  level?: number; 
+  validationLevel?: number; 
+  isRejected?: boolean; 
+  rejectionReason?: string; 
+  validatedAt?: any; 
 }
 
 export interface QueuedReport {
@@ -383,7 +381,6 @@ export class ReportService {
         throw new Error('User not authenticated. Please log in and try again.');
       }
 
-      // Fetch user profile data for non-anonymous reports
       let reporterName: string | undefined;
       let reporterEmail: string | undefined;
       let emergencyContact: string | undefined;
@@ -432,8 +429,6 @@ export class ReportService {
         data.location.lng
       );
       console.log('📍 Address:', locationAddress);
-
-      // Risk level will be determined by admin, not automatically assigned
       console.log(`⚠️ Risk level will be determined by admin for ${data.type}`);
 
       console.log('📝 Creating report object...');
@@ -459,7 +454,7 @@ export class ReportService {
           emergencyContact
         }),
         media: mediaUrls,
-        riskLevel: null, // Will be determined by admin
+        riskLevel: null,
         isSilent: data.isSilent || false,
         status: 'Pending',
         createdAt: serverTimestamp(),
@@ -861,7 +856,6 @@ export class ReportService {
     return new Observable<Report[]>(observer => {
       const q = query(
         collection(getFirestore(), this.collectionName)
-        // No status filter - get ALL reports
       );
       
       const unsubscribe = onSnapshot(q, 
@@ -885,11 +879,9 @@ export class ReportService {
 
   getValidatedReports(): Observable<Report[]> {
     return new Observable<Report[]>(observer => {
-      // Simplified query to avoid index requirements
       const q = query(
         collection(getFirestore(), this.collectionName), 
         where('status', '==', 'Validated')
-        // Removed orderBy and second where clause to avoid index requirement
       );
       
       const unsubscribe = onSnapshot(q, 
@@ -899,19 +891,16 @@ export class ReportService {
             return { 
               id: doc.id, 
               ...data,
-              // Ensure timestamps are properly converted
               validatedAt: data['validatedAt']?.toDate ? data['validatedAt'].toDate() : data['validatedAt'],
               updatedAt: data['updatedAt']?.toDate ? data['updatedAt'].toDate() : data['updatedAt'],
               createdAt: data['createdAt']?.toDate ? data['createdAt'].toDate() : data['createdAt']
             } as Report;
           });
           
-          // Debug: Log all reports before filtering
           console.log('📊 All reports from database before filtering:', reports.length);
           console.log('📊 Reports without validatedAt:', reports.filter(r => !r.validatedAt).length);
           console.log('📊 Reports with validatedAt:', reports.filter(r => r.validatedAt).length);
           
-          // Show reports without validatedAt for debugging
           const reportsWithoutValidatedAt = reports.filter(r => !r.validatedAt);
           if (reportsWithoutValidatedAt.length > 0) {
             console.log('⚠️ Reports missing validatedAt field:', reportsWithoutValidatedAt.map(r => ({
@@ -924,22 +913,18 @@ export class ReportService {
             })));
           }
           
-          // Filter and sort in memory instead of in query
-          // TEMPORARILY: Include reports even without validatedAt to see if that's the issue
           const filteredReports = reports
             .filter(report => {
-              // Include reports with status 'Validated' even if they don't have validatedAt
               if (report.status === 'Validated' && !report.validatedAt) {
                 console.log('⚠️ Found Validated report without validatedAt:', report.id, report.type);
-                // Set a default validatedAt if missing
                 report.validatedAt = report.updatedAt || report.createdAt || new Date();
               }
-              return report.status === 'Validated'; // Changed from report.validatedAt to report.status
+              return report.status === 'Validated'; 
             })
             .sort((a, b) => {
               const aTime = a.validatedAt?.getTime() || 0;
               const bTime = b.validatedAt?.getTime() || 0;
-              return bTime - aTime; // Most recent first
+              return bTime - aTime; 
             });
           
           console.log('📊 Real-time validated reports loaded:', filteredReports.length);

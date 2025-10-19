@@ -56,7 +56,7 @@ export class LoginPage implements OnInit {
       const loading = await this.loadingController.create({
         message: 'Logging in...',
         spinner: 'crescent',
-        duration: 10000 // 10 second timeout
+        duration: 10000
       });
       await loading.present();
 
@@ -68,13 +68,10 @@ export class LoginPage implements OnInit {
 
         if (userCredential.success) {
           await loading.dismiss();
-          // Login notification removed as requested - will be dismissed on home page entry
-          
-          // Wait a moment for auth state to be established
+
           console.log('LoginPage: Login successful, waiting for auth state to settle...');
           await new Promise(resolve => setTimeout(resolve, 1000));
           
-          // Double-check authentication before navigation
           const isAuthenticated = await this.authService.isAuthenticated();
           console.log('LoginPage: Final auth check before navigation:', isAuthenticated);
           
@@ -116,7 +113,7 @@ export class LoginPage implements OnInit {
     const loading = await this.loadingController.create({
       message: 'Logging in with Google...',
       spinner: 'crescent',
-      duration: 15000 // 15 second timeout for social login
+      duration: 15000
     });
     await loading.present();
 
@@ -126,13 +123,10 @@ export class LoginPage implements OnInit {
       await loading.dismiss();
 
       if (result.success) {
-        // Login notification removed as requested - will be dismissed on home page entry
-        
-        // Wait a moment for auth state to be established
+
         console.log('LoginPage: Google login successful, waiting for auth state to settle...');
         await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // Double-check authentication before navigation
         const isAuthenticated = await this.authService.isAuthenticated();
         console.log('LoginPage: Final auth check before navigation (Google):', isAuthenticated);
         
@@ -162,7 +156,7 @@ export class LoginPage implements OnInit {
     const loading = await this.loadingController.create({
       message: 'Logging in with Facebook...',
       spinner: 'crescent',
-      duration: 15000 // 15 second timeout for social login
+      duration: 15000
     });
     await loading.present();
 
@@ -172,13 +166,10 @@ export class LoginPage implements OnInit {
       await loading.dismiss();
 
       if (result.success) {
-        // Login notification removed as requested - will be dismissed on home page entry
-        
-        // Wait a moment for auth state to be established
+
         console.log('LoginPage: Facebook login successful, waiting for auth state to settle...');
         await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // Double-check authentication before navigation
         const isAuthenticated = await this.authService.isAuthenticated();
         console.log('LoginPage: Final auth check before navigation (Facebook):', isAuthenticated);
         

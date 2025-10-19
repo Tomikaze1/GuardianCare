@@ -1,10 +1,10 @@
-// Notifications Page Styles - Exact Match to Reports Design
+
 .notifications-content {
   --background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);
   min-height: 100vh;
   font-family: 'DM Sans', 'Plus Jakarta Sans', Arial, sans-serif;
   padding: 0;
-  padding-bottom: calc(180px + env(safe-area-inset-bottom)); // Account for safe area
+  padding-bottom: calc(180px + env(safe-area-inset-bottom));
 }
 
 .logo-container {
@@ -118,11 +118,10 @@
   }
 }
 
-// Notification History Section - Exact Match to Report History
 .notification-history-section {
   padding: 0 20px 20px;
   animation: fadeInUp 0.4s ease-out;
-  max-width: 420px; // constrain to phone width
+  max-width: 420px;
   margin: 0 auto;
 }
 
@@ -149,7 +148,6 @@
       font-weight: 600;
     }
     
-    // FORCE BLACK TEXT ON ALL OUTLINE CHIPS
     &[outline="true"] {
       color: black !important;
       --color: black !important;
@@ -163,7 +161,6 @@
       }
     }
     
-    // Additional override for outline chips
     &.ion-color-light {
       --color: black !important;
       color: black !important;
@@ -220,8 +217,7 @@
         }
       }
     }
-    
-    // Force black text on all outline chips
+
     &.ion-color-light {
       --color: #000000 !important;
       
@@ -235,8 +231,8 @@
 .notifications-list {
   display: flex;
   flex-direction: column;
-  gap: 12px; // Reduced from 16px to 12px for tighter spacing
-  padding-bottom: 20px; // Reduced from 140px to 20px to bring buttons closer
+  gap: 12px;
+  padding-bottom: 20px;
 }
 
 .notification-card {
@@ -315,7 +311,6 @@
     line-height: 1.6;
     font-weight: 500;
     
-    // Make distance and time more prominent
     strong {
       font-weight: 700;
       color: var(--primary-purple);
@@ -371,8 +366,6 @@
   }
 }
 
-
-// No Notifications - Matching Reports
 .no-notifications {
   text-align: center;
   padding: 60px 20px;
@@ -398,15 +391,15 @@
   }
 }
 
-// Action Buttons - Matching Reports
+
 .action-buttons {
-  margin: 16px 0 40px 0; // Reduced top margin from 32px to 16px
+  margin: 16px 0 40px 0;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding-bottom: 20px; // Added extra padding at bottom
+  padding-bottom: 20px;
   position: relative;
-  z-index: 10; // Ensure buttons stay above other content
+  z-index: 10;
   
   .action-btn {
     --border-radius: 16px;
@@ -421,7 +414,7 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
     position: relative;
-    z-index: 5; // Ensure buttons are clickable
+    z-index: 5;
     
     ion-icon {
       margin-right: 8px;
@@ -465,7 +458,6 @@
   }
 }
 
-// Loading State
 .loading-state {
   display: flex;
   flex-direction: column;
@@ -485,7 +477,6 @@
   }
 }
 
-// Animations - Exact Match to Reports
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -535,7 +526,6 @@
   }
 }
 
-// Responsive Design
 @media (max-width: 768px) {
   .logo-container {
     padding: 24px 16px 20px 16px;
@@ -574,22 +564,19 @@
       font-size: 0.9rem;
     }
     
-    // Closer spacing on mobile
-    margin: 12px 0 50px 0; // Reduced top margin from 32px to 12px
+    margin: 12px 0 50px 0;
     padding-bottom: 30px;
   }
   
-  // Ensure content doesn't get cut off on mobile
   .notifications-content {
     padding-bottom: calc(200px + env(safe-area-inset-bottom));
   }
   
   .notifications-list {
-    padding-bottom: 20px; // Reduced from 160px to 20px for closer spacing
+    padding-bottom: 20px;
   }
 }
 
-// AGGRESSIVE OVERRIDE FOR FILTER BUTTON TEXT COLOR
 .notifications-content {
   .filters-row {
     ion-chip[outline] {
@@ -605,7 +592,7 @@
       }
     }
     
-    // Custom filter classes
+
     .active-filter {
       --background: var(--primary-purple) !important;
       --color: white !important;

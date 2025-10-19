@@ -27,9 +27,9 @@ export interface ZoneNotificationSettings {
   enableVibration: boolean;
   enableSound: boolean;
   enablePushNotifications: boolean;
-  alertRadius: number; // in meters
-  cooldownPeriod: number; // in minutes
-  minimumRiskLevel: number; // 1-5
+  alertRadius: number; 
+  cooldownPeriod: number; 
+  minimumRiskLevel: number; 
 }
 
 @Injectable({
@@ -52,9 +52,9 @@ export class ZoneNotificationService {
     enableVibration: true,
     enableSound: true,
     enablePushNotifications: true,
-    alertRadius: 100, // 100 meters
-    cooldownPeriod: 5, // 5 minutes
-    minimumRiskLevel: 2 // Alert for risk level 2 and above
+    alertRadius: 100, 
+    cooldownPeriod: 5, 
+    minimumRiskLevel: 2 
   };
   
   private settings: ZoneNotificationSettings = { ...this.defaultSettings };
@@ -66,15 +66,11 @@ export class ZoneNotificationService {
     this.loadSettings();
   }
 
-  /**
-   * Check if user has entered a new zone and trigger appropriate alerts
-   */
+
   checkZoneEntry(location: { lat: number; lng: number }): void {
-    // Subscribe to zones to get current value
     this.zoneEngine.zones$.pipe(take(1)).subscribe(zones => {
       const currentZone = this.findZoneAtLocation(location, zones);
     
-      // Check if user entered a new zone
       if (currentZone && currentZone !== this.currentZone) {
         this.previousZone = this.currentZone;
         this.currentZone = currentZone;
@@ -84,7 +80,6 @@ export class ZoneNotificationService {
         }
       }
       
-      // Check if user exited a zone
       if (this.currentZone && !currentZone) {
         if (this.shouldTriggerAlert('zone_exit', this.currentZone)) {
           this.triggerZoneExitAlert(this.currentZone, location);
@@ -93,14 +88,10 @@ export class ZoneNotificationService {
         this.currentZone = null;
       }
       
-      // Check for nearby zones
       this.checkNearbyZones(location, zones);
     });
   }
 
-  /**
-   * Check for zone level changes and trigger alerts
-   */
   checkZoneLevelChanges(): void {
     if (!this.currentZone) return;
     
@@ -118,54 +109,36 @@ export class ZoneNotificationService {
     });
   }
 
-  /**
-   * Update notification settings
-   */
   updateSettings(settings: Partial<ZoneNotificationSettings>): void {
     this.settings = { ...this.settings, ...settings };
     this.saveSettings();
   }
 
-  /**
-   * Get current notification settings
-   */
+
   getSettings(): ZoneNotificationSettings {
     return { ...this.settings };
   }
 
-  /**
-   * Reset settings to default
-   */
   resetSettings(): void {
     this.settings = { ...this.defaultSettings };
     this.saveSettings();
   }
 
-  /**
-   * Get current zone information
-   */
+
   getCurrentZone(): DangerZone | null {
     return this.currentZone;
   }
 
-  /**
-   * Get active alerts
-   */
+
   getActiveAlerts(): ZoneAlert[] {
     return this.activeAlerts.value;
   }
 
-  /**
-   * Dismiss an alert
-   */
   dismissAlert(alertId: string): void {
     const alerts = this.activeAlerts.value.filter(alert => alert.id !== alertId);
     this.activeAlerts.next(alerts);
   }
 
-  /**
-   * Dismiss all alerts
-   */
   dismissAllAlerts(): void {
     this.activeAlerts.next([]);
   }
@@ -202,7 +175,7 @@ export class ZoneNotificationService {
   }
 
   private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-    const R = 6371; // Earth's radius in kilometers
+    const R = 6371; 
     const dLat = this.deg2rad(lat2 - lat1);
     const dLon = this.deg2rad(lon2 - lon1);
     const a = 
@@ -210,7 +183,7 @@ export class ZoneNotificationService {
       Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) * 
       Math.sin(dLon/2) * Math.sin(dLon/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c * 1000; // Return distance in meters
+    return R * c * 1000; 
   }
 
   private deg2rad(deg: number): number {
@@ -234,30 +207,25 @@ export class ZoneNotificationService {
   }
 
   private shouldTriggerAlert(type: string, zone: DangerZone): boolean {
-    // Don't trigger alerts for Safe zones - they're not dangerous
     if (zone.level === 'Safe') {
       return false;
     }
 
-    // Check if risk level meets minimum threshold
     if (zone.riskLevel && zone.riskLevel < this.settings.minimumRiskLevel) {
       return false;
     }
 
-    // Check cooldown period
     const now = Date.now();
     const cooldownMs = this.settings.cooldownPeriod * 60 * 1000;
     if (now - this.lastNotificationTime < cooldownMs) {
       return false;
     }
 
-    // Check if alert was already triggered recently
     const alertKey = `${type}-${zone.id}-${Math.floor(now / (cooldownMs))}`;
     if (this.alertHistory.has(alertKey)) {
       return false;
     }
 
-    // Check specific alert type settings
     switch (type) {
       case 'zone_entry':
         return this.settings.enableZoneEntryAlerts;
@@ -323,7 +291,7 @@ export class ZoneNotificationService {
       message: this.generateZoneLevelChangeMessage(zone, oldLevel),
       recommendations: this.generateZoneRecommendations(zone),
       timestamp: new Date(),
-      location: { lat: 0, lng: 0 }, // Will be updated with current location
+      location: { lat: 0, lng: 0 }, 
       isActive: true
     };
 
@@ -481,20 +449,17 @@ export class ZoneNotificationService {
   private triggerNotification(alert: ZoneAlert): void {
     this.lastNotificationTime = Date.now();
     
-    // Trigger vibration
+
     if (this.settings.enableVibration) {
       this.triggerVibration(alert.zoneLevel);
     }
     
-    // Trigger sound
     if (this.settings.enableSound) {
       this.triggerSound(alert.zoneLevel);
     }
     
-    // Show notification banner
     this.showNotificationBanner(alert);
     
-    // Trigger push notification
     if (this.settings.enablePushNotifications) {
       this.triggerPushNotification(alert);
     }
@@ -523,8 +488,6 @@ export class ZoneNotificationService {
   }
 
   private triggerSound(level: string): void {
-    // Play sound for all zone levels (Safe, Neutral, Caution, Danger)
-    // This covers risk levels 1, 2, 3, 4, 5
 
     try {
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -534,7 +497,6 @@ export class ZoneNotificationService {
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
       
-      // Sound settings based on zone level
       let frequency: number;
       let duration: number;
       
@@ -625,7 +587,7 @@ export class ZoneNotificationService {
     const alertKey = `${alert.type}-${alert.zoneId}-${Math.floor(Date.now() / (this.settings.cooldownPeriod * 60 * 1000))}`;
     this.alertHistory.add(alertKey);
     
-    // Clean up old history entries
+
     setTimeout(() => {
       this.alertHistory.delete(alertKey);
     }, this.settings.cooldownPeriod * 60 * 1000 * 2);

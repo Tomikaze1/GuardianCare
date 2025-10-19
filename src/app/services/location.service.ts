@@ -5,9 +5,9 @@ export interface Location {
   lat: number;
   lng: number;
   address?: string;
-  heading?: number; // Direction of movement in degrees (0-360)
-  speed?: number; // Speed in m/s
-  accuracy?: number; // Accuracy in meters
+  heading?: number; 
+  speed?: number; 
+  accuracy?: number; 
 }
 
 @Injectable({
@@ -37,17 +37,16 @@ export class LocationService {
         return;
       }
 
-      // First try with maximum accuracy and longer timeout
       const highAccuracyOptions = {
         enableHighAccuracy: true,
-        timeout: 45000, // 45 seconds for maximum accuracy
-        maximumAge: 0 // Don't use cached position
+        timeout: 45000, 
+        maximumAge: 0 
       };
 
       const standardOptions = {
         enableHighAccuracy: false,
-        timeout: 15000, // 15 seconds for standard accuracy
-        maximumAge: 300000 // 5 minutes cache
+        timeout: 15000, 
+        maximumAge: 300000 
       };
 
       const tryGetLocation = (options: PositionOptions, isRetry = false) => {
@@ -74,21 +73,18 @@ export class LocationService {
               isRetry: isRetry
             });
 
-            // If high accuracy failed and this is not a retry, try standard accuracy
             if (!isRetry && options.enableHighAccuracy) {
               console.log('High accuracy failed, trying standard accuracy...');
               tryGetLocation(standardOptions, true);
               return;
             }
 
-            // If both failed, reject with error
             reject(new Error(`Location error: ${error.message} (Code: ${error.code})`));
           },
           options
         );
       };
 
-      // Start with high accuracy
       tryGetLocation(highAccuracyOptions);
     });
   }
@@ -150,8 +146,8 @@ export class LocationService {
         },
         {
           enableHighAccuracy: true,
-          timeout: 30000, // 30 seconds for high accuracy
-          maximumAge: 0 // Don't use cached position for watching
+          timeout: 30000, 
+          maximumAge: 0 
         }
       );
 
@@ -161,7 +157,6 @@ export class LocationService {
     });
   }
 
-  // Real-time location tracking with configurable intervals
   startRealTimeTracking(intervalMs: number = 5000): Observable<Location> {
     return new Observable(observer => {
       if (!navigator.geolocation) {
@@ -196,27 +191,24 @@ export class LocationService {
             this.currentLocationSubject.next(location);
             observer.next(location);
 
-            // Schedule next location update
             if (isTracking) {
               setTimeout(trackLocation, intervalMs);
             }
           },
           (error) => {
             console.error('Real-time tracking error:', error);
-            // Continue tracking even if one update fails
             if (isTracking) {
               setTimeout(trackLocation, intervalMs);
             }
           },
           {
             enableHighAccuracy: true,
-            timeout: 30000, // 30 seconds - increased to prevent timeout errors
-            maximumAge: 5000 // Allow 5 second cache for real-time updates
+            timeout: 30000, 
+            maximumAge: 5000 
           }
         );
       };
 
-      // Start tracking
       trackLocation();
 
       return () => {
@@ -240,7 +232,6 @@ export class LocationService {
     return R * c;
   }
 
-  // Method to check GPS accuracy and status
   async checkGPSAccuracy(): Promise<{ accuracy: number; status: string; coordinates?: { lat: number; lng: number } }> {
     return new Promise((resolve) => {
       if (!navigator.geolocation) {
@@ -298,13 +289,11 @@ export class LocationService {
     });
   }
 
-  // Method to force refresh location with high accuracy
   async refreshLocationWithHighAccuracy(): Promise<Location> {
     console.log('Forcing high accuracy location refresh...');
     return this.getCurrentLocation();
   }
 
-  // Method to get maximum precision location
   async getMaximumPrecisionLocation(): Promise<Location> {
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
@@ -312,11 +301,10 @@ export class LocationService {
         return;
       }
 
-      // Maximum precision options
       const maxPrecisionOptions = {
         enableHighAccuracy: true,
-        timeout: 60000, // 60 seconds for maximum precision
-        maximumAge: 0 // Always get fresh position
+        timeout: 60000,
+        maximumAge: 0 
       };
 
       navigator.geolocation.getCurrentPosition(
@@ -348,7 +336,6 @@ export class LocationService {
     });
   }
 
-  // Method to get the most accurate location possible with multiple attempts
   async getDeviceExactLocation(): Promise<Location> {
     return new Promise(async (resolve, reject) => {
       if (!navigator.geolocation) {
@@ -381,7 +368,6 @@ export class LocationService {
                 timestamp: new Date(position.timestamp).toLocaleString()
               });
 
-              // If this is the most accurate location so far, save it
               if (accuracy < bestAccuracy) {
                 bestAccuracy = accuracy;
                 bestLocation = {
@@ -390,11 +376,9 @@ export class LocationService {
                 } as Location;
               }
 
-              // If we have excellent accuracy (≤5m) or we've tried enough times, resolve
               if (accuracy <= 5 || attempts >= maxAttempts) {
                 resolveAttempt();
               } else {
-                // Wait a bit and try again for better accuracy
                 setTimeout(() => {
                   tryGetLocation().then(resolveAttempt).catch(rejectAttempt);
                 }, 2000);
@@ -405,7 +389,6 @@ export class LocationService {
               if (attempts >= maxAttempts) {
                 rejectAttempt(error);
               } else {
-                // Try again after a short delay
                 setTimeout(() => {
                   tryGetLocation().then(resolveAttempt).catch(rejectAttempt);
                 }, 3000);

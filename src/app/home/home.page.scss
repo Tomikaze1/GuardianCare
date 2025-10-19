@@ -1,4 +1,4 @@
-// Modern UI Variables
+
 :root {
   --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --danger-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
@@ -12,7 +12,6 @@
   --shadow-xl: 0 12px 48px rgba(0, 0, 0, 0.18);
 }
 
-// App Layout
 .modern-content {
   --background: #f5f7fa;
   display: flex;
@@ -30,12 +29,11 @@ ion-content {
   height: 100vh;
   --padding-top: 0;
   --padding-bottom: 0;
-  padding-bottom: env(safe-area-inset-bottom); // Handle devices with home indicator
-  overflow: hidden !important; // Prevent any scrolling on the content
+  padding-bottom: env(safe-area-inset-bottom);
+  overflow: hidden !important;
   --overflow: hidden;
 }
 
-// Full Width Header - Now Sticky
 .app-header {
   position: sticky;
   top: 0;
@@ -53,21 +51,19 @@ ion-content {
   max-width: 100%;
 }
 
-// Map Styling
 #map, .modern-map {
   width: 100%;
-  height: calc(100vh - 60px); // Account for tab bar height
+  height: calc(100vh - 60px);
   flex: 1;
   min-height: 0;
   z-index: 1;
   position: relative;
   border-radius: 0;
   overflow: hidden;
-  margin-bottom: 60px; // Ensure content doesn't get hidden behind tabs
-  touch-action: manipulation; // Allow map interactions while preventing page scroll
+  margin-bottom: 60px;
+  touch-action: manipulation;
 }
 
-// Enhanced Live Badge
 .live-badge {
   display: inline-flex;
   align-items: center;
@@ -119,7 +115,6 @@ ion-content {
   animation: liveIndicator 1s ease-in-out infinite alternate;
 }
 
-// Location Row
 .location-row {
   display: flex;
   align-items: center;
@@ -206,14 +201,12 @@ ion-content {
   color: #9ca3af;
 }
 
-// Safety and Reports Row Container
 .safety-reports-row {
   display: flex;
   gap: 12px;
   margin-bottom: 8px;
 }
 
-// Safety Row
 .safety-row {
   display: flex;
   align-items: center;
@@ -282,7 +275,6 @@ ion-content {
   .danger & { color: #dc2626; }
 }
 
-// Incidents Row
 .incidents-row {
   display: flex;
   align-items: center;
@@ -320,10 +312,9 @@ ion-content {
   letter-spacing: 0.3px;
 }
 
-// Modern Legend
 .modern-legend {
   position: absolute;
-  bottom: 80px; // Increased from 120px to account for tab bar
+  bottom: 80px;
   left: 24px;
   z-index: 900;
   animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1);
@@ -395,10 +386,9 @@ ion-content {
   background: linear-gradient(135deg, #dc2626, #ef4444);
 }
 
-// Floating Action Buttons
 .fab-container {
   position: absolute;
-  bottom: 80px; // Increased from 200px to account for tab bar
+  bottom: 80px;
   right: 32px;
   z-index: 1000;
   display: flex;
@@ -496,7 +486,6 @@ button:active .fab-ripple {
   animation: rippleEffect 0.6s ease-out;
 }
 
-// Zone Alert Banner
 .zone-alert-banner {
   position: absolute;
   top: 0;
@@ -642,9 +631,6 @@ button:active .fab-ripple {
   }
 }
 
-
-
-// Animations
 @keyframes slideDownFade {
   from {
     opacity: 0;
@@ -750,7 +736,6 @@ button:active .fab-ripple {
   }
 }
 
-// Mobile Responsive
 @media (max-width: 768px) {
   .header-content {
     padding: 12px 16px;
@@ -792,7 +777,7 @@ button:active .fab-ripple {
   }
   
   .modern-legend {
-    bottom: 80px; // Updated to match main positioning
+    bottom: 80px;
     left: 20px;
   }
   
@@ -801,16 +786,14 @@ button:active .fab-ripple {
     min-width: 120px;
   }
   
-  // Additional mobile improvements for scrolling
   .fab-container {
-    bottom: 70px; // Adjust for smaller tab bar
+    bottom: 70px;
   }
   
   .modern-legend {
-    bottom: 70px; // Adjust for smaller tab bar
+    bottom: 70px;
   }
   
-  // Make header more compact on mobile
   .app-header {
     .header-content {
       padding: 10px 12px;
@@ -818,7 +801,6 @@ button:active .fab-ripple {
   }
 }
 
-// Dark mode support (future)
 @media (prefers-color-scheme: dark) {
   .app-header,
   .legend-card {
@@ -838,7 +820,6 @@ button:active .fab-ripple {
   }
 }
 
-// Zone Alert Dialog Styles
 .full-screen-alert {
   --backdrop-opacity: 0.8;
   

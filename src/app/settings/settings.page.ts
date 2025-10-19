@@ -19,41 +19,34 @@ export class SettingsPage implements OnInit, OnDestroy {
   userRole = 'Unknown';
   userId = 'Unknown';
   
-  // User profile data
   userProfile: any = null;
   userReports: Report[] = [];
   private subscriptions: Subscription[] = [];
   @ViewChild(IonContent, { static: false }) content?: IonContent;
   
-  // Account & Security
   twoFactorEnabled = false;
   
-  // Location & Alerts
   gpsEnabled = true;
   timeBasedAlerts = true;
   dangerZoneAlerts = true;
   doNotDisturbEnabled = false;
   
-  // Notifications
   smartVibration = true;
   selectedAlertSound = 'Default';
   panicModeVisuals = true;
   selectedVibrationPattern: 'gentle' | 'default' | 'strong' = 'default';
   vibrationDuration = 200;
   
-  // Localization
   selectedUnit = 'Metric';
   touristTranslationMode = false;
   homeUIMode: 'sidebar' | 'buttons' = 'sidebar';
   
-  // UI state: collapsible sections
   expandAccountSecurity = false;
   expandLocationAlerts = false;
   expandNotifications = false;
   expandLocalization = false;
   expandLegalSupport = false;
   
-  // UI state: subpanels
   smartVibrationOptionsOpen = false;
   
   languages = [
@@ -86,11 +79,9 @@ export class SettingsPage implements OnInit, OnDestroy {
     private loadingController: LoadingController,
     private reportService: ReportService
   ) {
-    // Don't set language here - let initializeLanguage() handle it
   }
 
   ngOnInit() {
-    // Load user profile data
     const userDataSub = this.userService.getCurrentUserData().subscribe(userData => {
       if (userData) {
         this.userProfile = userData;
@@ -106,7 +97,6 @@ export class SettingsPage implements OnInit, OnDestroy {
     });
     this.subscriptions.push(userDataSub);
 
-    // Load user reports
     const reportsSub = this.reportService.getUserReports().subscribe(reports => {
       this.userReports = reports;
       console.log('User reports loaded:', reports.length);
@@ -116,12 +106,10 @@ export class SettingsPage implements OnInit, OnDestroy {
     this.initializeLanguage();
     this.loadSettings();
     
-    // Check GPS status on page load
     this.checkGPSStatus();
   }
 
   ionViewWillEnter() {
-    // Scroll to top whenever entering this tab
     this.content?.scrollToTop(0);
   }
 
@@ -129,19 +117,16 @@ export class SettingsPage implements OnInit, OnDestroy {
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
-  // Collapsible helpers
+
   toggleSection(section: 'account' | 'location' | 'notifications' | 'localization' | 'legal') {
-    // Store the current state of the clicked section
     const isCurrentlyExpanded = this.getSectionState(section);
     
-    // Close all sections first
     this.expandAccountSecurity = false;
     this.expandLocationAlerts = false;
     this.expandNotifications = false;
     this.expandLocalization = false;
     this.expandLegalSupport = false;
     
-    // If the clicked section was closed, open it (if it was open, keep it closed)
     if (!isCurrentlyExpanded) {
       switch (section) {
         case 'account':
@@ -163,7 +148,6 @@ export class SettingsPage implements OnInit, OnDestroy {
     }
   }
 
-  // Helper method to get the current state of a section
   private getSectionState(section: 'account' | 'location' | 'notifications' | 'localization' | 'legal'): boolean {
     switch (section) {
       case 'account': return this.expandAccountSecurity;
@@ -175,7 +159,6 @@ export class SettingsPage implements OnInit, OnDestroy {
     }
   }
 
-  // Helper methods for user profile display
   getUserDisplayName(): string {
     if (this.userProfile) {
       return `${this.userProfile.firstName || ''} ${this.userProfile.lastName || ''}`.trim() || 'User';
@@ -200,7 +183,6 @@ export class SettingsPage implements OnInit, OnDestroy {
 
 
   private initializeLanguage() {
-    // Load saved language from localStorage, default to 'en' if not found
     const savedLanguage = localStorage.getItem('userLanguage') || 'en';
     this.currentLanguage = savedLanguage;
     this.translate.use(savedLanguage);
@@ -209,15 +191,14 @@ export class SettingsPage implements OnInit, OnDestroy {
   }
 
   private loadSettings() {
-    // Load saved settings from localStorage with proper default values
-    this.gpsEnabled = localStorage.getItem('gpsEnabled') !== 'false'; // Default to true
-    this.timeBasedAlerts = localStorage.getItem('timeBasedAlerts') !== 'false'; // Default to true
-    this.dangerZoneAlerts = localStorage.getItem('dangerZoneAlerts') !== 'false'; // Default to true
-    this.doNotDisturbEnabled = localStorage.getItem('doNotDisturbEnabled') === 'true'; // Default to false
-    this.smartVibration = localStorage.getItem('smartVibration') !== 'false'; // Default to true
-    this.panicModeVisuals = localStorage.getItem('panicModeVisuals') !== 'false'; // Default to true
-    this.touristTranslationMode = localStorage.getItem('touristTranslationMode') === 'true'; // Default to false
-    this.twoFactorEnabled = localStorage.getItem('twoFactorEnabled') === 'true'; // Default to false
+    this.gpsEnabled = localStorage.getItem('gpsEnabled') !== 'false';
+    this.timeBasedAlerts = localStorage.getItem('timeBasedAlerts') !== 'false'; 
+    this.dangerZoneAlerts = localStorage.getItem('dangerZoneAlerts') !== 'false'; 
+    this.doNotDisturbEnabled = localStorage.getItem('doNotDisturbEnabled') === 'true'; 
+    this.smartVibration = localStorage.getItem('smartVibration') !== 'false'; 
+    this.panicModeVisuals = localStorage.getItem('panicModeVisuals') !== 'false'; 
+    this.touristTranslationMode = localStorage.getItem('touristTranslationMode') === 'true'; 
+    this.twoFactorEnabled = localStorage.getItem('twoFactorEnabled') === 'true'; 
     this.selectedVibrationPattern = (localStorage.getItem('vibrationPattern') as any) || 'default';
     this.vibrationDuration = Number(localStorage.getItem('vibrationDuration') || 200);
     
@@ -226,7 +207,7 @@ export class SettingsPage implements OnInit, OnDestroy {
     const savedUi = localStorage.getItem('homeUIMode');
     this.homeUIMode = (savedUi === 'buttons' || savedUi === 'sidebar') ? (savedUi as any) : 'sidebar';
     
-    // Load saved language
+
     const savedLanguage = localStorage.getItem('userLanguage') || 'en';
     this.currentLanguage = savedLanguage;
     this.translate.use(savedLanguage);
@@ -267,7 +248,6 @@ export class SettingsPage implements OnInit, OnDestroy {
     }
   }
 
-  // Account & Security Methods
   async changePassword() {
     this.notificationService.info('Coming Soon', 'Password change functionality will be available soon!', 'OK', 3000);
   }
@@ -290,10 +270,8 @@ export class SettingsPage implements OnInit, OnDestroy {
     this.notificationService.success('Success', message, 'OK', 2000);
   }
 
-  // Location & Alerts Methods
   async toggleGPS() {
     try {
-      // Check if GPS is actually available
       if (this.gpsEnabled && 'geolocation' in navigator) {
         // Test GPS access
         navigator.geolocation.getCurrentPosition(
@@ -324,7 +302,6 @@ export class SettingsPage implements OnInit, OnDestroy {
     const message = this.timeBasedAlerts ? 'Time-based alerts enabled' : 'Time-based alerts disabled';
     this.notificationService.success('Success', message, 'OK', 2000);
     
-    // If enabling, show a brief explanation
     if (this.timeBasedAlerts) {
       setTimeout(() => {
         this.notificationService.info('Time-Based Alerts', 'You will receive smart alerts during high-risk hours based on your location and time of day.', 'OK', 4000);
@@ -337,7 +314,7 @@ export class SettingsPage implements OnInit, OnDestroy {
     const message = this.dangerZoneAlerts ? 'Danger zone alerts enabled' : 'Danger zone alerts disabled';
     this.notificationService.success('Success', message, 'OK', 2000);
     
-    // If enabling, show a brief explanation
+
     if (this.dangerZoneAlerts) {
       setTimeout(() => {
         this.notificationService.info('Danger Zone Alerts', 'You will be notified when approaching or entering high-risk areas in your vicinity.', 'OK', 4000);
@@ -350,7 +327,6 @@ export class SettingsPage implements OnInit, OnDestroy {
     const message = this.doNotDisturbEnabled ? 'Do not disturb mode enabled' : 'Do not disturb mode disabled';
     this.notificationService.success('Success', message, 'OK', 2000);
     
-    // If enabling, show current schedule
     if (this.doNotDisturbEnabled) {
       setTimeout(() => {
         this.notificationService.info('Do Not Disturb Active', 'Notifications will be silenced from 10:00 PM to 6:00 AM. Tap to customize schedule.', 'OK', 4000);
@@ -394,7 +370,6 @@ export class SettingsPage implements OnInit, OnDestroy {
     await alert.present();
   }
 
-  // Notifications Methods
   async toggleSmartVibration() {
     localStorage.setItem('smartVibration', this.smartVibration.toString());
     const message = this.smartVibration ? 'Smart vibration enabled' : 'Smart vibration disabled';
@@ -474,7 +449,6 @@ export class SettingsPage implements OnInit, OnDestroy {
     }
   }
 
-  // Localization Methods
   async appLanguage() {
     const alert = await this.alertController.create({
       header: 'Select App Language',
@@ -536,7 +510,6 @@ export class SettingsPage implements OnInit, OnDestroy {
     const message = this.touristTranslationMode ? 'Tourist translation mode enabled' : 'Tourist translation mode disabled';
     this.notificationService.success('Success', message, 'OK', 2000);
     
-    // If enabling, show explanation
     if (this.touristTranslationMode) {
       setTimeout(() => {
         this.notificationService.info('Tourist Mode Active', 'The app will provide translations and tourist-friendly information for your current location.', 'OK', 4000);
@@ -544,7 +517,6 @@ export class SettingsPage implements OnInit, OnDestroy {
     }
   }
 
-  // Utility method to reset all settings to defaults
   async resetToDefaults() {
     const alert = await this.alertController.create({
       header: 'Reset Settings',
@@ -557,7 +529,6 @@ export class SettingsPage implements OnInit, OnDestroy {
         {
           text: 'Reset',
           handler: () => {
-            // Reset to default values
             this.gpsEnabled = true;
             this.timeBasedAlerts = true;
             this.dangerZoneAlerts = true;
@@ -569,7 +540,6 @@ export class SettingsPage implements OnInit, OnDestroy {
             this.selectedAlertSound = 'Default';
             this.selectedUnit = 'Metric';
             
-            // Clear localStorage and set defaults
             localStorage.removeItem('gpsEnabled');
             localStorage.removeItem('timeBasedAlerts');
             localStorage.removeItem('dangerZoneAlerts');
@@ -591,7 +561,6 @@ export class SettingsPage implements OnInit, OnDestroy {
     await alert.present();
   }
 
-  // Method to check if location services are available
   async checkLocationServices() {
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -619,7 +588,6 @@ export class SettingsPage implements OnInit, OnDestroy {
     }
   }
 
-  // Legal & Support Methods
   async termsOfService() {
     const alert = await this.alertController.create({
       header: 'Terms of Service',
@@ -776,12 +744,10 @@ export class SettingsPage implements OnInit, OnDestroy {
     this.translate.use(lang);
     localStorage.setItem('userLanguage', lang);
     
-    // Force a small delay to ensure the language change is applied
     setTimeout(() => {
       const message = this.translate.instant('ALERTS.LANGUAGE_CHANGED');
       this.notificationService.success('Success', message, 'OK', 2000);
       
-      // Log the current language to verify the change
       console.log('Language changed to:', this.currentLanguage);
       console.log('Translate service current lang:', this.translate.currentLang);
     }, 100);

@@ -52,7 +52,6 @@ export class NotificationsPage implements OnInit, OnDestroy {
     this.subscribeToNotifications();
     this.subscribeToAdminValidations();
     
-    // Test notifications disabled - no demo data
     this.clearTestNotifications();
   }
 
@@ -71,12 +70,10 @@ export class NotificationsPage implements OnInit, OnDestroy {
   private loadNotifications() {
     this.isLoading = true;
     
-    // Load existing notifications from localStorage to preserve read status
     const stored = localStorage.getItem('guardian_care_notifications');
     if (stored) {
       try {
         const storedNotifications = JSON.parse(stored);
-        // Restore notifications with proper Date objects
         this.notifications = storedNotifications.map((n: any) => ({
           ...n,
           timestamp: new Date(n.timestamp)
@@ -90,29 +87,24 @@ export class NotificationsPage implements OnInit, OnDestroy {
       this.notifications = [];
     }
     
-    // Load all validated reports to show the 11+ reports for existing users
     this.loadReportValidationNotifications();
     
     this.isLoading = false;
   }
 
   clearAllNotifications() {
-    // Clear all notifications from memory
     this.notifications = [];
     this.filteredNotifications = [];
     
-    // Clear all stored notifications from localStorage
     localStorage.removeItem('guardian_care_notifications');
     localStorage.removeItem('guardian_care_last_notification_check');
     
-    // Clear processed report IDs to start fresh
     this.adminNotificationService.clearProcessedReports();
     
     console.log('🧹 Cleared all notifications');
   }
 
   private loadReportValidationNotifications() {
-    // Show notifications for ALL validated reports (not just user's own)
     console.log('👤 Current user for notifications:', this.currentUser);
     if (this.currentUser) {
       this.subscriptions.push(
@@ -126,23 +118,17 @@ export class NotificationsPage implements OnInit, OnDestroy {
             reporterName: r.reporterName
           })));
           
-          // Get last check time to determine which reports are NEW
           const lastCheckTime = this.getLastNotificationCheckTime();
           
-          // Show notifications for:
-          // 1. User's own reports (becomes "Your Report Validated")
-          // 2. ALL validated reports from other users (becomes "New Zone Alert" with same design)
           const validatedReports = reports.filter(report => {
             if (report.status !== 'Validated' || !report.validatedAt) return false;
             
-            // Show ALL validated reports - user's own reports OR any other user's validated reports
             const isUserReport = report.userId === this.currentUser.uid;
-            return true; // Show ALL validated reports regardless of age
+            return true;
           });
           
           console.log('✅ All validated reports found:', validatedReports.length);
           
-          // Debug: Check for the specific crime-theft report from dasdadasd
           const specificReport = validatedReports.find(report => 
             report.type === 'crime-theft' && 
             (report.reporterName === 'dasdadasd' || report.userId === 'dasdadasd' || 
@@ -150,7 +136,6 @@ export class NotificationsPage implements OnInit, OnDestroy {
           );
           console.log('🔍 Looking for crime-theft report from dasdadasd:', specificReport);
           
-          // Debug: Show all report types and details
           console.log('📊 All report details:', validatedReports.map(r => ({
             id: r.id,
             type: r.type,
@@ -162,7 +147,6 @@ export class NotificationsPage implements OnInit, OnDestroy {
           console.log('📅 Last notification check time:', lastCheckTime);
           
           validatedReports.forEach(report => {
-            // Check for existing notification by report ID (regardless of type)
             const existingNotification = this.notifications.find(n => 
               n.data?.reportId === report.id
             );
@@ -178,8 +162,7 @@ export class NotificationsPage implements OnInit, OnDestroy {
               locationAddress: report.locationAddress
             });
             
-            // Always create notification to ensure all reports are displayed
-            // Remove existing notification first to prevent duplicates
+
             if (existingNotification) {
               const existingIndex = this.notifications.findIndex(n => n.data?.reportId === report.id);
               if (existingIndex !== -1) {
@@ -188,8 +171,7 @@ export class NotificationsPage implements OnInit, OnDestroy {
               }
             }
             
-            // CRITICAL: Admin validation stores risk level in 'level' field (1-5 stars from admin interface)
-            // Priority: level (admin-set) > validationLevel (legacy) > riskLevel (auto-calculated)
+
             const adminLevel = report.level ?? report.validationLevel ?? report.riskLevel ?? 1;
             const riskLevel = Number(adminLevel);
             
@@ -206,27 +188,24 @@ export class NotificationsPage implements OnInit, OnDestroy {
             const isUserReport = report.userId === this.currentUser.uid;
             const riskText = this.getRiskLevelText(riskLevel);
 
-            // Determine if this is a TRULY NEW notification (validated after last check)
             const isNewNotification = validatedDate > lastCheckTime;
 
-            // Create notification with same design for both user's own reports and zone alerts
             const notification: NotificationItem = {
               id: `validated_${report.id}`,
               type: isUserReport ? 'report_validated' : 'new_zone',
               title: isUserReport ? `Your Report Validated` : `New Zone Alert`,
               message: `${report.type} • ${report.locationAddress || report.location?.fullAddress || report.location?.simplifiedAddress || 'Unknown Location'} • Level ${riskLevel} - ${riskText} Risk • ${timeStr}`,
               timestamp: validatedDate,
-              read: !isNewNotification, // Only mark as unread if it's truly new
+              read: !isNewNotification,
               data: {
                 reportId: report.id,
                 reportType: report.type,
-                riskLevel: riskLevel, // Store final risk level
-                adminLevel: riskLevel, // Store admin-validated level (same value)
+                riskLevel: riskLevel,
+                adminLevel: riskLevel,
                 location: report.location,
                 locationAddress: report.locationAddress || report.location?.fullAddress || report.location?.simplifiedAddress || 'Unknown Location',
                 validatedTime: timeStr,
-                seenByUser: !isNewNotification, // Only mark as unseen if it's truly new
-                // Add same fields for both notification types to ensure consistent design
+                seenByUser: !isNewNotification,
                 isUserReport: isUserReport,
                 validatedAt: report.validatedAt,
                 userId: report.userId
@@ -264,7 +243,6 @@ export class NotificationsPage implements OnInit, OnDestroy {
   }
 
   getRiskLevelText(riskLevel: number | null | undefined): string {
-    // Ensure we have a valid number
     const level = Number(riskLevel ?? 1);
     
     switch (level) {
@@ -279,18 +257,15 @@ export class NotificationsPage implements OnInit, OnDestroy {
 
 
   private subscribeToNotifications() {
-    // Subscribe to real-time notification updates, but filter out system notifications
+
     this.subscriptions.push(
       this.notificationManager.notifications$.subscribe(newNotifications => {
-        // Filter out system notifications completely
         const filteredNotifications = newNotifications.filter(notification => 
           notification.type !== 'system' && 
           notification.type !== 'engagement'
         );
         
-        // Allow only specific notification types from NotificationManager (not zone alerts)
         filteredNotifications.forEach(notification => {
-          // Only allow report notifications, filter out safety/location notifications that cause zone alerts
           if (notification.type === 'report') {
             const convertedType = this.convertNotificationType(notification.type);
             const existingIndex = this.notifications.findIndex(n => n.id === notification.id);
@@ -327,14 +302,12 @@ export class NotificationsPage implements OnInit, OnDestroy {
     localStorage.setItem('guardian_care_notifications', JSON.stringify(this.notifications));
     this.applyFiltersAndSort();
     
-    // Trigger storage event to update badge count in tabs
     window.dispatchEvent(new StorageEvent('storage', {
       key: 'guardian_care_notifications',
       newValue: JSON.stringify(this.notifications)
     }));
   }
 
-  // Sort notifications by timestamp (newest first) and apply sticky NEW if enabled
   private sortNotifications() {
     // base sort by timestamp desc
     this.notifications.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
@@ -354,14 +327,12 @@ export class NotificationsPage implements OnInit, OnDestroy {
   private applyFiltersAndSort() {
     let list = [...this.notifications];
 
-    // filter
     if (this.activeFilter === 'new') {
       list = list.filter(n => this.isNewBadge(n));
     } else if (this.activeFilter === 'unread') {
       list = list.filter(n => !n.read);
     }
 
-    // Sort by timestamp (newest first) - no sticky behavior
     this.filteredNotifications = list.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
   }
 
@@ -377,23 +348,18 @@ export class NotificationsPage implements OnInit, OnDestroy {
   }
 
   handleNotificationClick(notification: NotificationItem) {
-    // Mark as read first
     this.markAsRead(notification);
     
-    // Navigate to map and center on location
     this.navigateToLocation(notification);
   }
 
   navigateToLocation(notification: NotificationItem) {
-    // Get location data from notification
     const location = notification.data?.location;
     const locationAddress = notification.data?.locationAddress;
     
     if (location && location.lat && location.lng) {
-      // Navigate to home tab (map view)
       this.navController.navigateRoot('/tabs/home');
       
-      // Store location data for the map to use
       const mapLocationData = {
         lat: location.lat,
         lng: location.lng,
@@ -403,12 +369,10 @@ export class NotificationsPage implements OnInit, OnDestroy {
         timestamp: notification.timestamp
       };
       
-      // Store in localStorage for the home page to pick up
       localStorage.setItem('guardian_care_navigate_to_location', JSON.stringify(mapLocationData));
       
       console.log('🗺️ Navigating to location:', mapLocationData);
     } else {
-      // Fallback: just navigate to home tab
       this.navController.navigateRoot('/tabs/home');
       console.log('🗺️ Navigating to home tab (no location data)');
     }
@@ -463,7 +427,7 @@ export class NotificationsPage implements OnInit, OnDestroy {
       case 'report_validated':
         return 'checkmark-circle';
       case 'new_zone':
-        return 'checkmark-circle'; // Same icon for consistent design
+        return 'checkmark-circle'; 
       case 'system':
         return 'information-circle';
       default:
@@ -476,7 +440,7 @@ export class NotificationsPage implements OnInit, OnDestroy {
       case 'report_validated':
         return 'success';
       case 'new_zone':
-        return 'success'; // Same color for consistent design
+        return 'success'; 
       case 'system':
         return 'primary';
       default:
@@ -514,17 +478,16 @@ export class NotificationsPage implements OnInit, OnDestroy {
 
 
   getRiskLevelColor(riskLevel: number | null | undefined): string {
-    // Ensure we have a valid number
+
     const level = Number(riskLevel ?? 1);
     
-    // Match heatmap legend colors exactly from report.service.ts
     switch (level) {
-      case 1: return '#28a745'; // Green - Low
-      case 2: return '#ffc107'; // Yellow - Moderate
-      case 3: return '#fd7e14'; // Orange - High
-      case 4: return '#dc3545'; // Red - Critical
-      case 5: return '#8B0000'; // Dark Red - Extreme
-      default: return '#6c757d'; // Gray - Unknown
+      case 1: return '#28a745'; 
+      case 2: return '#ffc107'; 
+      case 3: return '#fd7e14'; 
+      case 4: return '#dc3545';
+      case 5: return '#8B0000'; 
+      default: return '#6c757d'; 
     }
   }
 
@@ -541,7 +504,7 @@ export class NotificationsPage implements OnInit, OnDestroy {
       case 'safety':
         return 'new_zone';
       default:
-        return 'new_zone'; // Default to new_zone for all other types
+        return 'new_zone';
     }
   }
 
@@ -564,7 +527,6 @@ export class NotificationsPage implements OnInit, OnDestroy {
     if (stored) {
       return new Date(stored);
     }
-    // First sign-in or no history: baseline to NOW to avoid old report spam
     return new Date();
   }
 
@@ -581,48 +543,39 @@ export class NotificationsPage implements OnInit, OnDestroy {
     const weeks = Math.floor(days / 7);
     const months = Math.floor(days / 30);
 
-    // If less than 1 hour ago, show minutes
     if (minutes < 60) {
       if (minutes < 1) return 'just now';
       return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
     }
 
-    // If less than 24 hours ago, show hours
     if (hours < 24) {
       return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
     }
 
-    // If exactly 1 day ago
     if (days === 1) {
       return '1 day ago';
     }
 
-    // If less than 7 days ago, show days
     if (days < 7) {
       return `${days} days ago`;
     }
 
-    // If exactly 1 week ago
     if (weeks === 1) {
       return '1 week ago';
     }
 
-    // If less than 4 weeks ago, show weeks
     if (weeks < 4) {
       return `${weeks} weeks ago`;
     }
 
-    // If exactly 1 month ago
     if (months === 1) {
       return '1 month ago';
     }
 
-    // If less than 12 months ago, show months
     if (months < 12) {
       return `${months} months ago`;
     }
 
-    // Otherwise show date and time
     return date.toLocaleString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -632,11 +585,9 @@ export class NotificationsPage implements OnInit, OnDestroy {
     });
   }
 
-  // Update check time when user views notifications
   ionViewDidEnter() {
     this.updateLastNotificationCheckTime();
     
-    // When user enters notification tab, mark all notifications as "seen" (remove NEW badges)
     this.markAllNotificationsAsSeen();
   }
 
@@ -644,14 +595,12 @@ export class NotificationsPage implements OnInit, OnDestroy {
     this.updateLastNotificationCheckTime();
   }
 
-  // Mark all notifications as "seen" when user enters the notification tab
   private markAllNotificationsAsSeen() {
     let hasChanges = false;
     this.notifications.forEach(notification => {
       if (!notification.read || !notification.data?.seenByUser) {
-        // Mark as read to update badge count
+
         notification.read = true;
-        // Also mark as seen by user
         notification.data = notification.data || {};
         notification.data.seenByUser = true;
         hasChanges = true;
@@ -664,13 +613,11 @@ export class NotificationsPage implements OnInit, OnDestroy {
     }
   }
 
-  // Check if notification should show NEW badge (disabled - no NEW badges)
+
   shouldShowNewBadge(notification: NotificationItem): boolean {
-    // Always return false to remove all NEW badges
     return false;
   }
 
-  // Ensure new notifications are marked as unseen by user
   private ensureNotificationUnseen(notification: NotificationItem): NotificationItem {
     if (!notification.data) {
       notification.data = {};
@@ -685,7 +632,6 @@ export class NotificationsPage implements OnInit, OnDestroy {
     return this.notifications.filter(n => !n.read).length;
   }
 
-  // Missing methods for template compatibility
   getNotificationTypeLabel(type: string): string {
     switch (type) {
       case 'report_validated':
@@ -698,17 +644,14 @@ export class NotificationsPage implements OnInit, OnDestroy {
   }
 
   getStatusColor(notification: NotificationItem): string {
-    // Both notification types show the same "Validated" status
     return 'success';
   }
 
   getStatusIcon(notification: NotificationItem): string {
-    // Both notification types show the same checkmark icon
     return 'checkmark-circle-outline';
   }
 
   getStatusText(notification: NotificationItem): string {
-    // Both notification types show "Validated" text for consistent design
     return 'Validated';
   }
 
@@ -716,29 +659,21 @@ export class NotificationsPage implements OnInit, OnDestroy {
 
   formatNotificationMessage(notification: NotificationItem): string {
     const message = notification.message;
-    
-    // Improve text formatting
     let formattedMessage = message
-      // Capitalize first letter of incident types
       .replace(/\b(crime-theft|vandalism|assault|theft|verbal threats|lost item|suspicious-activity)\b/g, (match) => {
         return match.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('-');
       })
-      // Add space before km/m units and make them more prominent
       .replace(/(\d+\.?\d*)\s*(km|m)\s+(away)/g, '<strong>$1 $2 $3</strong>')
-      // Make risk levels prominent with colors
       .replace(/\b(Level \d+ - (Low|Moderate|High|Critical|Extreme) Risk)\b/g, '<strong style="color: var(--primary-purple);">$1</strong>')
-      // Capitalize time references and make them prominent
       .replace(/\b(just now|minutes? ago|hours? ago|days? ago|weeks? ago|months? ago)\b/g, (match) => {
         const capitalized = match.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
         return `<strong>${capitalized}</strong>`;
       })
-      // Make incident types prominent
       .replace(/\b(Crime-Theft|Vandalism|Assault|Theft|Verbal Threats|Lost Item|Suspicious-Activity)\b/g, '<strong>$1</strong>');
     
     return formattedMessage;
   }
 
-  // Create test notifications for demonstration
   private createTestNotifications() {
     const testNotifications: NotificationItem[] = [
       {
@@ -746,16 +681,16 @@ export class NotificationsPage implements OnInit, OnDestroy {
         type: 'new_zone',
         title: 'New Zone Alert',
         message: 'suspicious-activity • OPRRA, Cebu City • Level 4 - Critical Risk • 4 mins ago',
-        timestamp: new Date(Date.now() - 4 * 60 * 1000), // 4 minutes ago (newest)
-        read: false, // NEW notification - will show NEW badge and count in tab
+        timestamp: new Date(Date.now() - 4 * 60 * 1000),
+        read: false, 
         priority: 'critical',
         data: {
           reportType: 'suspicious-activity',
           locationAddress: 'OPRRA, Cebu City, Central Visayas, 6000, Philippines',
           distanceMeters: 10200,
-          riskLevel: 4, // Admin-validated risk level
-          adminLevel: 4, // Level 4 - Critical
-          seenByUser: false // Hasn't been seen by user yet
+          riskLevel: 4, 
+          adminLevel: 4,
+          seenByUser: false 
         }
       },
       {
@@ -763,16 +698,16 @@ export class NotificationsPage implements OnInit, OnDestroy {
         type: 'new_zone',
         title: 'New Zone Alert',
         message: 'theft • Babag, Cebu City, Central Visayas, Philippines • Level 2 - Moderate Risk • 3 hrs ago',
-        timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000), // 3 hours ago
-        read: false, // NEW notification - will show NEW badge and count in tab
+        timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000), 
+        read: false, 
         priority: 'medium',
         data: {
           reportType: 'theft',
           locationAddress: 'Babag, Cebu City, Central Visayas, Philippines',
           distanceMeters: 2400,
-          riskLevel: 2, // Admin-validated risk level
-          adminLevel: 2, // Level 2 - Moderate
-          seenByUser: false // Hasn't been seen by user yet
+          riskLevel: 2, 
+          adminLevel: 2, 
+          seenByUser: false 
         }
       },
       {
@@ -780,16 +715,16 @@ export class NotificationsPage implements OnInit, OnDestroy {
         type: 'new_zone',
         title: 'New Zone Alert',
         message: 'vandalism • Lahug, Cebu City, Central Visayas, Philippines • Level 3 - High Risk • 1 day ago',
-        timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago (oldest)
-        read: true, // Already read - no NEW badge, no count in tab
+        timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), 
+        read: true, 
         priority: 'high',
         data: {
           reportType: 'vandalism',
           locationAddress: 'Lahug, Cebu City, Central Visayas, Philippines',
           distanceMeters: 800,
-          riskLevel: 3, // Admin-validated risk level
-          adminLevel: 3, // Level 3 - High
-          seenByUser: true // Already seen by user
+          riskLevel: 3, 
+          adminLevel: 3, 
+          seenByUser: true 
         }
       }
     ];
@@ -802,14 +737,10 @@ export class NotificationsPage implements OnInit, OnDestroy {
   }
 
   private subscribeToAdminValidations() {
-    // Subscribe to real-time admin validation events
     this.subscriptions.push(
       this.adminNotificationService.validationEvents$.subscribe(events => {
-        // Admin validation events are automatically processed by the service
-        // This ensures real-time notifications when admin validates reports
         console.log('🔔 Admin validation events updated:', events.length);
         
-        // Force refresh of notifications when new admin validations arrive
         this.loadReportValidationNotifications();
       })
     );
@@ -835,7 +766,6 @@ export class NotificationsPage implements OnInit, OnDestroy {
     }
   }
 
-  // Clear test notifications
   private clearTestNotifications() {
     try {
       localStorage.removeItem('guardian_care_notifications');
@@ -845,17 +775,13 @@ export class NotificationsPage implements OnInit, OnDestroy {
     }
   }
 
-  // Clear all repeated notifications to stop them from appearing
   private clearAllRepeatedNotifications() {
     try {
-      // Clear all notifications from localStorage
       localStorage.removeItem('guardian_care_notifications');
       
-      // Reset the notifications array
       this.notifications = [];
       this.filteredNotifications = [];
       
-      // Update the view
       this.applyFiltersAndSort();
       
       console.log('🧹 Cleared all repeated notifications');

@@ -12,14 +12,12 @@
     <div class="title-underline"></div>
   </div>
 
-  <!-- Notification History Section -->
   <div class="notification-history-section">
     <div class="section-header">
       <span>My Notifications</span>
       <div class="section-underline"></div>
     </div>
 
-    <!-- Filters -->
     <div class="filters-row" *ngIf="notifications.length > 0">
       <ion-chip 
         [outline]="activeFilter !== 'all'" 
@@ -76,7 +74,6 @@
           <p [innerHTML]="formatNotificationMessage(notification)"></p>
         </div>
 
-        <!-- Admin Risk Level -->
         <div class="notification-validation" *ngIf="notification.data?.adminLevel">
           <div class="validation-header">
             <ion-icon name="shield-checkmark-outline"></ion-icon>
@@ -100,7 +97,6 @@
       <p>You don't have any notifications yet. New incident reports and validations will appear here.</p>
     </div>
 
-    <!-- Action Buttons -->
     <div class="action-buttons" *ngIf="notifications.length > 0">
       <ion-button 
         expand="block" 
@@ -123,7 +119,6 @@
     </div>
   </div>
 
-  <!-- Loading State -->
   <div class="loading-state" *ngIf="isLoading">
     <ion-spinner name="crescent"></ion-spinner>
     <p>Loading notifications...</p>

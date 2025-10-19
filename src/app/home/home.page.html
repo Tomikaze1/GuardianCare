@@ -1,10 +1,7 @@
 <ion-content [fullscreen]="true" [scrollY]="false" id="home-content" class="modern-content">
-  <!-- Zone Alert Banner removed as requested -->
 
-  <!-- Full Width Header -->
   <div class="app-header">
     <div class="header-content">
-      <!-- Location Info Row with Enhanced Live Badge -->
       <div class="location-row">
         <div class="location-icon-box">
           <ion-icon name="location-sharp"></ion-icon>
@@ -34,9 +31,7 @@
         
       </div>
       
-      <!-- Safety and Reports Row (Side by Side) -->
       <div class="safety-reports-row">
-        <!-- Safety Status -->
         <div class="safety-row" [class]="getSafetyStatusClass()">
           <div class="safety-icon-box">
             <ion-icon name="shield-checkmark-outline"></ion-icon>
@@ -46,7 +41,6 @@
           </div>
         </div>
         
-        <!-- Incidents Status -->
         <div class="incidents-row" *ngIf="hasNearbyReports">
           <div class="incidents-icon-box">
             <ion-icon name="warning-outline"></ion-icon>
@@ -59,10 +53,8 @@
     </div>
   </div>
 
-  <!-- Map Container -->
   <div id="map" class="modern-map"></div>
   
-  <!-- Modern Heatmap Legend -->
   <div class="modern-legend" *ngIf="isHeatmapVisible">
     <div class="legend-card">
       <div class="legend-header">
@@ -94,9 +86,7 @@
     </div>
   </div>
   
-  <!-- Floating Action Buttons -->
   <div class="fab-container">
-    <!-- Main Panic Button -->
     <button class="fab-main panic-fab" 
             (click)="triggerPanicButton()" 
             [disabled]="isPanicActive">
@@ -104,7 +94,6 @@
       <div class="fab-ripple"></div>
     </button>
     
-    <!-- Heatmap Toggle -->
     <button class="fab-secondary heatmap-fab" 
             (click)="toggleHeatmap()"
             [class.active]="isHeatmapVisible">
