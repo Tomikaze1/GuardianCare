@@ -218,6 +218,11 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   private checkZoneNotifications(location: { lat: number; lng: number }) {
+    // Check for zone entry/exit and trigger appropriate alerts
+    this.zoneNotificationService.checkZoneEntry(location);
+    
+    // Also update zone engine for internal tracking
+    this.zoneEngine.updateCurrentLocation(location);
   }
 
   dismissZoneAlert(alertId: string) {
@@ -413,7 +418,8 @@ export class HomePage implements OnInit, OnDestroy {
 
     const userLat = this.currentLocation.lat;
     const userLng = this.currentLocation.lng;
-    const nearbyRadius = 1000;
+    // Use 30m for nearby reports (2x zone radius for broader notification area)
+    const nearbyRadius = 0.03; // 30 meters in kilometers
 
     newReports.forEach(report => {
       if (report.location?.lat && report.location?.lng) {
@@ -1757,35 +1763,32 @@ export class HomePage implements OnInit, OnDestroy {
     }
 
 
+    // Zoom-dependent radius for 25-meter real-world distance
+    // This ensures the heatmap represents actual 25m radius at all zoom levels
     const heatLayers = [
       {
         id: 'heat-l1', level: 1, rgba: [16, 185, 129],
         weight: 0.5,
-        radiusStops: [5, 28, 10, 40, 15, 56],
         intensityStops: [5, 0.8, 10, 1.0, 15, 1.2]
       },
       {
         id: 'heat-l2', level: 2, rgba: [251, 191, 36],
         weight: 0.7,
-        radiusStops: [5, 26, 10, 38, 15, 52],
         intensityStops: [5, 0.9, 10, 1.1, 15, 1.3]
       },
       {
         id: 'heat-l3', level: 3, rgba: [249, 115, 22],
         weight: 0.9,
-        radiusStops: [5, 24, 10, 36, 15, 48],
         intensityStops: [5, 1.0, 10, 1.2, 15, 1.5]
       },
       {
         id: 'heat-l4', level: 4, rgba: [239, 68, 68],
         weight: 1.1,
-        radiusStops: [5, 22, 10, 34, 15, 44],
         intensityStops: [5, 1.2, 10, 1.5, 15, 1.8]
       },
       {
         id: 'heat-l5', level: 5, rgba: [220, 38, 38],
         weight: 1.3,
-        radiusStops: [5, 20, 10, 32, 15, 40],
         intensityStops: [5, 1.4, 10, 1.7, 15, 2.0]
       }
     ];
@@ -1793,7 +1796,7 @@ export class HomePage implements OnInit, OnDestroy {
 
     heatLayers.forEach(layer => {
       if (!this.map!.getLayer(layer.id)) {
-        console.log(`📍 Heatmap: Adding layer ${layer.id} for level ${layer.level} (${layer.rgba.join(',')} color)`);
+        console.log(`📍 Heatmap: Adding layer ${layer.id} for level ${layer.level} (${layer.rgba.join(',')} color, 25m radius)`);
         this.map!.addLayer({
           id: layer.id,
           type: 'heatmap',
@@ -1806,10 +1809,19 @@ export class HomePage implements OnInit, OnDestroy {
           },
           paint: {
             'heatmap-weight': layer.weight,
-            'heatmap-radius': ['interpolate', ['linear'], ['zoom'],
-              layer.radiusStops[0], layer.radiusStops[1],
-              layer.radiusStops[2], layer.radiusStops[3],
-              layer.radiusStops[4], layer.radiusStops[5]
+            // Zoom-dependent radius representing 15 meters with good visibility for navigation
+            'heatmap-radius': [
+              'interpolate',
+              ['exponential', 2],
+              ['zoom'],
+              8, 12,     // Good visibility at low zoom (reduced from 20)
+              10, 24,    // Clear visibility (reduced from 40)
+              12, 48,    // Good for overview (reduced from 80)
+              14, 72,    // Clear for street view (reduced from 120)
+              16, 120,   // Good for navigation zoom level (reduced from 200)
+              17, 168,   // Optimal for navigation mode (reduced from 280)
+              18, 240,   // Excellent visibility for close navigation (reduced from 400)
+              19, 360    // Maximum visibility for detailed navigation (reduced from 600)
             ],
             'heatmap-intensity': ['interpolate', ['linear'], ['zoom'],
               layer.intensityStops[0], layer.intensityStops[1],
@@ -2716,7 +2728,7 @@ export class HomePage implements OnInit, OnDestroy {
     const nearestRiskLevel = nearest.report.level || nearest.report.riskLevel || 1;
     const zoneRadius = this.getZoneRadiusMeters(nearestRiskLevel);
 
-    const nearbyReports = reportsWithDistance.filter(r => r.distance * 1000 <= 1000);
+    const nearbyReports = reportsWithDistance.filter(r => r.distance * 1000 <= 30); // 30m for nearby reports (2x zone radius)
     this.nearbyReportsCount = nearbyReports.length;
     this.hasNearbyReports = nearbyReports.length > 0;
 
@@ -2796,14 +2808,8 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   private getZoneRadiusMeters(riskLevel: number): number {
-    switch (riskLevel) {
-      case 1: return 25;  
-      case 2: return 35;   
-      case 3: return 50;  
-      case 4: return 70;   
-      case 5: return 90;   
-      default: return 40;
-    }
+    // Standardized to 15 meters radius for all risk levels - optimized for precise mobile visualization
+    return 15;
   }
 
   private checkAndNotifyZoneChanges(previousStatus: 'safe' | 'warning' | 'danger', wasInZone: boolean) {
@@ -2824,7 +2830,7 @@ export class HomePage implements OnInit, OnDestroy {
             report.location.lat, report.location.lng
           );
           const riskLevel = report.level || report.riskLevel || 1;
-          return distance * 1000 <= 100 && riskLevel >= 1 && riskLevel <= 5;
+          return distance * 1000 <= 25 && riskLevel >= 1 && riskLevel <= 5;
         })
         .sort((a, b) => {
           const distA = this.calculateDistance(this.currentLocation!.lat, this.currentLocation!.lng, a.location.lat, a.location.lng);
@@ -2881,7 +2887,7 @@ export class HomePage implements OnInit, OnDestroy {
             report.location.lat, report.location.lng
           );
           const riskLevel = report.level || report.riskLevel || 1;
-          return distance * 1000 <= 100 && riskLevel >= 1 && riskLevel <= 5;
+          return distance * 1000 <= 25 && riskLevel >= 1 && riskLevel <= 5;
         })
         .sort((a, b) => {
           const distA = this.calculateDistance(this.currentLocation!.lat, this.currentLocation!.lng, a.location.lat, a.location.lng);

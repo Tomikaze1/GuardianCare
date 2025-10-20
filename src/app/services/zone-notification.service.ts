@@ -52,7 +52,7 @@ export class ZoneNotificationService {
     enableVibration: true,
     enableSound: true,
     enablePushNotifications: true,
-    alertRadius: 100, 
+    alertRadius: 25, // Optimized for walking detection - 25 meters provides better precision for pedestrians 
     cooldownPeriod: 5, 
     minimumRiskLevel: 2 
   };
@@ -70,13 +70,19 @@ export class ZoneNotificationService {
   checkZoneEntry(location: { lat: number; lng: number }): void {
     this.zoneEngine.zones$.pipe(take(1)).subscribe(zones => {
       const currentZone = this.findZoneAtLocation(location, zones);
+      
+      // Debug logging for zone detection
+      console.log(`🔍 Checking zone entry at location:`, location, `Found zone:`, currentZone?.name || 'None');
     
       if (currentZone && currentZone !== this.currentZone) {
+        console.log(`📍 Zone entry detected! User moved into:`, currentZone.name, `(Level: ${currentZone.level})`);
         this.previousZone = this.currentZone;
         this.currentZone = currentZone;
         
         if (this.shouldTriggerAlert('zone_entry', currentZone)) {
           this.triggerZoneEntryAlert(currentZone, location);
+        } else {
+          console.log(`⏸️ Zone entry alert skipped due to cooldown or settings`);
         }
       }
       
@@ -216,8 +222,10 @@ export class ZoneNotificationService {
     }
 
     const now = Date.now();
-    const cooldownMs = this.settings.cooldownPeriod * 60 * 1000;
-    if (now - this.lastNotificationTime < cooldownMs) {
+    // Use shorter cooldown for zone entry alerts to ensure immediate response
+    const cooldownMs = type === 'zone_entry' ? 30 * 1000 : this.settings.cooldownPeriod * 60 * 1000; // 30 seconds for entry, 5 minutes for others
+    
+    if (type !== 'zone_entry' && now - this.lastNotificationTime < cooldownMs) {
       return false;
     }
 
@@ -241,6 +249,9 @@ export class ZoneNotificationService {
   }
 
   private triggerZoneEntryAlert(zone: DangerZone, location: { lat: number; lng: number }): void {
+    console.log(`🚨 ZONE ENTRY DETECTED: User entered ${zone.name} (${zone.level} zone) at location:`, location);
+    console.log(`📍 Zone coordinates:`, zone.coordinates);
+    
     const alert: ZoneAlert = {
       id: `entry-${zone.id}-${Date.now()}`,
       type: 'zone_entry',
@@ -324,10 +335,12 @@ export class ZoneNotificationService {
   }
 
   private generateZoneEntryMessage(zone: DangerZone): string {
-    const levelEmoji = this.getLevelEmoji(zone.level);
-    const riskText = this.getRiskText(zone.riskLevel || 1);
+    const riskLevel = zone.riskLevel || 1;
+    const heatmapEmoji = this.getHeatmapEmojiForRiskLevel(riskLevel);
+    const riskText = this.getRiskText(riskLevel);
+    const heatmapColor = this.getHeatmapColorForRiskLevel(riskLevel);
     
-    return `${levelEmoji} You have entered ${zone.name}\nRisk Level: ${riskText} (${zone.level})`;
+    return `${heatmapEmoji} You have entered ${zone.name}\nHeatmap Color: ${heatmapColor} | Risk Level: ${riskText} (Level ${riskLevel})`;
   }
 
   private generateZoneExitMessage(zone: DangerZone): string {
@@ -441,6 +454,38 @@ export class ZoneNotificationService {
     }
   }
 
+  private getLevelColor(level: string): string {
+    switch (level) {
+      case 'Safe': return 'Green';
+      case 'Neutral': return 'Yellow';
+      case 'Caution': return 'Orange';
+      case 'Danger': return 'Red';
+      default: return 'Unknown';
+    }
+  }
+
+  private getHeatmapColorForRiskLevel(riskLevel: number): string {
+    switch (riskLevel) {
+      case 1: return 'Green (Low)';
+      case 2: return 'Yellow (Moderate)';
+      case 3: return 'Orange (High)';
+      case 4: return 'Red (Critical)';
+      case 5: return 'Dark Red (Extreme)';
+      default: return 'Unknown';
+    }
+  }
+
+  private getHeatmapEmojiForRiskLevel(riskLevel: number): string {
+    switch (riskLevel) {
+      case 1: return '🟢'; // Green - matches heatmap level-1
+      case 2: return '🟡'; // Yellow - matches heatmap level-2  
+      case 3: return '🟠'; // Orange - matches heatmap level-3
+      case 4: return '🔴'; // Red - matches heatmap level-4
+      case 5: return '⛑️'; // Dark Red/Extreme - matches heatmap level-5
+      default: return '⚪';
+    }
+  }
+
   private addAlert(alert: ZoneAlert): void {
     const alerts = [...this.activeAlerts.value, alert];
     this.activeAlerts.next(alerts);
@@ -536,15 +581,27 @@ export class ZoneNotificationService {
   }
 
   private showNotificationBanner(alert: ZoneAlert): void {
-    const notificationType = this.getNotificationType(alert.zoneLevel);
-    const title = this.getAlertTitle(alert.type);
+    const riskLevel = alert.riskLevel || 1;
+    const notificationType = alert.type === 'zone_entry' 
+      ? this.getNotificationTypeForRiskLevel(riskLevel)
+      : this.getNotificationType(alert.zoneLevel);
+    const heatmapEmoji = alert.type === 'zone_entry' 
+      ? this.getHeatmapEmojiForRiskLevel(riskLevel)
+      : this.getLevelEmoji(alert.zoneLevel);
+    const heatmapColor = alert.type === 'zone_entry' 
+      ? this.getHeatmapColorForRiskLevel(riskLevel)
+      : this.getLevelColor(alert.zoneLevel);
+    
+    const title = alert.type === 'zone_entry' 
+      ? `${heatmapEmoji} ENTERED LEVEL ${riskLevel} ZONE (${heatmapColor})`
+      : this.getAlertTitle(alert.type);
     
     this.notificationService.show({
       type: notificationType,
       title: title,
       message: alert.message,
       actionText: 'View Details',
-      duration: 8000
+      duration: alert.type === 'zone_entry' ? 10000 : 8000 // Longer duration for entry alerts
     });
   }
 
@@ -569,6 +626,17 @@ export class ZoneNotificationService {
       case 'Caution': return 'warning';
       case 'Neutral': return 'info';
       case 'Safe': return 'success';
+      default: return 'info';
+    }
+  }
+
+  private getNotificationTypeForRiskLevel(riskLevel: number): 'success' | 'warning' | 'error' | 'info' {
+    switch (riskLevel) {
+      case 1: return 'success';  // Green - Low risk
+      case 2: return 'info';     // Yellow - Moderate risk  
+      case 3: return 'warning';  // Orange - High risk
+      case 4: return 'error';    // Red - Critical risk
+      case 5: return 'error';    // Dark Red - Extreme risk
       default: return 'info';
     }
   }

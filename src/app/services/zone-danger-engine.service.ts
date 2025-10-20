@@ -164,7 +164,10 @@ export class ZoneDangerEngineService {
       level = 'Danger';
     }
     
-    const radius = 0.002;
+    // 15 meters radius converted to degrees for Cebu latitude (~10.3°)
+    // At this latitude, 1 degree ≈ 109.5km, so 15m ≈ 0.000137 degrees
+    // Further reduced to 15m for more precise heatmap visualization as shown in screenshot
+    const radius = 0.000137;
     const lat = report.location.lat;
     const lng = report.location.lng;
     
