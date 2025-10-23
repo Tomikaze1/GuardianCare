@@ -1,6 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { NotificationManagerService } from '../services/notification-manager.service';
+import { ReportService } from '../services/report.service';
+import { AuthService } from '../services/auth.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -23,17 +25,25 @@ import { Subscription } from 'rxjs';
 })
 export class TabsPage implements OnInit, OnDestroy {
   unreadCount = 0;
+  newValidatedReportsCount = 0;
   private notificationSubscription?: Subscription;
+  private reportsSubscription?: Subscription;
+  private lastSeenValidatedReports: Set<string> = new Set();
 
-  constructor(private notificationManager: NotificationManagerService) {}
+  constructor(
+    private notificationManager: NotificationManagerService,
+    private reportService: ReportService,
+    private authService: AuthService
+  ) {}
 
   ngOnInit() {
     this.clearStuckHoverStates();
     
-
     this.clearTestNotifications();
     
     this.updateBadgeCount();
+    this.loadLastSeenData();
+    this.subscribeToValidatedReports();
     
     window.addEventListener('storage', () => {
       this.updateBadgeCount();
@@ -43,6 +53,9 @@ export class TabsPage implements OnInit, OnDestroy {
   ngOnDestroy() {
     if (this.notificationSubscription) {
       this.notificationSubscription.unsubscribe();
+    }
+    if (this.reportsSubscription) {
+      this.reportsSubscription.unsubscribe();
     }
   }
 
@@ -90,5 +103,65 @@ export class TabsPage implements OnInit, OnDestroy {
         tabBar.classList.remove('ion-activatable');
       }
     }, 100);
+  }
+
+  private loadLastSeenData() {
+    try {
+      const lastSeenValidatedReports = localStorage.getItem('lastSeenValidatedReports');
+      
+      if (lastSeenValidatedReports) {
+        this.lastSeenValidatedReports = new Set(JSON.parse(lastSeenValidatedReports));
+      }
+    } catch (error) {
+      console.warn('Could not load last seen data:', error);
+    }
+  }
+
+  private saveLastSeenData() {
+    try {
+      localStorage.setItem('lastSeenValidatedReports', JSON.stringify([...this.lastSeenValidatedReports]));
+    } catch (error) {
+      console.warn('Could not save last seen data:', error);
+    }
+  }
+
+  private subscribeToValidatedReports() {
+    this.reportsSubscription = this.reportService.getValidatedReports().subscribe(reports => {
+      this.updateValidatedReportsCount(reports);
+    });
+  }
+
+  private async updateValidatedReportsCount(reports: any[]) {
+    const currentUser = await this.authService.getCurrentUser();
+    if (!currentUser) return;
+
+    let newCount = 0;
+    
+    reports.forEach(report => {
+      if (report.id && !this.lastSeenValidatedReports.has(report.id)) {
+        // Check if this is a new validated report from the current user
+        if (report.userId === currentUser.uid) {
+          newCount++;
+        }
+      }
+    });
+
+    this.newValidatedReportsCount = newCount;
+  }
+
+  onNotificationsTabClick() {
+    // Mark all validated reports as seen
+    this.reportsSubscription = this.reportService.getValidatedReports().subscribe(async reports => {
+      const currentUser = await this.authService.getCurrentUser();
+      if (currentUser) {
+        reports.forEach(report => {
+          if (report.id && report.userId === currentUser.uid) {
+            this.lastSeenValidatedReports.add(report.id);
+          }
+        });
+        this.saveLastSeenData();
+        this.newValidatedReportsCount = 0;
+      }
+    });
   }
 }
