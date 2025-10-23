@@ -117,6 +117,13 @@ ion-tab-bar {
     padding: 0 3px;
     min-width: 22px;
   }
+  
+  // Success badge for validated reports
+  &[color="success"] {
+    background: linear-gradient(135deg, #10b981, #059669);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+    animation: successBadgePulse 2s ease-in-out infinite;
+  }
 }
 
 ion-router-outlet > * {
@@ -143,6 +150,17 @@ ion-router-outlet > * {
   50% {
     transform: scale(1.05);
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.6);
+  }
+}
+
+@keyframes successBadgePulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.6);
   }
 }
 

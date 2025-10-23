@@ -217,8 +217,9 @@ ion-content {
   transition: all 0.3s ease;
   
   &.safe {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(52, 211, 153, 0.15));
-    border: 1px solid rgba(16, 185, 129, 0.3);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.9));
+    border: 1px solid rgba(209, 213, 219, 0.5);
+    color: #374151;
   }
   
   &.warning {
@@ -230,6 +231,34 @@ ion-content {
     background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(248, 113, 113, 0.15));
     border: 1px solid rgba(239, 68, 68, 0.3);
     animation: dangerGlow 2s ease-in-out infinite;
+  }
+  
+  // Risk level specific colors matching heatmap legend
+  &.low-risk {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(52, 211, 153, 0.15));
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+  
+  &.moderate-risk {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(252, 211, 77, 0.15));
+    border: 1px solid rgba(251, 191, 36, 0.3);
+  }
+  
+  &.high-risk {
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(251, 146, 60, 0.15));
+    border: 1px solid rgba(249, 115, 22, 0.3);
+  }
+  
+  &.critical-risk {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(248, 113, 113, 0.15));
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    animation: dangerGlow 2s ease-in-out infinite;
+  }
+  
+  &.extreme-risk {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.15), rgba(239, 68, 68, 0.15));
+    border: 1px solid rgba(220, 38, 38, 0.3);
+    animation: dangerGlow 1.5s ease-in-out infinite;
   }
 }
 
@@ -244,8 +273,8 @@ ion-content {
   flex-shrink: 0;
   
   .safe & {
-    background: rgba(16, 185, 129, 0.2);
-    color: #059669;
+    background: rgba(255, 255, 255, 0.8);
+    color: #6b7280;
   }
   
   .warning & {
@@ -256,6 +285,32 @@ ion-content {
   .danger & {
     background: rgba(239, 68, 68, 0.2);
     color: #dc2626;
+  }
+  
+  // Risk level specific icon colors matching heatmap legend
+  .low-risk & {
+    background: rgba(16, 185, 129, 0.2);
+    color: #059669;
+  }
+  
+  .moderate-risk & {
+    background: rgba(251, 191, 36, 0.2);
+    color: #d97706;
+  }
+  
+  .high-risk & {
+    background: rgba(249, 115, 22, 0.2);
+    color: #ea580c;
+  }
+  
+  .critical-risk & {
+    background: rgba(239, 68, 68, 0.2);
+    color: #dc2626;
+  }
+  
+  .extreme-risk & {
+    background: rgba(220, 38, 38, 0.2);
+    color: #b91c1c;
   }
 }
 
@@ -270,9 +325,68 @@ ion-content {
   text-transform: uppercase;
   letter-spacing: 0.3px;
   
-  .safe & { color: #059669; }
+  .safe & { color: #374151; }
   .warning & { color: #d97706; }
   .danger & { color: #dc2626; }
+  
+  // Risk level specific text colors matching heatmap legend
+  .low-risk & { color: #059669; }
+  .moderate-risk & { color: #d97706; }
+  .high-risk & { color: #ea580c; }
+  .critical-risk & { color: #dc2626; }
+  .extreme-risk & { color: #b91c1c; }
+}
+
+.safety-description {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 0;
+  font-weight: 500;
+  line-height: 1.3;
+  
+  .safe & { color: #6b7280; }
+  .warning & { color: #d97706; }
+  .danger & { color: #dc2626; }
+  
+  // Risk level specific description colors
+  .low-risk & { color: #059669; }
+  .moderate-risk & { color: #d97706; }
+  .high-risk & { color: #ea580c; }
+  .critical-risk & { color: #dc2626; }
+  .extreme-risk & { color: #b91c1c; }
+  
+  // Ensure bold text is properly styled
+  strong {
+    font-weight: 700;
+    color: inherit;
+    font-size: 13px;
+  }
+}
+
+.safety-arrows {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+  
+  .arrow-up {
+    font-size: 12px;
+    animation: arrowPulse 1.5s ease-in-out infinite;
+    
+    &:nth-child(2) {
+      animation-delay: 0.3s;
+    }
+  }
+}
+
+@keyframes arrowPulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
 }
 
 .incidents-row {
@@ -1093,6 +1207,240 @@ button:active .fab-ripple {
         font-weight: 600;
       }
     }
+  }
+}
+
+// Enhanced heatmap zone alert styles using heatmap colors
+.zone-alert-info.full-screen-alert {
+  --backdrop-opacity: 0.7;
+  
+  .alert-wrapper {
+    background: linear-gradient(135deg, #10b981, #34d399); // Level 1 colors
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(16, 185, 129, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    
+    .alert-head {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 18px 18px 0 0;
+      padding: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      
+      .alert-title {
+        color: #ffffff;
+        font-size: 1.4rem;
+        font-weight: 700;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+    }
+    
+    .alert-message {
+      color: rgba(255, 255, 255, 0.95);
+      font-size: 1rem;
+      line-height: 1.6;
+      padding: 20px;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    
+    .alert-button-group {
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      
+      button {
+        color: #ffffff;
+        font-weight: 600;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      }
+    }
+  }
+}
+
+// Enhanced danger zone alert with pulsing effect using heatmap colors
+.zone-alert-danger.full-screen-alert {
+  --backdrop-opacity: 0.9;
+  
+  .alert-wrapper {
+    background: linear-gradient(135deg, #dc2626, #ef4444); // Level 5 colors
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(220, 38, 38, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    animation: dangerPulse 2s infinite;
+    
+    .alert-head {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 18px 18px 0 0;
+      padding: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+      
+      .alert-title {
+        color: #ffffff;
+        font-size: 1.5rem;
+        font-weight: 800;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+      }
+    }
+    
+    .alert-message {
+      color: rgba(255, 255, 255, 0.95);
+      font-size: 1rem;
+      line-height: 1.6;
+      padding: 20px;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+    
+    .alert-button-group {
+      border-top: 1px solid rgba(255, 255, 255, 0.3);
+      
+      button {
+        color: #ffffff;
+        font-weight: 700;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+      }
+    }
+  }
+}
+
+// Enhanced warning zone alert using heatmap colors
+.zone-alert-warning.full-screen-alert {
+  --backdrop-opacity: 0.8;
+  
+  .alert-wrapper {
+    background: linear-gradient(135deg, #f97316, #fb923c); // Level 3 colors
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(249, 115, 22, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    
+    .alert-head {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 18px 18px 0 0;
+      padding: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+      
+      .alert-title {
+        color: #ffffff;
+        font-size: 1.4rem;
+        font-weight: 700;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+    }
+    
+    .alert-message {
+      color: rgba(255, 255, 255, 0.95);
+      font-size: 1rem;
+      line-height: 1.6;
+      padding: 20px;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    
+    .alert-button-group {
+      border-top: 1px solid rgba(255, 255, 255, 0.25);
+      
+      button {
+        color: #ffffff;
+        font-weight: 600;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      }
+    }
+  }
+}
+
+// Additional alert styles for Level 2 and Level 4
+.zone-alert-moderate.full-screen-alert {
+  --backdrop-opacity: 0.75;
+  
+  .alert-wrapper {
+    background: linear-gradient(135deg, #fbbf24, #fcd34d); // Level 2 colors
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(251, 191, 36, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    
+    .alert-head {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 18px 18px 0 0;
+      padding: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      
+      .alert-title {
+        color: #ffffff;
+        font-size: 1.4rem;
+        font-weight: 700;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+    }
+    
+    .alert-message {
+      color: rgba(255, 255, 255, 0.95);
+      font-size: 1rem;
+      line-height: 1.6;
+      padding: 20px;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    
+    .alert-button-group {
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      
+      button {
+        color: #ffffff;
+        font-weight: 600;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      }
+    }
+  }
+}
+
+.zone-alert-critical.full-screen-alert {
+  --backdrop-opacity: 0.85;
+  
+  .alert-wrapper {
+    background: linear-gradient(135deg, #ef4444, #f87171); // Level 4 colors
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(239, 68, 68, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    animation: dangerPulse 1.8s infinite;
+    
+    .alert-head {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 18px 18px 0 0;
+      padding: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+      
+      .alert-title {
+        color: #ffffff;
+        font-size: 1.5rem;
+        font-weight: 800;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+      }
+    }
+    
+    .alert-message {
+      color: rgba(255, 255, 255, 0.95);
+      font-size: 1rem;
+      line-height: 1.6;
+      padding: 20px;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+    
+    .alert-button-group {
+      border-top: 1px solid rgba(255, 255, 255, 0.3);
+      
+      button {
+        color: #ffffff;
+        font-weight: 700;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+      }
+    }
+  }
+}
+
+// Danger pulse animation
+@keyframes dangerPulse {
+  0% {
+    box-shadow: 0 20px 40px rgba(220, 38, 38, 0.4);
+  }
+  50% {
+    box-shadow: 0 25px 50px rgba(220, 38, 38, 0.6);
+  }
+  100% {
+    box-shadow: 0 20px 40px rgba(220, 38, 38, 0.4);
   }
 }
 

@@ -34,10 +34,10 @@
       <div class="safety-reports-row">
         <div class="safety-row" [class]="getSafetyStatusClass()">
           <div class="safety-icon-box">
-            <ion-icon name="shield-checkmark-outline"></ion-icon>
+            <ion-icon [name]="getSafetyIcon()"></ion-icon>
           </div>
           <div class="safety-info">
-            <div class="safety-title">{{ getSafetyStatusText() }}</div>
+            <div class="safety-description" *ngIf="getCurrentZoneInfoText()" [innerHTML]="getCurrentZoneInfoText()"></div>
           </div>
         </div>
         

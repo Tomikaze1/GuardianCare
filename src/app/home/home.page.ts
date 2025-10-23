@@ -64,6 +64,8 @@ export class HomePage implements OnInit, OnDestroy {
   
   private alertSoundInterval: any = null;
   private currentAlertSound: any = null;
+  private alertAcknowledged: boolean = false;
+  private lastAlertedZoneId: string | null = null;
 
   constructor(
     private locationService: LocationService,
@@ -449,6 +451,54 @@ export class HomePage implements OnInit, OnDestroy {
     return this.zoneNotificationService.getCurrentZone();
   }
 
+  getCurrentZoneInfoText(): string {
+    console.log('🔍 getCurrentZoneInfoText called:', {
+      inDangerZone: this.inDangerZone,
+      currentZoneRiskLevel: this.currentZoneRiskLevel,
+      hasNearbyReports: this.hasNearbyReports,
+      nearbyReportsCount: this.nearbyReportsCount
+    });
+    
+    // Show specific risk level if currentZoneRiskLevel is set
+    if (this.currentZoneRiskLevel !== null && this.currentZoneRiskLevel !== undefined) {
+      const riskText = this.getRiskLevelText(this.currentZoneRiskLevel);
+      const result = `Currently in<br><strong>${riskText} Risk Zone</strong>`;
+      console.log('✅ Returning zone info text:', result);
+      return result;
+    }
+    
+    // If in danger zone but no specific risk level, determine from nearby reports
+    if (this.inDangerZone && this.hasNearbyReports && this.nearbyReportsCount > 0) {
+      // Get the highest risk level from nearby reports
+      const nearbyReports = this.validatedReports.filter(report => {
+        if (!this.currentLocation) return false;
+        const distance = this.calculateDistance(
+          this.currentLocation.lat,
+          this.currentLocation.lng,
+          report.location.lat,
+          report.location.lng
+        );
+        return distance * 1000 <= 30; // Within 30m
+      });
+      
+      if (nearbyReports.length > 0) {
+        const highestRiskLevel = nearbyReports.reduce((max, report) => 
+          Math.max(max, report.level || report.riskLevel || 1), 1
+        );
+        
+        const riskText = this.getRiskLevelText(highestRiskLevel);
+        const result = `Currently in<br><strong>${riskText} Risk Zone</strong>`;
+        console.log('✅ Returning nearby reports risk text:', result);
+        return result;
+      }
+    }
+    
+    // Show "Currently in Low Risk Zone" when not in any specific zone
+    const result = `Currently in<br><strong>Low Risk Zone</strong>`;
+    console.log('✅ Returning default zone info text:', result);
+    return result;
+  }
+
   onNotificationClick(notification: any) {
     console.log('Notification clicked:', notification);
   }
@@ -626,16 +676,13 @@ export class HomePage implements OnInit, OnDestroy {
       if (!this.userMarker || !this.userMarker.getElement()?.isConnected) {
         if (this.currentLocation) {
           const markerElement = document.createElement('div');
-          markerElement.className = 'waze-navigation-marker';
+          markerElement.className = 'user-location-dot';
           markerElement.innerHTML = `
-            <svg width="44" height="52" viewBox="0 0 44 52" class="waze-arrow">
-              <path d="M22 6 L36 30 L30 30 L30 46 L14 46 L14 30 L8 30 Z"
-                    fill="#00B8D4" stroke="#FFFFFF" stroke-width="2.5" class="nav-arrow"/>
-            </svg>
+            <div class="location-dot"></div>
           `;
           this.userMarker = new mapboxgl.Marker({
             element: markerElement,
-            anchor: 'bottom',
+            anchor: 'center',
             rotationAlignment: 'map',
             pitchAlignment: 'map'
           })
@@ -645,39 +692,30 @@ export class HomePage implements OnInit, OnDestroy {
       }
     }
     if (this.userMarker && this.map) {
-      this.userMarker.setLngLat([location.lng, location.lat]);
-      
+      // Hide the arrow marker when heatmap is visible
       if (this.isHeatmapVisible) {
+        this.userMarker.getElement().style.display = 'none';
         this.updateRealTimeUserLocationInHeatmap(location);
         return;
+      } else {
+        // Show the arrow marker when heatmap is not visible
+        this.userMarker.getElement().style.display = 'block';
       }
       
-      const currentZoom = this.map.getZoom();
-      const currentBearing = this.map.getBearing();
+      this.userMarker.setLngLat([location.lng, location.lat]);
       
-      const targetBearing = location.heading !== undefined && location.heading !== null 
-        ? location.heading 
-        : currentBearing;
+      const currentZoom = this.map.getZoom();
       
       const animationOptions = {
         center: [location.lng, location.lat] as [number, number],
         zoom: Math.max(currentZoom, 17.5),
         pitch: 55,
-        bearing: targetBearing,
         duration: 800,
         essential: true,
         easing: (t: number) => t * (2 - t)
       };
       
       this.map.easeTo(animationOptions);
-      
-      if (location.heading !== undefined && location.heading !== null) {
-        const markerElement = this.userMarker.getElement();
-        const arrowEl = markerElement?.querySelector('.waze-arrow') as HTMLElement | null;
-        if (arrowEl) {
-          arrowEl.style.transform = 'rotate(0deg)';
-        }
-      }
       
       this.checkNearbyZones(location);
     }
@@ -745,8 +783,10 @@ export class HomePage implements OnInit, OnDestroy {
             'interpolate',
             ['linear'],
             ['zoom'],
-            0, 2,
-            15, 20
+            0, 0.015,  // ~15cm radius at zoom 0
+            5, 0.03,   // ~15cm radius at zoom 5
+            10, 0.96,  // ~15cm radius at zoom 10
+            15, 30.72  // ~15cm radius at zoom 15
           ],
           'heatmap-opacity': [
             'interpolate',
@@ -1154,69 +1194,47 @@ export class HomePage implements OnInit, OnDestroy {
     });
 
     const markerElement = document.createElement('div');
-    markerElement.className = 'waze-navigation-marker';
+    markerElement.className = 'user-location-dot';
     markerElement.innerHTML = `
-      <!-- Waze-style SOLID BLUE triangle arrow (bottom point at GPS location) -->
-      <svg width="44" height="52" viewBox="0 0 44 52" class="waze-arrow">
-        <defs>
-          <!-- Shadow for depth -->
-          <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
-            <feOffset dx="0" dy="2" result="offsetblur"/>
-            <feComponentTransfer>
-              <feFuncA type="linear" slope="0.6"/>
-            </feComponentTransfer>
-            <feMerge>
-              <feMergeNode/>
-              <feMergeNode in="SourceGraphic"/>
-            </feMerge>
-          </filter>
-        </defs>
-        
-        <!-- Solid blue triangle - tip pointing UP, bottom at viewBox bottom -->
-        <path d="M22 6 L36 30 L30 30 L30 46 L14 46 L14 30 L8 30 Z" 
-              fill="#00B8D4" 
-              stroke="#FFFFFF" 
-              stroke-width="2.5"
-              filter="url(#shadow)"
-              class="nav-arrow"/>
-      </svg>
+      <div class="location-dot"></div>
     `;
 
     const style = document.createElement('style');
     style.textContent = `
-      .waze-navigation-marker {
+      .user-location-dot {
         position: relative;
-        width: 44px;
-        height: 52px;
+        width: 20px;
+        height: 20px;
         display: flex;
-        align-items: flex-end;
+        align-items: center;
         justify-content: center;
       }
       
-      
-      .waze-arrow {
-        position: relative;
-        z-index: 2;
-        filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.3));
-        display: block;
-      }
-      
-      .nav-arrow {
+      .location-dot {
+        width: 16px;
+        height: 16px;
+        background: #00B8D4;
+        border: 3px solid #FFFFFF;
+        border-radius: 50%;
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
         transition: all 0.2s ease;
       }
-      
     `;
     document.head.appendChild(style);
 
     this.userMarker = new mapboxgl.Marker({
       element: markerElement,
-      anchor: 'bottom',
+      anchor: 'center',
       rotationAlignment: 'map',
       pitchAlignment: 'map'
     })
       .setLngLat([this.currentLocation.lng, this.currentLocation.lat])
       .addTo(this.map);
+    
+    // Hide the marker if heatmap is initially visible
+    if (this.isHeatmapVisible) {
+      this.userMarker.getElement().style.display = 'none';
+    }
 
     this.map.on('load', () => {
       console.log('Map loaded in HomePage - Simple Waze-like navigation');
@@ -1763,8 +1781,8 @@ export class HomePage implements OnInit, OnDestroy {
     }
 
 
-    // Zoom-dependent radius for 25-meter real-world distance
-    // This ensures the heatmap represents actual 25m radius at all zoom levels
+    // Consistent 15-centimeter real-world radius for all zoom levels
+    // This ensures the heatmap represents actual 15cm radius at all zoom levels
     const heatLayers = [
       {
         id: 'heat-l1', level: 1, rgba: [16, 185, 129],
@@ -1796,7 +1814,7 @@ export class HomePage implements OnInit, OnDestroy {
 
     heatLayers.forEach(layer => {
       if (!this.map!.getLayer(layer.id)) {
-        console.log(`📍 Heatmap: Adding layer ${layer.id} for level ${layer.level} (${layer.rgba.join(',')} color, 25m radius)`);
+        console.log(`📍 Heatmap: Adding layer ${layer.id} for level ${layer.level} (${layer.rgba.join(',')} color, 15cm radius)`);
         this.map!.addLayer({
           id: layer.id,
           type: 'heatmap',
@@ -1809,19 +1827,30 @@ export class HomePage implements OnInit, OnDestroy {
           },
           paint: {
             'heatmap-weight': layer.weight,
-            // Zoom-dependent radius representing 15 meters with good visibility for navigation
+            // Consistent 15-centimeter radius at all zoom levels
+            // Pixel radius calculation: 15cm = 0.15m * (pixels per meter at current zoom)
             'heatmap-radius': [
               'interpolate',
-              ['exponential', 2],
+              ['linear'],
               ['zoom'],
-              8, 12,     // Good visibility at low zoom (reduced from 20)
-              10, 24,    // Clear visibility (reduced from 40)
-              12, 48,    // Good for overview (reduced from 80)
-              14, 72,    // Clear for street view (reduced from 120)
-              16, 120,   // Good for navigation zoom level (reduced from 200)
-              17, 168,   // Optimal for navigation mode (reduced from 280)
-              18, 240,   // Excellent visibility for close navigation (reduced from 400)
-              19, 360    // Maximum visibility for detailed navigation (reduced from 600)
+              5, 0.03,   // ~15cm radius at zoom 5
+              6, 0.06,   // ~15cm radius at zoom 6
+              7, 0.12,   // ~15cm radius at zoom 7
+              8, 0.24,   // ~15cm radius at zoom 8
+              9, 0.48,   // ~15cm radius at zoom 9
+              10, 0.96,  // ~15cm radius at zoom 10
+              11, 1.92,  // ~15cm radius at zoom 11
+              12, 3.84,  // ~15cm radius at zoom 12
+              13, 7.68,  // ~15cm radius at zoom 13
+              14, 15.36, // ~15cm radius at zoom 14
+              15, 30.72, // ~15cm radius at zoom 15
+              16, 61.44, // ~15cm radius at zoom 16
+              17, 122.88,// ~15cm radius at zoom 17
+              18, 245.76,// ~15cm radius at zoom 18
+              19, 491.52,// ~15cm radius at zoom 19
+              20, 983.04,// ~15cm radius at zoom 20
+              21, 1966.08,// ~15cm radius at zoom 21
+              22, 3932.16 // ~15cm radius at zoom 22
             ],
             'heatmap-intensity': ['interpolate', ['linear'], ['zoom'],
               layer.intensityStops[0], layer.intensityStops[1],
@@ -2101,7 +2130,7 @@ export class HomePage implements OnInit, OnDestroy {
         });
         
         if (this.userMarker) {
-          this.userMarker.remove();
+          this.userMarker.getElement().style.display = 'none';
         }
         
         this.removeHeatmapLayer();
@@ -2125,32 +2154,29 @@ export class HomePage implements OnInit, OnDestroy {
         
         if (this.currentLocation && this.map) {
           if (this.userMarker) {
+            this.userMarker.getElement().style.display = 'block';
             this.userMarker.addTo(this.map);
             this.userMarker.setLngLat([this.currentLocation.lng, this.currentLocation.lat]);
           } else {
             const markerElement = document.createElement('div');
-            markerElement.className = 'waze-navigation-marker';
+            markerElement.className = 'user-location-dot';
             markerElement.innerHTML = `
-              <svg width="44" height="52" viewBox="0 0 44 52" class="waze-arrow">
-                <path d="M22 6 L36 30 L30 30 L30 46 L14 46 L14 30 L8 30 Z" 
-                      fill="#00B8D4" stroke="#FFFFFF" stroke-width="2.5" class="nav-arrow"/>
-              </svg>
+              <div class="location-dot"></div>
             `;
 
-            if (!document.querySelector('style[data-nav-arrow="1"]')) {
+            if (!document.querySelector('style[data-user-dot="1"]')) {
               const style = document.createElement('style');
-              style.setAttribute('data-nav-arrow', '1');
+              style.setAttribute('data-user-dot', '1');
               style.textContent = `
-                .waze-navigation-marker{position:relative;width:44px;height:52px;display:flex;align-items:flex-end;justify-content:center}
-                .waze-arrow{position:relative;z-index:2;filter:drop-shadow(0 3px 8px rgba(0,0,0,.3));display:block}
-                .nav-arrow{transition:all .2s ease}
+                .user-location-dot{position:relative;width:20px;height:20px;display:flex;align-items:center;justify-content:center}
+                .location-dot{width:16px;height:16px;background:#00B8D4;border:3px solid #FFFFFF;border-radius:50%;box-shadow:0 3px 8px rgba(0,0,0,.3);transition:all .2s ease}
               `;
               document.head.appendChild(style);
             }
 
             this.userMarker = new mapboxgl.Marker({
               element: markerElement,
-              anchor: 'bottom',
+              anchor: 'center',
               rotationAlignment: 'map',
               pitchAlignment: 'map'
             })
@@ -2808,8 +2834,101 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   private getZoneRadiusMeters(riskLevel: number): number {
-    // Standardized to 15 meters radius for all risk levels - optimized for precise mobile visualization
+    // Increased radius for more practical zone detection
+    // 15 meters radius for all risk levels - allows for reasonable proximity detection
     return 15;
+  }
+
+  private generateZoneId(): string {
+    if (!this.currentLocation || !this.currentZoneRiskLevel) {
+      return '';
+    }
+    // Create a unique zone ID based on location and risk level
+    const lat = Math.round(this.currentLocation.lat * 1000) / 1000; // Round to 3 decimal places
+    const lng = Math.round(this.currentLocation.lng * 1000) / 1000;
+    return `${lat}_${lng}_${this.currentZoneRiskLevel}`;
+  }
+
+  private getAlertClassForRiskLevel(riskLevel: number): string {
+    switch (riskLevel) {
+      case 1:
+        return 'info'; // Green - Low risk
+      case 2:
+        return 'moderate'; // Yellow - Moderate risk
+      case 3:
+        return 'warning'; // Orange - High risk
+      case 4:
+        return 'critical'; // Red - Critical risk
+      case 5:
+        return 'danger'; // Dark red - Extreme risk
+      default:
+        return 'info';
+    }
+  }
+
+  private async showHeatmapZoneAlert(incident: any, riskLevel: number, zoneId: string) {
+    const alertTitle = riskLevel >= 5 ? `🚨 EXTREME ZONE ENTERED!` : 
+                      riskLevel >= 4 ? `🚨 CRITICAL ZONE ENTERED!` : 
+                      riskLevel >= 3 ? `⚠️ HIGH RISK ZONE ENTERED!` : 
+                      riskLevel >= 2 ? `⚠️ MODERATE ZONE ENTERED!` : 
+                      `📍 LOW RISK ZONE ENTERED!`;
+    
+    const alertMessage = riskLevel >= 5 ? 
+      `🚨 You have entered an EXTREME RISK zone!\n\n` +
+      `📍 Location: ${incident.locationAddress || incident.location.fullAddress || incident.location.simplifiedAddress || 'Unknown'}\n` +
+      `📊 Risk Level: ${riskLevel}/5 (${this.getRiskLevelText(riskLevel)})\n` +
+      `📝 Incident: ${incident.type || 'Unknown'}\n` +
+      `📅 Reported: ${incident.createdAt ? new Date(incident.createdAt).toLocaleDateString() : 'Unknown'}\n\n` +
+      `🚨 IMMEDIATE DANGER: Leave this area immediately and stay alert!` :
+      riskLevel >= 4 ? 
+      `⚠️ You have entered a CRITICAL RISK zone!\n\n` +
+      `📍 Location: ${incident.locationAddress || incident.location.fullAddress || incident.location.simplifiedAddress || 'Unknown'}\n` +
+      `📊 Risk Level: ${riskLevel}/5 (${this.getRiskLevelText(riskLevel)})\n` +
+      `📝 Incident: ${incident.type || 'Unknown'}\n` +
+      `📅 Reported: ${incident.createdAt ? new Date(incident.createdAt).toLocaleDateString() : 'Unknown'}\n\n` +
+      `🚨 HIGH DANGER: Consider leaving this area immediately!` :
+      riskLevel >= 3 ?
+      `⚠️ You have entered a HIGH RISK zone!\n\n` +
+      `📍 Location: ${incident.locationAddress || incident.location.fullAddress || incident.location.simplifiedAddress || 'Unknown'}\n` +
+      `📊 Risk Level: ${riskLevel}/5 (${this.getRiskLevelText(riskLevel)})\n` +
+      `📝 Incident: ${incident.type || 'Unknown'}\n` +
+      `📅 Reported: ${incident.createdAt ? new Date(incident.createdAt).toLocaleDateString() : 'Unknown'}\n\n` +
+      `⚠️ HIGH RISK: Stay alert and exercise caution!` :
+      riskLevel >= 2 ?
+      `⚠️ You have entered a MODERATE RISK zone!\n\n` +
+      `📍 Location: ${incident.locationAddress || incident.location.fullAddress || incident.location.simplifiedAddress || 'Unknown'}\n` +
+      `📊 Risk Level: ${riskLevel}/5 (${this.getRiskLevelText(riskLevel)})\n` +
+      `📝 Incident: ${incident.type || 'Unknown'}\n` +
+      `📅 Reported: ${incident.createdAt ? new Date(incident.createdAt).toLocaleDateString() : 'Unknown'}\n\n` +
+      `⚠️ MODERATE RISK: Stay aware of your surroundings!` :
+      `📍 You have entered a LOW RISK zone!\n\n` +
+      `📍 Location: ${incident.locationAddress || incident.location.fullAddress || incident.location.simplifiedAddress || 'Unknown'}\n` +
+      `📊 Risk Level: ${riskLevel}/5 (${this.getRiskLevelText(riskLevel)})\n` +
+      `📝 Incident: ${incident.type || 'Unknown'}\n` +
+      `📅 Reported: ${incident.createdAt ? new Date(incident.createdAt).toLocaleDateString() : 'Unknown'}\n\n` +
+      `📍 LOW RISK: Stay aware of your surroundings.`;
+
+    const alert = await this.alertController.create({
+      header: alertTitle,
+      message: alertMessage,
+      buttons: [
+        {
+          text: 'I Understand',
+          handler: () => {
+            this.alertAcknowledged = true;
+            this.lastAlertedZoneId = zoneId;
+            console.log('✅ User acknowledged heatmap zone alert - ringtone continues');
+          }
+        }
+      ],
+      cssClass: `zone-alert-${this.getAlertClassForRiskLevel(riskLevel)} full-screen-alert`,
+      backdropDismiss: false,
+      translucent: false
+    });
+    
+    await alert.present();
+    
+    console.log('🚨 Heatmap zone alert shown:', alertTitle);
   }
 
   private checkAndNotifyZoneChanges(previousStatus: 'safe' | 'warning' | 'danger', wasInZone: boolean) {
@@ -2819,8 +2938,18 @@ export class HomePage implements OnInit, OnDestroy {
     }
 
     console.log('📍 Zone detection active - checking for zone entry alerts');
+    console.log('📍 Current status:', {
+      wasInZone,
+      inDangerZone: this.inDangerZone,
+      safetyStatus: this.safetyStatus,
+      currentZoneRiskLevel: this.currentZoneRiskLevel
+    });
 
-    if (!wasInZone && this.inDangerZone && this.safetyStatus === 'danger') {
+    // Generate unique zone ID based on current location and risk level
+    const currentZoneId = this.generateZoneId();
+
+    // Check if user entered a heatmap zone - now includes ALL risk levels
+    if (!wasInZone && this.inDangerZone) {
       this.lastNotificationTime = now;
       
       const nearestIncident = this.validatedReports
@@ -2841,97 +2970,27 @@ export class HomePage implements OnInit, OnDestroy {
       if (nearestIncident) {
         const riskLevel = nearestIncident.level || nearestIncident.riskLevel || 1;
         
-        if (this.inDangerZone || this.currentZoneRiskLevel) {
-          this.startContinuousAlertSoundForRiskLevel(riskLevel);
+        // Only show alert if this is a new zone or user hasn't acknowledged yet
+        if (this.lastAlertedZoneId !== currentZoneId || !this.alertAcknowledged) {
+          this.showHeatmapZoneAlert(nearestIncident, riskLevel, currentZoneId);
         }
         
-        const alertTitle = riskLevel >= 4 ? `🚨 DANGER ZONE ENTERED!` : 
-                          riskLevel >= 3 ? `⚠️ CAUTION ZONE ENTERED!` : 
-                          `📍 HEATMAP ZONE ENTERED!`;
-        
-        const alertMessage = riskLevel >= 4 ? 
-          `⚠️ You have entered a HIGH-RISK danger zone!\n\n` +
-          `📍 Location: ${nearestIncident.locationAddress || nearestIncident.location.fullAddress || nearestIncident.location.simplifiedAddress || 'Unknown'}\n` +
-          `📊 Risk Level: ${riskLevel}/5 (${this.getRiskLevelText(riskLevel)})\n` +
-          `📝 Incident: ${nearestIncident.type || 'Unknown'}\n` +
-          `📅 Reported: ${nearestIncident.createdAt ? new Date(nearestIncident.createdAt).toLocaleDateString() : 'Unknown'}\n\n` +
-          `🚨 Please exercise EXTREME CAUTION and consider leaving this area immediately!` :
-          riskLevel >= 3 ?
-          `⚠️ You have entered a CAUTION zone!\n\n` +
-          `📍 Location: ${nearestIncident.locationAddress || nearestIncident.location.fullAddress || nearestIncident.location.simplifiedAddress || 'Unknown'}\n` +
-          `📊 Risk Level: ${riskLevel}/5 (${this.getRiskLevelText(riskLevel)})\n` +
-          `📝 Incident: ${nearestIncident.type || 'Unknown'}\n` +
-          `📅 Reported: ${nearestIncident.createdAt ? new Date(nearestIncident.createdAt).toLocaleDateString() : 'Unknown'}\n\n` +
-          `⚠️ Please stay alert and exercise caution in this area!` :
-          `📍 You have entered a heatmap zone!\n\n` +
-          `📍 Location: ${nearestIncident.locationAddress || nearestIncident.location.fullAddress || nearestIncident.location.simplifiedAddress || 'Unknown'}\n` +
-          `📊 Risk Level: ${riskLevel}/5 (${this.getRiskLevelText(riskLevel)})\n` +
-          `📝 Incident: ${nearestIncident.type || 'Unknown'}\n` +
-          `📅 Reported: ${nearestIncident.createdAt ? new Date(nearestIncident.createdAt).toLocaleDateString() : 'Unknown'}\n\n` +
-          `📍 Stay aware of your surroundings.`;
-        
-        this.showZoneAlert(alertTitle, alertMessage, 'warning', 'OK');
+        // Start ringtone if not already playing (for all risk levels)
+        if (!this.alertSoundInterval) {
+          this.startContinuousAlertSoundForRiskLevel(riskLevel);
+        }
         
         console.log(`🔊 HEATMAP ZONE ALERT (Risk Level ${riskLevel}):`, nearestIncident.type);
       }
       return;
     }
 
-    if (!wasInZone && this.inDangerZone && this.safetyStatus === 'warning') {
-      this.lastNotificationTime = now;
-      
-      const nearestIncident = this.validatedReports
-        .filter(report => {
-          const distance = this.calculateDistance(
-            this.currentLocation!.lat, this.currentLocation!.lng,
-            report.location.lat, report.location.lng
-          );
-          const riskLevel = report.level || report.riskLevel || 1;
-          return distance * 1000 <= 25 && riskLevel >= 1 && riskLevel <= 5;
-        })
-        .sort((a, b) => {
-          const distA = this.calculateDistance(this.currentLocation!.lat, this.currentLocation!.lng, a.location.lat, a.location.lng);
-          const distB = this.calculateDistance(this.currentLocation!.lat, this.currentLocation!.lng, b.location.lat, b.location.lng);
-          return distA - distB;
-        })[0];
-
-      if (nearestIncident) {
-        const riskLevel = nearestIncident.level || nearestIncident.riskLevel || 1;
-        
-        if (this.inDangerZone || this.currentZoneRiskLevel) {
-          this.startContinuousAlertSoundForRiskLevel(riskLevel);
-        }
-        
-        const alertTitle = riskLevel >= 4 ? `🚨 DANGER ZONE ENTERED!` : 
-                          riskLevel >= 3 ? `⚠️ CAUTION ZONE ENTERED!` : 
-                          `📍 HEATMAP ZONE ENTERED!`;
-        
-        const alertMessage = riskLevel >= 4 ? 
-          `⚠️ You have entered a HIGH-RISK danger zone!\n\n` +
-          `📍 Location: ${nearestIncident.locationAddress || nearestIncident.location.fullAddress || nearestIncident.location.simplifiedAddress || 'Unknown'}\n` +
-          `📊 Risk Level: ${riskLevel}/5 (${this.getRiskLevelText(riskLevel)})\n` +
-          `📝 Incident: ${nearestIncident.type || 'Unknown'}\n` +
-          `📅 Reported: ${nearestIncident.createdAt ? new Date(nearestIncident.createdAt).toLocaleDateString() : 'Unknown'}\n\n` +
-          `🚨 Please exercise EXTREME CAUTION and consider leaving this area immediately!` :
-          riskLevel >= 3 ?
-          `⚠️ You have entered a CAUTION zone!\n\n` +
-          `📍 Location: ${nearestIncident.locationAddress || nearestIncident.location.fullAddress || nearestIncident.location.simplifiedAddress || 'Unknown'}\n` +
-          `📊 Risk Level: ${riskLevel}/5 (${this.getRiskLevelText(riskLevel)})\n` +
-          `📝 Incident: ${nearestIncident.type || 'Unknown'}\n` +
-          `📅 Reported: ${nearestIncident.createdAt ? new Date(nearestIncident.createdAt).toLocaleDateString() : 'Unknown'}\n\n` +
-          `⚠️ Please stay alert and exercise caution in this area!` :
-          `📍 You have entered a heatmap zone!\n\n` +
-          `📍 Location: ${nearestIncident.locationAddress || nearestIncident.location.fullAddress || nearestIncident.location.simplifiedAddress || 'Unknown'}\n` +
-          `📊 Risk Level: ${riskLevel}/5 (${this.getRiskLevelText(riskLevel)})\n` +
-          `📝 Incident: ${nearestIncident.type || 'Unknown'}\n` +
-          `📅 Reported: ${nearestIncident.createdAt ? new Date(nearestIncident.createdAt).toLocaleDateString() : 'Unknown'}\n\n` +
-          `📍 Stay aware of your surroundings.`;
-        
-        this.showZoneAlert(alertTitle, alertMessage, 'warning', 'OK');
-        
-        console.log(`🔊 HEATMAP ZONE ALERT (Risk Level ${riskLevel}):`, nearestIncident.type);
-      }
-      return;
+    // Check if user exited the zone
+    if (wasInZone && !this.inDangerZone) {
+      console.log('📍 User exited heatmap zone - stopping ringtone');
+      this.stopAlertSound();
+      this.alertAcknowledged = false;
+      this.lastAlertedZoneId = null;
     }
 
     if (previousStatus === 'safe' && this.safetyStatus === 'warning' && !this.inDangerZone) {
@@ -3101,6 +3160,9 @@ export class HomePage implements OnInit, OnDestroy {
       }
     }
     
+    // Reset acknowledgment state when sound is stopped
+    this.alertAcknowledged = false;
+    this.lastAlertedZoneId = null;
   }
   
   private async showZoneAlert(icon: string, title: string, message: string, zoneLevel: string) {
@@ -3118,8 +3180,8 @@ export class HomePage implements OnInit, OnDestroy {
           text: 'OK',
           role: 'cancel',
           handler: () => {
-            this.stopAlertSound();
-            console.log('🔇 Alert dismissed - sound stopped');
+            // Don't stop the ringtone - let it continue after acknowledgment
+            console.log('✅ Alert acknowledged - ringtone continues');
           }
         }
       ],
@@ -3219,7 +3281,48 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   getSafetyStatusClass(): string {
-    return this.safetyStatus;
+    // Use currentZoneRiskLevel if available
+    if (this.currentZoneRiskLevel !== null && this.currentZoneRiskLevel !== undefined) {
+      switch (this.currentZoneRiskLevel) {
+        case 1: return 'low-risk';
+        case 2: return 'moderate-risk';
+        case 3: return 'high-risk';
+        case 4: return 'critical-risk';
+        case 5: return 'extreme-risk';
+        default: return 'low-risk';
+      }
+    }
+    
+    // If in danger zone but no specific risk level, determine from nearby reports
+    if (this.inDangerZone && this.hasNearbyReports && this.nearbyReportsCount > 0) {
+      const nearbyReports = this.validatedReports.filter(report => {
+        if (!this.currentLocation) return false;
+        const distance = this.calculateDistance(
+          this.currentLocation.lat,
+          this.currentLocation.lng,
+          report.location.lat,
+          report.location.lng
+        );
+        return distance * 1000 <= 30; // Within 30m
+      });
+      
+      if (nearbyReports.length > 0) {
+        const highestRiskLevel = nearbyReports.reduce((max, report) => 
+          Math.max(max, report.level || report.riskLevel || 1), 1
+        );
+        
+        switch (highestRiskLevel) {
+          case 1: return 'low-risk';
+          case 2: return 'moderate-risk';
+          case 3: return 'high-risk';
+          case 4: return 'critical-risk';
+          case 5: return 'extreme-risk';
+          default: return 'low-risk';
+        }
+      }
+    }
+    
+    return 'low-risk'; // Default to low-risk when not in any specific zone
   }
 
   getSafetyIcon(): string {
@@ -3236,16 +3339,7 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   getSafetyStatusText(): string {
-    if (this.inDangerZone && this.currentZoneRiskLevel) {
-      switch (this.currentZoneRiskLevel) {
-        case 1: return 'LOW RISK';
-        case 2: return 'MODERATE RISK';
-        case 3: return 'HIGH RISK';
-        case 4: return 'CRITICAL RISK';
-        case 5: return 'EXTREME RISK';
-      }
-    }
-    return 'SAFE';
+    return '';
   }
 
   getZoneAlertClass(): string {
