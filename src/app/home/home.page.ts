@@ -2962,7 +2962,10 @@ export class HomePage implements OnInit, OnDestroy {
       this.inDangerZone = true;
       this.currentZoneRiskLevel = riskLevel; // Set the risk level for all levels including Level 1
       this.hasNearbyReports = true;
-      this.nearbyReportsCount = allIncidentsWithDistance.filter(r => r.distance > 10 && r.distance <= 500).length; // Count OTHER incidents within 500m (exclude current zone within 50m)
+      
+      // Count ALL incidents within 500m (including the one the blue dot is in)
+      this.nearbyReportsCount = allIncidentsWithDistance.filter(r => r.distance <= 500).length;
+      
       this.nearestZoneDistance = 0;
       
       // Trigger ringtone immediately for being at incident location (no delay)
@@ -2986,8 +2989,8 @@ export class HomePage implements OnInit, OnDestroy {
     const zoneRadius = this.getZoneRadiusMeters(nearestRiskLevel);
 
     const nearbyReports = allIncidentsWithDistance.filter(r => r.distance <= 30); // 30m for nearby reports
-    const allNearbyIncidents = allIncidentsWithDistance.filter(r => r.distance > 10 && r.distance <= 500); // 1km for all nearby incidents
-    this.nearbyReportsCount = allNearbyIncidents.length; // Count OTHER incidents within 500m (exclude current zone within 50m)
+    const allNearbyIncidents = allIncidentsWithDistance.filter(r => r.distance <= 500); // Count ALL incidents within 500m
+    this.nearbyReportsCount = allNearbyIncidents.length; // Count ALL incidents within 500m
     this.hasNearbyReports = allNearbyIncidents.length > 0; // Show "incidents nearby" if any incidents within 500m
     
     console.log('🔍 DEBUG: Final counts - nearbyReports (30m):', nearbyReports.length, 'allNearbyIncidents (1km):', allNearbyIncidents.length);
