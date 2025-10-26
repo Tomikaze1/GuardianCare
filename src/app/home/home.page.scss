@@ -543,8 +543,8 @@ ion-content {
 
 .modern-legend {
   position: absolute;
-  bottom: 80px;
-  left: 24px;
+  bottom: 150px;
+  left: 16px;
   z-index: 900;
   animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -618,18 +618,18 @@ ion-content {
 
 .fab-container {
   position: absolute;
-  bottom: 80px;
-  right: 32px;
+  bottom: 150px;
+  right: 24px;
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   animation: slideLeftFade 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .fab-main, .fab-secondary {
-  width: 64px;
-  height: 64px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   border: none;
   display: flex;
@@ -641,7 +641,7 @@ ion-content {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   
   ion-icon {
-    font-size: 28px;
+    font-size: 24px;
     color: white;
     position: relative;
     z-index: 2;
@@ -989,39 +989,38 @@ button:active .fab-ripple {
   
   
   .fab-main {
-    width: 60px;
-    height: 60px;
+    width: 52px;
+    height: 52px;
     
     ion-icon {
-      font-size: 26px;
+      font-size: 22px;
     }
   }
   
   .fab-secondary {
-    width: 60px;
-    height: 60px;
+    width: 52px;
+    height: 52px;
     
     ion-icon {
-      font-size: 26px;
+      font-size: 22px;
     }
   }
   
   .modern-legend {
-    bottom: 80px;
-    left: 20px;
+    bottom: 145px;
+    left: 12px;
   }
   
   .legend-card {
-    padding: 12px;
-    min-width: 120px;
+    padding: 10px;
+    min-width: 110px;
+    font-size: 12px;
   }
   
   .fab-container {
-    bottom: 70px;
-  }
-  
-  .modern-legend {
-    bottom: 70px;
+    bottom: 140px;
+    right: 16px;
+    gap: 10px;
   }
   
   .app-header {

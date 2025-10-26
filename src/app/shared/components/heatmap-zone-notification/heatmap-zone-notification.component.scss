@@ -1,0 +1,364 @@
+// Heatmap Zone Notification Styles
+.heatmap-zone-notification {
+  position: fixed;
+  top: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  width: 92%;
+  max-width: 450px;
+  border-radius: 16px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.15),
+    0 4px 16px rgba(0, 0, 0, 0.1);
+  animation: slideInDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  .notification-content {
+    display: flex;
+    align-items: flex-start;
+    padding: 20px;
+    gap: 16px;
+    position: relative;
+  }
+
+  .notification-icon {
+    position: relative;
+    flex-shrink: 0;
+    margin-top: 4px;
+
+    .icon-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 2;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+
+      ion-icon {
+        font-size: 24px;
+        color: white;
+      }
+    }
+
+    .speech-bubble-tail {
+      position: absolute;
+      bottom: -6px;
+      left: -2px;
+      width: 12px;
+      height: 12px;
+      background: inherit;
+      border-radius: 0 0 0 8px;
+      transform: rotate(-20deg);
+      z-index: 1;
+    }
+  }
+
+  .notification-text {
+    flex: 1;
+    min-width: 0;
+    margin-top: 2px;
+
+    .notification-title {
+      margin: 0 0 8px 0;
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+    }
+
+    .notification-message {
+      margin: 0 0 16px 0;
+      font-size: 14px;
+      line-height: 1.5;
+      opacity: 0.9;
+    }
+
+    .notification-details {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      .detail-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        opacity: 0.85;
+
+        .detail-icon {
+          font-size: 14px;
+          flex-shrink: 0;
+          opacity: 0.7;
+        }
+
+        .detail-text {
+          flex: 1;
+          min-width: 0;
+          word-break: break-word;
+        }
+      }
+    }
+  }
+
+  .notification-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 12px;
+    flex-shrink: 0;
+    margin-top: 2px;
+
+    .safety-tips-button {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+
+      ion-icon {
+        font-size: 16px;
+      }
+
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+    }
+
+    .dismiss-button {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      -webkit-backdrop-filter: blur(5px);
+      backdrop-filter: blur(5px);
+
+      ion-icon {
+        font-size: 18px;
+        color: inherit;
+      }
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: scale(1.05);
+      }
+
+      &:active {
+        transform: scale(0.95);
+      }
+    }
+  }
+}
+
+// Color Variations
+.notification-heatmap {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+
+  .notification-title,
+  .notification-message,
+  .detail-row {
+    color: white;
+  }
+
+  .safety-tips-button {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  }
+
+  .dismiss-button {
+    color: white;
+  }
+}
+
+.notification-caution {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: white;
+
+  .notification-title,
+  .notification-message,
+  .detail-row {
+    color: white;
+  }
+
+  .safety-tips-button {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  }
+
+  .dismiss-button {
+    color: white;
+  }
+}
+
+.notification-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+
+  .notification-title,
+  .notification-message,
+  .detail-row {
+    color: white;
+  }
+
+  .safety-tips-button {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  }
+
+  .dismiss-button {
+    color: white;
+  }
+}
+
+// Animations
+@keyframes slideInDown {
+  from {
+    transform: translateX(-50%) translateY(-120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutUp {
+  from {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-50%) translateY(-120%);
+    opacity: 0;
+  }
+}
+
+.heatmap-zone-notification.dismissing {
+  animation: slideOutUp 0.3s ease-in forwards;
+}
+
+// Responsive Design
+@media (max-width: 576px) {
+  .heatmap-zone-notification {
+    width: 95%;
+    top: 20px;
+
+    .notification-content {
+      padding: 16px;
+      gap: 12px;
+    }
+
+    .notification-icon {
+      .icon-circle {
+        width: 40px;
+        height: 40px;
+
+        ion-icon {
+          font-size: 20px;
+        }
+      }
+    }
+
+    .notification-text {
+      .notification-title {
+        font-size: 16px;
+      }
+
+      .notification-message {
+        font-size: 13px;
+        margin-bottom: 12px;
+      }
+
+      .notification-details {
+        gap: 6px;
+
+        .detail-row {
+          font-size: 11px;
+
+          .detail-icon {
+            font-size: 12px;
+          }
+        }
+      }
+    }
+
+    .notification-actions {
+      gap: 8px;
+
+      .safety-tips-button {
+        padding: 8px 12px;
+        font-size: 11px;
+
+        ion-icon {
+          font-size: 14px;
+        }
+      }
+
+      .dismiss-button {
+        width: 28px;
+        height: 28px;
+
+        ion-icon {
+          font-size: 16px;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 380px) {
+  .heatmap-zone-notification {
+    .notification-content {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .notification-actions {
+      flex-direction: row;
+      justify-content: center;
+      width: 100%;
+    }
+  }
+}

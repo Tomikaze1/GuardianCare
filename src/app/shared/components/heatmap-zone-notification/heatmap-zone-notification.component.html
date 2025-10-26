@@ -1,0 +1,54 @@
+<div class="heatmap-zone-notification" [ngClass]="getColorClass()">
+  <div class="notification-content">
+    <!-- Left Icon with Speech Bubble Tail -->
+    <div class="notification-icon">
+      <div class="icon-circle">
+        <ion-icon [name]="getIcon()"></ion-icon>
+      </div>
+      <div class="speech-bubble-tail"></div>
+    </div>
+    
+    <!-- Notification Text -->
+    <div class="notification-text">
+      <h4 class="notification-title">{{ data.title }}</h4>
+      <p class="notification-message">{{ data.message }}</p>
+      
+      <!-- Location and Risk Details -->
+      <div class="notification-details">
+        <div class="detail-row">
+          <ion-icon name="location-outline" class="detail-icon"></ion-icon>
+          <span class="detail-text">{{ data.location }}</span>
+        </div>
+        <div class="detail-row">
+          <ion-icon name="shield-outline" class="detail-icon"></ion-icon>
+          <span class="detail-text">Risk Level: {{ data.riskLevel }}/5 ({{ getRiskLevelText() }})</span>
+        </div>
+        <div class="detail-row">
+          <ion-icon name="alert-circle-outline" class="detail-icon"></ion-icon>
+          <span class="detail-text">Incident: {{ data.incident }}</span>
+        </div>
+        <div class="detail-row">
+          <ion-icon name="time-outline" class="detail-icon"></ion-icon>
+          <span class="detail-text">Reported: {{ data.reportedDate }}</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Right Actions -->
+    <div class="notification-actions">
+      <button 
+        class="safety-tips-button"
+        (click)="onViewSafetyTips()">
+        <ion-icon name="shield-checkmark-outline"></ion-icon>
+        <span>Safety Tips</span>
+      </button>
+      <button 
+        class="dismiss-button"
+        (click)="onDismiss()"
+        aria-label="Dismiss notification">
+        <ion-icon name="close"></ion-icon>
+      </button>
+    </div>
+  </div>
+</div>
+
