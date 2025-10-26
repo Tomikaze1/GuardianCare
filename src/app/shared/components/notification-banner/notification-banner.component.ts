@@ -7,6 +7,7 @@ export interface NotificationBanner {
   title: string;
   message: string;
   actionText?: string;
+  acknowledgeText?: string;
   duration?: number;
   dismissible?: boolean;
 }
@@ -22,6 +23,7 @@ export class NotificationBannerComponent {
   @Input() notification!: NotificationBanner;
   @Output() dismiss = new EventEmitter<void>();
   @Output() action = new EventEmitter<void>();
+  @Output() acknowledge = new EventEmitter<void>();
 
   getIcon(): string {
     switch (this.notification.type) {
@@ -43,5 +45,9 @@ export class NotificationBannerComponent {
 
   onAction(): void {
     this.action.emit();
+  }
+
+  onAcknowledge(): void {
+    this.acknowledge.emit();
   }
 } 

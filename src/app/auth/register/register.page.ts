@@ -56,10 +56,10 @@ export class RegisterPage implements OnInit {
       firstName: ['', [Validators.required, Validators.minLength(2), Validators.pattern(/^[a-zA-Z\s]*$/)]],
       lastName: ['', [Validators.required, Validators.minLength(2), Validators.pattern(/^[a-zA-Z\s]*$/)]],
       email: ['', [Validators.required, Validators.email]],
-      phone: ['', [Validators.required, Validators.pattern(/^[\+]?[1-9][\d]{0,15}$/)]],
+      phone: ['', [Validators.required, Validators.pattern(/^09\d{9}$/)]],
       password: ['', [Validators.required, Validators.minLength(8), this.passwordStrengthValidator]],
       confirmPassword: ['', [Validators.required]],
-      emergencyContact: ['', [Validators.required, Validators.pattern(/^[\+]?[1-9][\d]{0,15}$/)]],
+      emergencyContact: ['', [Validators.required, Validators.pattern(/^09\d{9}$/)]],
       emergencyContactName: ['', [Validators.required, Validators.minLength(2), Validators.pattern(/^[a-zA-Z\s]*$/)]],
       acceptTerms: [false, [Validators.requiredTrue]]
     }, { 
@@ -67,7 +67,26 @@ export class RegisterPage implements OnInit {
     });
   }
 
-  ngOnInit() {}
+  ngOnInit() {
+    // Debug form validation
+    this.registerForm.statusChanges.subscribe(status => {
+      console.log('Form status:', status);
+      if (status === 'INVALID') {
+        console.log('Form errors:', this.getFormErrors());
+      }
+    });
+  }
+
+  getFormErrors() {
+    const errors: any = {};
+    Object.keys(this.registerForm.controls).forEach(key => {
+      const control = this.registerForm.get(key);
+      if (control && control.errors) {
+        errors[key] = control.errors;
+      }
+    });
+    return errors;
+  }
 
   passwordStrengthValidator(control: any) {
     const value = control.value;
@@ -349,7 +368,7 @@ export class RegisterPage implements OnInit {
         return 'Only letters and spaces are allowed';
       case 'phone':
       case 'emergencyContact':
-        return 'Please enter a valid phone number';
+        return 'Phone number must be 11 digits starting with 09 (e.g., 09499382695)';
       default:
         return `Please enter a valid ${this.getFieldDisplayName(fieldName)}`;
     }

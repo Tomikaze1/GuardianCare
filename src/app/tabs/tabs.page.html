@@ -1,4 +1,4 @@
-<ion-tabs>
+<ion-tabs (ionTabsDidChange)="onTabChange($event)">
   <ion-tab-bar slot="bottom" class="clean-tab-bar">
     <ion-tab-button tab="home">
       <ion-icon name="location"></ion-icon>
@@ -12,12 +12,12 @@
 
     <ion-tab-button tab="notifications" (click)="onNotificationsTabClick()">
       <ion-icon name="notifications"></ion-icon>
-      <ion-badge *ngIf="newValidatedReportsCount > 0" 
+      <ion-badge *ngIf="unreadCount > 0" 
                  color="danger" 
                  class="notif-badge"
-                 [class.double-digit]="newValidatedReportsCount >= 10"
-                 [class.triple-digit]="newValidatedReportsCount >= 100">
-        {{ newValidatedReportsCount > 99 ? '99+' : newValidatedReportsCount }}
+                 [class.double-digit]="unreadCount >= 10"
+                 [class.triple-digit]="unreadCount >= 100">
+        {{ unreadCount > 99 ? '99+' : unreadCount }}
       </ion-badge>
       <ion-label>Notifications</ion-label>
     </ion-tab-button>

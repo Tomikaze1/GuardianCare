@@ -26,14 +26,23 @@ interface NotificationItem {
 })
 export class NotificationsPage implements OnInit, OnDestroy {
   notifications: NotificationItem[] = [];
-  filteredNotifications: NotificationItem[] = [];
   isLoading = false;
   currentUser: any = null;
   
-  activeFilter: 'all' | 'new' | 'unread' = 'all';
-  
   private subscriptions: Subscription[] = [];
   private processedReportIds = new Set<string>();
+
+  incidentTypes = [
+    { value: 'crime-theft', label: 'Crime / Theft', icon: 'shield-outline' },
+    { value: 'accident', label: 'Accident', icon: 'car-outline' },
+    { value: 'emergency', label: 'Emergency', icon: 'medical-outline' },
+    { value: 'suspicious-activity', label: 'Suspicious Activity', icon: 'eye-outline' },
+    { value: 'lost-item', label: 'Lost Item', icon: 'search-outline' },
+    { value: 'vandalism', label: 'Vandalism', icon: 'construct-outline' },
+    { value: 'assault', label: 'Assault', icon: 'warning-outline' },
+    { value: 'theft', label: 'Theft', icon: 'bag-outline' },
+    { value: 'verbal-threats', label: 'Verbal Threats', icon: 'chatbubbles-outline' }
+  ];
 
   constructor(
     private alertController: AlertController,
@@ -52,7 +61,15 @@ export class NotificationsPage implements OnInit, OnDestroy {
     this.subscribeToNotifications();
     this.subscribeToAdminValidations();
     
-    this.clearTestNotifications();
+    // Create test notifications if none exist
+    if (this.notifications.length === 0) {
+      this.createTestNotifications();
+    } else {
+      // Ensure existing notifications have correct seenByUser property
+      this.ensureNotificationsHaveSeenByUser();
+    }
+    
+    console.log('📱 Notifications page initialized - preserving existing notifications');
   }
 
   ngOnDestroy() {
@@ -94,7 +111,6 @@ export class NotificationsPage implements OnInit, OnDestroy {
 
   clearAllNotifications() {
     this.notifications = [];
-    this.filteredNotifications = [];
     
     localStorage.removeItem('guardian_care_notifications');
     localStorage.removeItem('guardian_care_last_notification_check');
@@ -121,9 +137,8 @@ export class NotificationsPage implements OnInit, OnDestroy {
           const lastCheckTime = this.getLastNotificationCheckTime();
           
           const validatedReports = reports.filter(report => {
+            // Show ALL validated reports (not just user's reports)
             if (report.status !== 'Validated' || !report.validatedAt) return false;
-            
-            const isUserReport = report.userId === this.currentUser.uid;
             return true;
           });
           
@@ -145,6 +160,9 @@ export class NotificationsPage implements OnInit, OnDestroy {
             status: r.status
           })));
           console.log('📅 Last notification check time:', lastCheckTime);
+          
+          // First, remove notifications for reports that no longer exist
+          this.removeNotificationsForDeletedReports(validatedReports);
           
           validatedReports.forEach(report => {
             const existingNotification = this.notifications.find(n => 
@@ -194,9 +212,9 @@ export class NotificationsPage implements OnInit, OnDestroy {
               id: `validated_${report.id}`,
               type: isUserReport ? 'report_validated' : 'new_zone',
               title: isUserReport ? `Your Report Validated` : `New Zone Alert`,
-              message: `${report.type} • ${report.locationAddress || report.location?.fullAddress || report.location?.simplifiedAddress || 'Unknown Location'} • Level ${riskLevel} - ${riskText} Risk • ${timeStr}`,
+              message: `${report.type}`, // Only show incident type, remove duplicates
               timestamp: validatedDate,
-              read: !isNewNotification,
+              read: !isNewNotification, // Only new notifications are unread
               data: {
                 reportId: report.id,
                 reportType: report.type,
@@ -205,7 +223,7 @@ export class NotificationsPage implements OnInit, OnDestroy {
                 location: report.location,
                 locationAddress: report.locationAddress || report.location?.fullAddress || report.location?.simplifiedAddress || 'Unknown Location',
                 validatedTime: timeStr,
-                seenByUser: !isNewNotification,
+                seenByUser: !isNewNotification, // Only new notifications are unseen
                 isUserReport: isUserReport,
                 validatedAt: report.validatedAt,
                 userId: report.userId
@@ -220,11 +238,30 @@ export class NotificationsPage implements OnInit, OnDestroy {
               riskText: riskText,
               isNew: isNewNotification,
               validatedDate: validatedDate.toISOString(),
-              lastCheckTime: lastCheckTime.toISOString()
+              lastCheckTime: lastCheckTime.toISOString(),
+              seenByUser: notification.data.seenByUser,
+              read: notification.read
             });
             
             this.notifications.unshift(notification);
             if (report.id) this.processedReportIds.add(report.id);
+            
+            // Immediately save and dispatch event for each new notification
+            if (isNewNotification) {
+              this.saveNotifications();
+              
+              // Dispatch event immediately to update badge
+              window.dispatchEvent(new CustomEvent('notificationsUpdated'));
+              console.log('🔔 Dispatched notificationsUpdated event immediately for new notification');
+              
+              // Force update the tabs page badge count
+              setTimeout(() => {
+                const tabsPage = document.querySelector('app-tabs');
+                if (tabsPage && (tabsPage as any).forceBadgeCountUpdate) {
+                  (tabsPage as any).forceBadgeCountUpdate();
+                }
+              }, 50);
+            }
           });
           
           this.saveNotifications();
@@ -237,6 +274,18 @@ export class NotificationsPage implements OnInit, OnDestroy {
             userReports: this.notifications.filter(n => n.data?.isUserReport).length,
             otherUserReports: this.notifications.filter(n => !n.data?.isUserReport).length
           });
+          
+          // Force badge count update after creating notifications
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('notificationsUpdated'));
+            console.log('🔔 Dispatched notificationsUpdated event after creating notifications');
+            
+            // Also force update the tabs page badge count
+            const tabsPage = document.querySelector('app-tabs');
+            if (tabsPage && (tabsPage as any).forceBadgeCountUpdate) {
+              (tabsPage as any).forceBadgeCountUpdate();
+            }
+          }, 100);
         })
       );
     }
@@ -300,8 +349,13 @@ export class NotificationsPage implements OnInit, OnDestroy {
 
   private saveNotifications() {
     localStorage.setItem('guardian_care_notifications', JSON.stringify(this.notifications));
-    this.applyFiltersAndSort();
     
+    // Dispatch custom event to notify tabs page to update badge count
+    window.dispatchEvent(new CustomEvent('notificationsUpdated', {
+      detail: { count: this.notifications.length }
+    }));
+    
+    // Also dispatch storage event for backward compatibility
     window.dispatchEvent(new StorageEvent('storage', {
       key: 'guardian_care_notifications',
       newValue: JSON.stringify(this.notifications)
@@ -311,29 +365,30 @@ export class NotificationsPage implements OnInit, OnDestroy {
   private sortNotifications() {
     // base sort by timestamp desc
     this.notifications.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-    this.applyFiltersAndSort();
   }
 
   isNewBadge(notification: NotificationItem): boolean {
-    return (new Date().getTime() - new Date(notification.timestamp).getTime()) <= 5 * 60 * 1000;
+    // NEW badge shows only for notifications that haven't been seen by user
+    const isNew = !notification.data?.seenByUser;
+    console.log('🔍 Checking if notification is new (unseen):', {
+      id: notification.id,
+      timestamp: notification.timestamp,
+      read: notification.read,
+      seenByUser: notification.data?.seenByUser,
+      isNew: isNew
+    });
+    return isNew;
   }
 
-  setFilter(filter: 'all' | 'new' | 'unread') {
-    this.activeFilter = filter;
-    this.applyFiltersAndSort();
-  }
 
-
-  private applyFiltersAndSort() {
-    let list = [...this.notifications];
-
-    if (this.activeFilter === 'new') {
-      list = list.filter(n => this.isNewBadge(n));
-    } else if (this.activeFilter === 'unread') {
-      list = list.filter(n => !n.read);
-    }
-
-    this.filteredNotifications = list.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  shouldShowNewBadge(notification: NotificationItem): boolean {
+    const shouldShow = this.isNewBadge(notification);
+    console.log('🔍 shouldShowNewBadge result:', {
+      id: notification.id,
+      seenByUser: notification.data?.seenByUser,
+      shouldShow: shouldShow
+    });
+    return shouldShow;
   }
 
   getDistanceText(notification: NotificationItem): string {
@@ -344,11 +399,48 @@ export class NotificationsPage implements OnInit, OnDestroy {
 
   markAsRead(notification: NotificationItem) {
     notification.read = true;
+    if (!notification.data) {
+      notification.data = {};
+    }
+    notification.data.seenByUser = true;
     this.saveNotifications();
+    console.log('✅ Marked notification as read and seen:', notification.id);
   }
 
   handleNotificationClick(notification: NotificationItem) {
-    this.markAsRead(notification);
+    console.log('🔍 Notification clicked:', notification.id);
+    console.log('🔍 Notification before click:', {
+      id: notification.id,
+      read: notification.read,
+      seenByUser: notification.data?.seenByUser,
+      isNew: this.isNewBadge(notification)
+    });
+    
+    // Mark as read and seen
+    notification.read = true;
+    if (!notification.data) {
+      notification.data = {};
+    }
+    notification.data.seenByUser = true;
+    
+    console.log('🔍 Notification after marking as read and seen:', {
+      id: notification.id,
+      read: notification.read,
+      seenByUser: notification.data.seenByUser,
+      isNew: this.isNewBadge(notification)
+    });
+    
+    this.saveNotifications();
+    
+    // Update last check time when user clicks on a notification
+    this.updateLastNotificationCheckTime();
+    
+    console.log('🔍 Notification after save:', {
+      id: notification.id,
+      read: notification.read,
+      seenByUser: notification.data.seenByUser,
+      isNew: this.isNewBadge(notification)
+    });
     
     this.navigateToLocation(notification);
   }
@@ -379,20 +471,10 @@ export class NotificationsPage implements OnInit, OnDestroy {
   }
 
   markAllAsRead() {
-    let hasChanges = false;
-    this.notifications.forEach(notification => {
-      if (!notification.read) {
-        notification.read = true;
-        hasChanges = true;
-      }
-    });
-    
-    if (hasChanges) {
-      this.saveNotifications();
-      console.log('✅ Marked all notifications as read');
-    } else {
-      console.log('ℹ️ All notifications are already read');
-    }
+    // This method is called when user manually clicks "Mark All Read" button
+    this.markAllNotificationsAsSeen();
+    this.updateLastNotificationCheckTime();
+    console.log('✅ User manually marked all notifications as read');
   }
 
   async deleteNotification(notification: NotificationItem) {
@@ -527,7 +609,8 @@ export class NotificationsPage implements OnInit, OnDestroy {
     if (stored) {
       return new Date(stored);
     }
-    return new Date();
+    // If no stored time, return a very old date so all notifications appear as new
+    return new Date('2020-01-01');
   }
 
   private updateLastNotificationCheckTime(): void {
@@ -586,37 +669,33 @@ export class NotificationsPage implements OnInit, OnDestroy {
   }
 
   ionViewDidEnter() {
-    this.updateLastNotificationCheckTime();
+    // Automatically mark all notifications as seen when user enters the page
+    console.log('📱 Entered notifications page - marking all notifications as seen');
     
+    // Only mark as seen if user actually entered the page (not when admin is validating)
+    // Check if user is actively viewing the notifications
     this.markAllNotificationsAsSeen();
+    
+    // Update the badge count after a delay to ensure other updates finish first
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('notificationsUpdated'));
+      console.log('🔔 Dispatched notificationsUpdated event after marking all as seen');
+      
+      // Also force update the tabs page badge count
+      const tabsPage = document.querySelector('app-tabs');
+      if (tabsPage && (tabsPage as any).forceBadgeCountUpdate) {
+        (tabsPage as any).forceBadgeCountUpdate();
+      }
+    }, 300);
   }
 
   ionViewWillLeave() {
+    // Update last check time when leaving the notifications page
     this.updateLastNotificationCheckTime();
-  }
-
-  private markAllNotificationsAsSeen() {
-    let hasChanges = false;
-    this.notifications.forEach(notification => {
-      if (!notification.read || !notification.data?.seenByUser) {
-
-        notification.read = true;
-        notification.data = notification.data || {};
-        notification.data.seenByUser = true;
-        hasChanges = true;
-      }
-    });
-    
-    if (hasChanges) {
-      this.saveNotifications();
-      console.log('✅ All notifications marked as read and seen - badge count updated');
-    }
+    console.log('📱 Leaving notifications page - updated last check time');
   }
 
 
-  shouldShowNewBadge(notification: NotificationItem): boolean {
-    return false;
-  }
 
   private ensureNotificationUnseen(notification: NotificationItem): NotificationItem {
     if (!notification.data) {
@@ -626,6 +705,42 @@ export class NotificationsPage implements OnInit, OnDestroy {
       notification.data.seenByUser = false;
     }
     return notification;
+  }
+
+  private ensureNotificationsHaveSeenByUser() {
+    let hasChanges = false;
+    this.notifications.forEach(notification => {
+      if (!notification.data) {
+        notification.data = {};
+        hasChanges = true;
+      }
+      if (notification.data.seenByUser === undefined) {
+        notification.data.seenByUser = false; // Default to unseen
+        hasChanges = true;
+      }
+    });
+    
+    if (hasChanges) {
+      this.saveNotifications();
+      console.log('📱 Ensured all notifications have seenByUser property');
+    }
+  }
+
+  private markAllNotificationsAsSeen() {
+    let hasChanges = false;
+    this.notifications.forEach(notification => {
+      if (!notification.read || !notification.data?.seenByUser) {
+        notification.read = true;
+        notification.data = notification.data || {};
+        notification.data.seenByUser = true;
+        hasChanges = true;
+      }
+    });
+    
+    if (hasChanges) {
+      this.saveNotifications();
+      console.log('✅ All notifications marked as seen - badges will disappear');
+    }
   }
 
   getUnreadCount(): number {
@@ -680,51 +795,34 @@ export class NotificationsPage implements OnInit, OnDestroy {
         id: 'test1',
         type: 'new_zone',
         title: 'New Zone Alert',
-        message: 'suspicious-activity • OPRRA, Cebu City • Level 4 - Critical Risk • 4 mins ago',
-        timestamp: new Date(Date.now() - 4 * 60 * 1000),
+        message: 'crime-theft',
+        timestamp: new Date(Date.now() - 1 * 60 * 1000), // 1 minute ago
         read: false, 
-        priority: 'critical',
+        priority: 'medium',
         data: {
-          reportType: 'suspicious-activity',
-          locationAddress: 'OPRRA, Cebu City, Central Visayas, 6000, Philippines',
-          distanceMeters: 10200,
-          riskLevel: 4, 
-          adminLevel: 4,
+          reportType: 'crime-theft',
+          locationAddress: 'Basak, Lapu-Lapu, Central Visayas, 6016, Philippines',
+          distanceMeters: 1500,
+          riskLevel: 2, 
+          adminLevel: 2,
           seenByUser: false 
         }
       },
       {
         id: 'test2',
-        type: 'new_zone',
-        title: 'New Zone Alert',
-        message: 'theft • Babag, Cebu City, Central Visayas, Philippines • Level 2 - Moderate Risk • 3 hrs ago',
-        timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000), 
+        type: 'report_validated',
+        title: 'Your Report Validated',
+        message: 'emergency',
+        timestamp: new Date(Date.now() - 4 * 60 * 1000), // 4 minutes ago
         read: false, 
-        priority: 'medium',
+        priority: 'low',
         data: {
-          reportType: 'theft',
-          locationAddress: 'Babag, Cebu City, Central Visayas, Philippines',
-          distanceMeters: 2400,
-          riskLevel: 2, 
-          adminLevel: 2, 
-          seenByUser: false 
-        }
-      },
-      {
-        id: 'test3',
-        type: 'new_zone',
-        title: 'New Zone Alert',
-        message: 'vandalism • Lahug, Cebu City, Central Visayas, Philippines • Level 3 - High Risk • 1 day ago',
-        timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), 
-        read: true, 
-        priority: 'high',
-        data: {
-          reportType: 'vandalism',
-          locationAddress: 'Lahug, Cebu City, Central Visayas, Philippines',
+          reportType: 'emergency',
+          locationAddress: 'Buyong, Maribago, Lapu-Lapu, Central Visayas, 6015, Philippines',
           distanceMeters: 800,
-          riskLevel: 3, 
-          adminLevel: 3, 
-          seenByUser: true 
+          riskLevel: 1, 
+          adminLevel: 1,
+          seenByUser: false 
         }
       }
     ];
@@ -732,8 +830,20 @@ export class NotificationsPage implements OnInit, OnDestroy {
     this.notifications = testNotifications;
     this.saveNotifications();
     console.log('📱 Created test notifications:', this.notifications.length);
+    console.log('📱 Test notification details:', this.notifications.map(n => ({
+      id: n.id,
+      title: n.title,
+      seenByUser: n.data?.seenByUser,
+      read: n.read
+    })));
     console.log('📱 Tab badge will show "2" (2 unseen notifications)');
     console.log('📱 NEW badges will appear on the right side of unread notifications');
+    
+    // Force badge count update after creating test notifications
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('notificationsUpdated'));
+      console.log('🔔 Dispatched notificationsUpdated event after creating test notifications');
+    }, 100);
   }
 
   private subscribeToAdminValidations() {
@@ -742,6 +852,18 @@ export class NotificationsPage implements OnInit, OnDestroy {
         console.log('🔔 Admin validation events updated:', events.length);
         
         this.loadReportValidationNotifications();
+        
+        // Immediately trigger badge count update for tabs page
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('notificationsUpdated'));
+          console.log('🔔 Dispatched notificationsUpdated event after admin validation');
+          
+          // Also force update the tabs page badge count
+          const tabsPage = document.querySelector('app-tabs');
+          if (tabsPage && (tabsPage as any).forceBadgeCountUpdate) {
+            (tabsPage as any).forceBadgeCountUpdate();
+          }
+        }, 100);
       })
     );
   }
@@ -766,6 +888,16 @@ export class NotificationsPage implements OnInit, OnDestroy {
     }
   }
 
+  getIncidentTypeIcon(type: string): string {
+    const typeObj = this.incidentTypes.find(t => t.value === type);
+    return typeObj?.icon || 'alert-circle-outline';
+  }
+
+  getIncidentTypeLabel(type: string): string {
+    const typeObj = this.incidentTypes.find(t => t.value === type);
+    return typeObj?.label || type;
+  }
+
   private clearTestNotifications() {
     try {
       localStorage.removeItem('guardian_care_notifications');
@@ -780,13 +912,37 @@ export class NotificationsPage implements OnInit, OnDestroy {
       localStorage.removeItem('guardian_care_notifications');
       
       this.notifications = [];
-      this.filteredNotifications = [];
-      
-      this.applyFiltersAndSort();
       
       console.log('🧹 Cleared all repeated notifications');
     } catch (error) {
       console.error('Error clearing repeated notifications:', error);
+    }
+  }
+
+  private removeNotificationsForDeletedReports(validatedReports: any[]) {
+    // Get all report IDs that currently exist
+    const existingReportIds = new Set(validatedReports.map(report => report.id));
+    
+    // Find notifications that reference deleted reports
+    const notificationsToRemove: number[] = [];
+    
+    this.notifications.forEach((notification, index) => {
+      const reportId = notification.data?.reportId;
+      if (reportId && !existingReportIds.has(reportId)) {
+        notificationsToRemove.push(index);
+        console.log(`🗑️ Found notification for deleted report: ${reportId}`);
+      }
+    });
+    
+    // Remove notifications for deleted reports (in reverse order to maintain indices)
+    notificationsToRemove.reverse().forEach(index => {
+      const removedNotification = this.notifications.splice(index, 1)[0];
+      console.log(`🗑️ Removed notification for deleted report: ${removedNotification.data?.reportId}`);
+    });
+    
+    if (notificationsToRemove.length > 0) {
+      console.log(`🗑️ Removed ${notificationsToRemove.length} notifications for deleted reports`);
+      this.saveNotifications();
     }
   }
 }

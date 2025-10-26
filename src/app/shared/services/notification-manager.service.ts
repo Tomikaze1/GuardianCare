@@ -17,6 +17,7 @@ export interface NotificationData {
   persistent?: boolean;
   distanceMeters?: number; // optional distance
   isNew?: boolean; // recent badge
+  seenByUser?: boolean; // for NEW badge in notifications page
 }
 
 export interface NotificationSettings {
@@ -89,13 +90,23 @@ export class NotificationManagerService {
       ...notification,
       id: this.generateId(),
       timestamp: new Date(),
-      read: false
+      read: false,
+      seenByUser: false // NEW badge will show
+    };
+
+    // Ensure seenByUser is in the data object for notifications page compatibility
+    (newNotification as any).data = {
+      ...(newNotification as any).data,
+      seenByUser: false
     };
 
     const currentNotifications = this.notificationsSubject.value;
     const updatedNotifications = [newNotification, ...currentNotifications].slice(0, 100); // Keep last 100
     this.notificationsSubject.next(updatedNotifications);
     this.saveNotificationsToStorage();
+
+    // Dispatch custom event to notify other components about new notification
+    this.dispatchNotificationEvent();
 
     // Show push notification only for zone context (set by ZoneNotificationService)
     if ((window as any).__guardianCareZoneSound === true && this.settingsSubject.value.pushNotifications && this.settingsSubject.value.enabled) {
@@ -409,9 +420,20 @@ export class NotificationManagerService {
   private saveNotificationsToStorage() {
     try {
       localStorage.setItem('guardian_care_notifications', JSON.stringify(this.notificationsSubject.value));
+      
+      // Dispatch custom event to notify tabs page about badge update
+      this.dispatchNotificationEvent();
     } catch (error) {
       console.warn('Could not save notifications to storage:', error);
     }
+  }
+
+  private dispatchNotificationEvent() {
+    // Dispatch a custom event that the tabs page can listen to
+    const event = new CustomEvent('notificationsUpdated', {
+      detail: { unreadCount: this.getUnreadCount() }
+    });
+    window.dispatchEvent(event);
   }
 
   private loadNotificationsFromStorage() {

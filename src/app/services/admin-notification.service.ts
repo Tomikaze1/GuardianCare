@@ -32,7 +32,9 @@ export class AdminNotificationService {
     private notificationManager: NotificationManagerService,
     private authService: AuthService
   ) {
+    // Initialize immediately when service is created
     this.initializeAdminValidationListener();
+    console.log('🔔 AdminNotificationService initialized and listening for admin validations');
   }
 
   ngOnDestroy() {
@@ -51,6 +53,12 @@ export class AdminNotificationService {
       new Observable<Report[]>(observer => {
         const unsubscribe = onSnapshot(allIncidentsQuery, snapshot => {
           console.log('📡 Admin validation listener: snapshot received', snapshot.size, 'docs');
+          console.log('📡 Snapshot changes:', snapshot.docChanges().map(change => ({
+            type: change.type,
+            docId: change.doc.id,
+            status: change.doc.data()['status'],
+            validatedAt: change.doc.data()['validatedAt']
+          })));
           
           const reports = snapshot.docs.map(doc => {
             const data = doc.data();
@@ -101,9 +109,22 @@ export class AdminNotificationService {
         const newEvents: AdminValidationEvent[] = [];
         
         const newlyValidatedReports = reports.filter(report => {
-          return report.status === 'Validated' && 
+          const isNewlyValidated = report.status === 'Validated' && 
                  report.validatedAt && 
                  !this.processedReportIds.has(report.id!);
+          
+          if (isNewlyValidated) {
+            console.log('🔔 NEWLY VALIDATED REPORT DETECTED:', {
+              id: report.id,
+              status: report.status,
+              validatedAt: report.validatedAt,
+              userId: report.userId,
+              currentUserId: currentUser.uid,
+              isForCurrentUser: report.userId === currentUser.uid
+            });
+          }
+          
+          return isNewlyValidated;
         });
         
         console.log('✅ Found newly validated reports:', newlyValidatedReports.length);
@@ -133,6 +154,32 @@ export class AdminNotificationService {
         if (newEvents.length > 0) {
           this.validationEventsSubject.next([...this.validationEventsSubject.value, ...newEvents]);
           console.log('📊 Admin validation events updated:', newEvents.length, 'new events');
+          
+          // Immediately create notifications for validated reports
+          this.createNotificationsForValidatedReports(newEvents, currentUser);
+          
+          // Immediately trigger badge count update - dispatch multiple times for mobile
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('notificationsUpdated'));
+            console.log('🔔 Dispatched notificationsUpdated event from AdminNotificationService');
+            
+            // Also force update the tabs page badge count
+            const tabsPage = document.querySelector('app-tabs');
+            if (tabsPage && (tabsPage as any).forceBadgeCountUpdate) {
+              (tabsPage as any).forceBadgeCountUpdate();
+            }
+          }, 100);
+          
+          // Dispatch again after a delay for mobile devices
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('notificationsUpdated'));
+            console.log('🔔 Dispatched second notificationsUpdated event for mobile');
+            
+            const tabsPage = document.querySelector('app-tabs');
+            if (tabsPage && (tabsPage as any).forceBadgeCountUpdate) {
+              (tabsPage as any).forceBadgeCountUpdate();
+            }
+          }, 500);
         }
         
         if (this.processedReportIds.size > 100) {
@@ -200,5 +247,88 @@ export class AdminNotificationService {
     this.processedReportIds.clear();
     this.lastProcessedValidationTime = null;
     console.log('🧹 Cleared processed report IDs from AdminNotificationService');
+  }
+
+  private createNotificationsForValidatedReports(events: AdminValidationEvent[], currentUser: any) {
+    console.log('🔔 Creating notifications for validated reports:', events.length);
+    console.log('🔔 Events details:', events.map(e => ({
+      reportId: e.reportId,
+      isForCurrentUser: e.isForCurrentUser,
+      userId: e.userId,
+      currentUserId: currentUser.uid
+    })));
+    
+    try {
+      // Get existing notifications
+      const stored = localStorage.getItem('guardian_care_notifications');
+      let existingNotifications: any[] = [];
+      
+      if (stored) {
+        existingNotifications = JSON.parse(stored);
+        console.log('🔔 Existing notifications count:', existingNotifications.length);
+      } else {
+        console.log('🔔 No existing notifications found');
+      }
+      
+      // Create new notifications for validated reports
+      events.forEach(event => {
+        console.log('🔔 Processing event:', {
+          reportId: event.reportId,
+          isForCurrentUser: event.isForCurrentUser,
+          userId: event.userId,
+          currentUserId: currentUser.uid
+        });
+        
+        if (event.isForCurrentUser) {
+          const notificationId = `validated_${event.reportId}`;
+          
+          // Check if notification already exists
+          const existingNotification = existingNotifications.find(n => n.id === notificationId);
+          if (existingNotification) {
+            console.log('🔔 Notification already exists for report:', event.reportId);
+            return;
+          }
+          
+          const notification = {
+            id: notificationId,
+            type: 'report_validated',
+            title: 'Your Report Validated',
+            message: event.reportType,
+            timestamp: new Date(),
+            read: false,
+            data: {
+              reportId: event.reportId,
+              reportType: event.reportType,
+              riskLevel: event.riskLevel,
+              adminLevel: event.riskLevel,
+              locationAddress: event.locationAddress,
+              validatedTime: this.formatTimeAgo(event.validatedAt),
+              seenByUser: false, // This is the key - unseen notification
+              isUserReport: true,
+              validatedAt: event.validatedAt,
+              userId: event.userId
+            },
+            priority: event.riskLevel >= 4 ? 'critical' : event.riskLevel >= 3 ? 'high' : 'medium'
+          };
+          
+          existingNotifications.unshift(notification);
+          console.log('🔔 Created notification for validated report:', event.reportId);
+          console.log('🔔 Notification details:', {
+            id: notification.id,
+            seenByUser: notification.data.seenByUser,
+            read: notification.read
+          });
+        } else {
+          console.log('🔔 Event is not for current user, skipping notification creation');
+        }
+      });
+      
+      // Save updated notifications
+      localStorage.setItem('guardian_care_notifications', JSON.stringify(existingNotifications));
+      console.log('🔔 Saved notifications to localStorage:', existingNotifications.length);
+      
+    } catch (error) {
+      console.error('❌ Error creating notifications for validated reports:', error);
+    }
   }
 }

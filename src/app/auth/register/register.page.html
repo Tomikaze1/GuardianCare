@@ -24,6 +24,9 @@
           [class.ion-invalid]="registerForm.get('firstName')?.invalid && registerForm.get('firstName')?.touched">
         </ion-input>
       </div>
+      <div class="error-message" *ngIf="getErrorMessage('firstName')">
+        {{ getErrorMessage('firstName') }}
+      </div>
     </div>
     <div class="form-row">
       <div class="input-box">
@@ -34,6 +37,9 @@
           placeholder="Last Name"
           [class.ion-invalid]="registerForm.get('lastName')?.invalid && registerForm.get('lastName')?.touched">
         </ion-input>
+      </div>
+      <div class="error-message" *ngIf="getErrorMessage('lastName')">
+        {{ getErrorMessage('lastName') }}
       </div>
     </div>
     
@@ -47,6 +53,9 @@
           [class.ion-invalid]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">
         </ion-input>
       </div>
+      <div class="error-message" *ngIf="getErrorMessage('email')">
+        {{ getErrorMessage('email') }}
+      </div>
     </div>
     
     <div class="form-row">
@@ -58,6 +67,9 @@
           placeholder="Phone Number"
           [class.ion-invalid]="registerForm.get('phone')?.invalid && registerForm.get('phone')?.touched">
         </ion-input>
+      </div>
+      <div class="error-message" *ngIf="getErrorMessage('phone')">
+        {{ getErrorMessage('phone') }}
       </div>
     </div>
     
@@ -83,6 +95,9 @@
           <ion-icon [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
         </ion-button>
       </div>
+      <div class="error-message" *ngIf="getErrorMessage('password')">
+        {{ getErrorMessage('password') }}
+      </div>
     </div>
     
     <div class="form-row">
@@ -102,6 +117,9 @@
           <ion-icon [name]="showConfirmPassword ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
         </ion-button>
       </div>
+      <div class="error-message" *ngIf="getErrorMessage('confirmPassword')">
+        {{ getErrorMessage('confirmPassword') }}
+      </div>
     </div>
     
     <div class="section-header">
@@ -119,6 +137,9 @@
           [class.ion-invalid]="registerForm.get('emergencyContactName')?.invalid && registerForm.get('emergencyContactName')?.touched">
         </ion-input>
       </div>
+      <div class="error-message" *ngIf="getErrorMessage('emergencyContactName')">
+        {{ getErrorMessage('emergencyContactName') }}
+      </div>
     </div>
     
     <div class="form-row">
@@ -130,6 +151,9 @@
           placeholder="Emergency Contact Number"
           [class.ion-invalid]="registerForm.get('emergencyContact')?.invalid && registerForm.get('emergencyContact')?.touched">
         </ion-input>
+      </div>
+      <div class="error-message" *ngIf="getErrorMessage('emergencyContact')">
+        {{ getErrorMessage('emergencyContact') }}
       </div>
     </div>
     
@@ -143,6 +167,9 @@
         <span class="terms-text">
           I agree to the <a href="#" class="terms-link">Terms of Service</a> and <a href="#" class="terms-link">Privacy Policy</a> *
         </span>
+      </div>
+      <div class="error-message" *ngIf="getErrorMessage('acceptTerms')">
+        {{ getErrorMessage('acceptTerms') }}
       </div>
     </div>
     

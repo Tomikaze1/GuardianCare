@@ -59,11 +59,8 @@ export class HomePage implements OnInit, OnDestroy {
   
   activeZoneAlerts: ZoneAlert[] = [];
   currentZoneInfo: DangerZone | null = null;
-  private reportsLoaded = false;
   private lastKnownReports: Set<string> = new Set(); // Track known reports for new report detection
   
-  private alertSoundInterval: any = null;
-  private currentAlertSound: any = null;
   private alertAcknowledged: boolean = false;
   private lastAlertedZoneId: string | null = null;
 
@@ -89,6 +86,11 @@ export class HomePage implements OnInit, OnDestroy {
     this.setupResizeListener();
     this.loadUiModePreference();
     this.initializeZoneNotifications();
+    
+    // Listen for notification updates to trigger badge update
+    window.addEventListener('notificationsUpdated', () => {
+      console.log('🔔 Home page received notificationsUpdated event');
+    });
   }
 
   ionViewWillEnter() {
@@ -98,6 +100,9 @@ export class HomePage implements OnInit, OnDestroy {
     this.checkForNotificationNavigation();
     
     this.notificationService.dismissAll();
+    
+    // Stop any lingering ringtone when entering home page
+    this.zoneNotificationService.stopRingtone();
     
     this.isHeatmapVisible = false;
     
@@ -117,8 +122,9 @@ export class HomePage implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.subscriptions.forEach(sub => sub.unsubscribe());
     this.stopRealTimeTracking();
-    this.stopAlertSound();
-    this.reportsLoaded = false;
+
+    // Stop any playing ringtone when component is destroyed
+    this.zoneNotificationService.stopRingtone();
 
     this.reportMarkers.forEach(marker => marker.remove());
     this.reportMarkers = [];
@@ -127,6 +133,7 @@ export class HomePage implements OnInit, OnDestroy {
     }
 
     window.removeEventListener('resize', this.handleResize);
+    window.removeEventListener('notificationsUpdated', () => {});
   }
 
 
@@ -135,14 +142,102 @@ export class HomePage implements OnInit, OnDestroy {
     this.requestNotificationPermissions();
   }
 
-  private loadValidatedReportsDirectly() {
-    if (this.reportsLoaded) {
-      console.log('📍 LOADING REPORTS: Already loaded, skipping to prevent duplicates');
-      return;
+  private async createNotificationsForNewValidatedReports(reports: any[]) {
+    try {
+      const currentUser = await this.authService.getCurrentUser();
+      if (!currentUser) {
+        console.log('🔔 No current user found, skipping notification creation');
+        return;
+      }
+
+      // Create notifications for ALL new validated reports (not just user's reports)
+      const newValidatedReports = reports.filter(report => {
+        // Check if this is a new validated report that hasn't been seen yet
+        return report.status === 'Validated' && 
+               !this.lastKnownReports.has(report.id);
+      });
+
+      console.log('🔔 Found new validated reports:', newValidatedReports.length);
+
+      // Get existing notifications from localStorage
+      const stored = localStorage.getItem('guardian_care_notifications');
+      const existingNotifications = stored ? JSON.parse(stored) : [];
+
+      for (const report of newValidatedReports) {
+        // Check if notification already exists
+        const exists = existingNotifications.some((n: any) => n.data?.reportId === report.id);
+        if (exists) {
+          console.log('🔔 Notification already exists for report:', report.id);
+          continue;
+        }
+
+        const adminLevel = report.level ?? report.validationLevel ?? report.riskLevel ?? 1;
+        const riskLevel = Number(adminLevel);
+        const validatedDate = report.validatedAt || new Date();
+        const isUserReport = report.userId === currentUser.uid;
+
+        console.log('🔔 Creating notification:', {
+          reportId: report.id,
+          reportType: report.type,
+          reportUserId: report.userId,
+          currentUserId: currentUser.uid,
+          isUserReport: isUserReport,
+          notificationType: isUserReport ? 'report_validated' : 'new_zone',
+          title: isUserReport ? 'Your Report Validated' : 'New Zone Alert'
+        });
+
+        // Create notification in the format expected by notifications page
+        const notification: any = {
+          id: `validated_${report.id}`,
+          type: isUserReport ? 'report_validated' : 'new_zone',
+          title: isUserReport ? `Your Report Validated` : `New Zone Alert`,
+          message: `${report.type}`,
+          timestamp: validatedDate,
+          read: false, // New notifications are unread
+          priority: riskLevel >= 4 ? 'critical' : riskLevel >= 3 ? 'high' : 'medium',
+          data: {
+            reportId: report.id,
+            reportType: report.type,
+            riskLevel: riskLevel,
+            adminLevel: riskLevel,
+            location: report.location,
+            locationAddress: report.locationAddress || report.location?.fullAddress || report.location?.simplifiedAddress || 'Unknown Location',
+            seenByUser: false, // NEW badge will show
+            isUserReport: isUserReport,
+            userId: report.userId
+          }
+        };
+
+        // Add to existing notifications
+        existingNotifications.unshift(notification);
+        
+        console.log('🔔 Created notification manually:', {
+          id: notification.id,
+          type: notification.type,
+          title: notification.title,
+          isUserReport: notification.data.isUserReport
+        });
+      }
+
+      // Save to localStorage
+      if (newValidatedReports.length > 0) {
+        localStorage.setItem('guardian_care_notifications', JSON.stringify(existingNotifications));
+        console.log('🔔 Saved notifications to localStorage');
+        
+        // Dispatch event to update badge immediately
+        window.dispatchEvent(new CustomEvent('notificationsUpdated'));
+        console.log('🔔 Dispatched notificationsUpdated event');
+      }
+    } catch (error) {
+      console.error('Error creating notifications for validated reports:', error);
     }
-    
+  }
+
+  private loadValidatedReportsDirectly() {
     console.log('📍 LOADING REPORTS: Starting loadValidatedReportsDirectly');
-    this.reportsLoaded = true;
+    
+    // Always reload to get latest validated reports
+    // Remove the early return to ensure reports are always loaded
     
     this.subscriptions.push(
       this.reportService.getAllReports().subscribe({
@@ -161,14 +256,21 @@ export class HomePage implements OnInit, OnDestroy {
             status: r.status
           })));
           
-          if (!this.reportsLoaded) {
-            const definedIds = reports.map(r => r.id).filter((id: any) => typeof id === 'string') as string[];
+          // Always check for new validated reports
+          const definedIds = reports.map(r => r.id).filter((id: any) => typeof id === 'string') as string[];
+          
+          if (this.lastKnownReports.size === 0) {
+            // First time loading - just store the IDs
             this.lastKnownReports = new Set(definedIds);
-            this.reportsLoaded = true;
           } else {
+            // Subsequent loads - check for new reports
             this.checkForNewValidatedReports(reports);
             
             this.checkForNearbyNewReports(reports);
+            
+            // Create notifications immediately for new validated reports
+            // This ensures badge shows immediately without clicking the notifications tab
+            this.createNotificationsForNewValidatedReports(reports);
           }
           
           this.validatedReports = reports.map(report => ({
@@ -199,6 +301,15 @@ export class HomePage implements OnInit, OnDestroy {
             this.removeReportMarkers();
             this.removeHeatmapLayer();
           }
+          
+          // Force zone re-evaluation when reports are updated (handles heatmap deletion)
+          if (this.currentLocation) {
+            console.log('🔄 Reports updated - forcing zone re-evaluation');
+            this.zoneNotificationService.forceZoneReevaluation(this.currentLocation);
+            
+            // Force UI update to reflect any zone changes
+            this.updateZoneStatusUI();
+          }
         },
         error: (error) => {
           console.error('Error loading validated reports:', error);
@@ -225,70 +336,86 @@ export class HomePage implements OnInit, OnDestroy {
     
     // Also update zone engine for internal tracking
     this.zoneEngine.updateCurrentLocation(location);
+    
+    // Trigger UI update to reflect current zone status
+    this.updateZoneStatusUI();
+    
+    // Force zone re-evaluation with current validated reports to ensure synchronization
+    if (this.validatedReports && this.validatedReports.length > 0) {
+      console.log('🔄 Forcing zone re-evaluation with current validated reports');
+      this.zoneNotificationService.forceZoneReevaluation(location);
+    }
+  }
+  
+  private updateZoneStatusUI() {
+    // Force UI update by triggering change detection
+    // This ensures the status display updates in real-time
+    setTimeout(() => {
+      // The getCurrentZoneInfoText(), getSafetyStatusClass(), and getSafetyIcon() 
+      // methods will be called automatically by Angular's change detection
+      console.log('🔄 Zone status UI updated');
+    }, 0);
   }
 
   dismissZoneAlert(alertId: string) {
     this.zoneNotificationService.dismissAlert(alertId);
   }
 
-  private triggerZoneNotification(alert: ZoneAlert) {
-    const priority = this.getNotificationPriority(alert.zoneLevel);
-    const title = this.getAlertTitle(alert.type);
-    if (alert.type === 'zone_entry') {
-      this.showZoneEntryNotification(alert);
-      this.showZoneEntryAlert(alert);
-    }
+  // Method to acknowledge zone alert (keeps ringtone playing until zone exit)
+  acknowledgeZoneAlert(alertId: string) {
+    this.zoneNotificationService.acknowledgeAlert(alertId);
   }
-  
-  private showZoneEntryNotification(alert: ZoneAlert) {
-    const notificationType = this.getNotificationType(alert.zoneLevel);
-    const emoji = this.getZoneEmoji(alert.zoneLevel);
+
+  // Method to check if ringtone is currently playing
+  isZoneRingtonePlaying(): boolean {
+    return this.zoneNotificationService.isRingtonePlaying();
+  }
+
+  // Method to manually stop ringtone (for emergency situations)
+  stopZoneRingtone() {
+    this.zoneNotificationService.stopRingtone();
+  }
+
+  // Method to get current zone status for debugging
+  getZoneStatus() {
+    return this.zoneNotificationService.getZoneStatus();
+  }
+
+  // Method to reset local zone tracking (useful when heatmap data changes)
+  resetLocalZoneTracking(): void {
+    console.log('🔄 Resetting local zone tracking due to heatmap data change');
     
-    this.notificationService.show({
-      type: notificationType,
-      title: `${emoji} Zone Alert`,
-      message: `You've entered ${alert.zoneName} (${alert.zoneLevel} zone)`,
-      actionText: 'OK',
-      duration: 5000
-    });
-  }
-  
-  private async showZoneEntryAlert(alert: ZoneAlert) {
-    const emoji = this.getZoneEmoji(alert.zoneLevel);
-    const alertDialog = await this.alertController.create({
-      header: `${emoji} ${alert.zoneLevel} Zone Detected`,
-      subHeader: alert.zoneName,
-      message: `You have entered a ${alert.zoneLevel.toLowerCase()} zone. ${this.getZoneAlertMessage(alert.zoneLevel)}`,
-      buttons: [
-        {
-          text: 'View Recommendations',
-          handler: () => {
-            this.showZoneRecommendations(alert);
-          }
-        },
-        {
-          text: 'OK',
-          role: 'cancel'
-        }
-      ],
-      cssClass: `zone-alert-${alert.zoneLevel.toLowerCase()}`
-    });
+    // Reset local zone tracking variables
+    this.inDangerZone = false;
+    this.currentZoneRiskLevel = null;
+    this.safetyStatus = 'safe';
+    this.locationSafetyMessage = 'Checking location safety...';
+    this.nearbyZoneAlert = '';
+    this.nearestZoneDistance = null;
+    this.hasNearbyReports = false;
+    this.nearbyReportsCount = 0;
     
-    await alertDialog.present();
-  }
-  
-  private async showZoneRecommendations(alert: ZoneAlert) {
-    const recommendations = alert.recommendations.join('\n\n');
-    const recommendationAlert = await this.alertController.create({
-      header: '📋 Safety Recommendations',
-      subHeader: alert.zoneName,
-      message: recommendations,
-      buttons: ['Close'],
-      cssClass: 'zone-recommendations-alert'
-    });
+    // Reset alert tracking
+    this.alertAcknowledged = false;
+    this.lastAlertedZoneId = null;
     
-    await recommendationAlert.present();
+    console.log('🔄 Local zone tracking reset complete');
+    
+    // Force UI update
+    this.updateZoneStatusUI();
   }
+
+  // Method to notify ZoneNotificationService when local system detects a zone
+  private notifyZoneNotificationService(location: { lat: number; lng: number }, riskLevel: number): void {
+    console.log(`🔄 Notifying ZoneNotificationService: Zone detected at risk level ${riskLevel}`);
+    
+    // Force zone re-evaluation to ensure ZoneNotificationService detects the same zone
+    this.zoneNotificationService.forceZoneReevaluation(location);
+    
+    // Force UI update to reflect zone status
+    this.updateZoneStatusUI();
+  }
+
   
   private getZoneEmoji(zoneLevel: string): string {
     switch (zoneLevel.toLowerCase()) {
@@ -305,49 +432,6 @@ export class HomePage implements OnInit, OnDestroy {
     }
   }
   
-  private getZoneAlertMessage(zoneLevel: string): string {
-    switch (zoneLevel.toLowerCase()) {
-      case 'danger':
-        return 'HIGH RISK: Consider leaving this area immediately and stay alert.';
-      case 'caution':
-        return 'MODERATE RISK: Stay cautious and aware of your surroundings.';
-      case 'neutral':
-        return 'NORMAL VIGILANCE: Be aware of your surroundings.';
-      case 'safe':
-        return 'This area is considered safe.';
-      default:
-        return 'Stay aware of your surroundings.';
-    }
-  }
-  
-  private getNotificationType(zoneLevel: string): 'success' | 'warning' | 'error' | 'info' {
-    switch (zoneLevel.toLowerCase()) {
-      case 'danger':
-        return 'error';
-      case 'caution':
-        return 'warning';
-      case 'neutral':
-        return 'info';
-      case 'safe':
-        return 'success';
-      default:
-        return 'info';
-    }
-  }
-
-  private getNotificationPriority(zoneLevel: string): 'medium' | 'high' | 'critical' {
-    switch (zoneLevel.toLowerCase()) {
-      case 'danger':
-      case 'critical':
-      case 'extreme':
-        return 'critical';
-      case 'caution':
-      case 'high':
-        return 'high';
-      default:
-        return 'medium';
-    }
-  }
 
   private checkForNewValidatedReports(reports: any[]) {
     const currentReportIds = new Set(reports.map(r => r.id));
@@ -386,10 +470,11 @@ export class HomePage implements OnInit, OnDestroy {
           }
           
           if (this.inDangerZone || this.currentZoneRiskLevel) {
-            this.startContinuousAlertSoundForRiskLevel(riskLevel);
+            // Ringtone removed - was associated with deleted first alert
           }
           
-          this.showZoneAlert(icon, title, message, zoneLevel);
+          // Disabled to prevent duplicate alerts - only keeping EXTREME ZONE ENTERED alert
+          // this.showZoneAlert(icon, title, message, zoneLevel);
           
           console.log(`🚨 NEW INCIDENT ALERT triggered for nearby report:`, {
             id: report.id,
@@ -451,52 +536,87 @@ export class HomePage implements OnInit, OnDestroy {
     return this.zoneNotificationService.getCurrentZone();
   }
 
+  isInHeatmapZone(): boolean {
+    // Check if user is in a heatmap zone detected by zone notification service
+    const zoneStatus = this.zoneNotificationService.getZoneStatus();
+    const currentZone = zoneStatus.currentZone;
+    
+    if (currentZone && currentZone.riskLevel) {
+      return true;
+    }
+    
+    // Check if user is in a heatmap zone detected by local system
+    if (this.inDangerZone && this.currentZoneRiskLevel !== null && this.currentZoneRiskLevel !== undefined) {
+      return true;
+    }
+    
+    return false;
+  }
+
   getCurrentZoneInfoText(): string {
+    // Get current zone from zone notification service
+    const zoneStatus = this.zoneNotificationService.getZoneStatus();
+    const currentZone = zoneStatus.currentZone;
+    
     console.log('🔍 getCurrentZoneInfoText called:', {
+      currentZone: currentZone?.name || 'None',
+      currentZoneRiskLevel: currentZone?.riskLevel || null,
+      isHeatmapVisible: this.isHeatmapVisible,
+      zoneStatus: zoneStatus,
       inDangerZone: this.inDangerZone,
-      currentZoneRiskLevel: this.currentZoneRiskLevel,
+      currentZoneRiskLevel_local: this.currentZoneRiskLevel,
+      safetyStatus: this.safetyStatus,
       hasNearbyReports: this.hasNearbyReports,
       nearbyReportsCount: this.nearbyReportsCount
     });
     
-    // Show specific risk level if currentZoneRiskLevel is set
-    if (this.currentZoneRiskLevel !== null && this.currentZoneRiskLevel !== undefined) {
-      const riskText = this.getRiskLevelText(this.currentZoneRiskLevel);
-      const result = `Currently in<br><strong>${riskText} Risk Zone</strong>`;
-      console.log('✅ Returning zone info text:', result);
+    // Priority 1: If user is in a heatmap zone detected by zone notification service
+    if (currentZone && currentZone.riskLevel) {
+      const riskLevel = currentZone.riskLevel;
+      const riskText = this.getRiskLevelText(riskLevel);
+      const heatmapColorName = this.getHeatmapColorName(riskLevel);
+      const emoji = this.getHeatmapEmojiForRiskLevel(riskLevel);
+      const result = `${emoji} Currently in<br><strong>Level ${riskLevel} Risk Zone</strong><br><small>${heatmapColorName}</small>`;
+      console.log('✅ Returning zone notification service zone info:', result);
       return result;
     }
     
-    // If in danger zone but no specific risk level, determine from nearby reports
-    if (this.inDangerZone && this.hasNearbyReports && this.nearbyReportsCount > 0) {
-      // Get the highest risk level from nearby reports
-      const nearbyReports = this.validatedReports.filter(report => {
-        if (!this.currentLocation) return false;
-        const distance = this.calculateDistance(
-          this.currentLocation.lat,
-          this.currentLocation.lng,
-          report.location.lat,
-          report.location.lng
-        );
-        return distance * 1000 <= 30; // Within 30m
-      });
-      
-      if (nearbyReports.length > 0) {
-        const highestRiskLevel = nearbyReports.reduce((max, report) => 
-          Math.max(max, report.level || report.riskLevel || 1), 1
-        );
-        
-        const riskText = this.getRiskLevelText(highestRiskLevel);
-        const result = `Currently in<br><strong>${riskText} Risk Zone</strong>`;
-        console.log('✅ Returning nearby reports risk text:', result);
-        return result;
-      }
+    // Priority 2: If user is in a heatmap zone detected by local system
+    if (this.inDangerZone && this.currentZoneRiskLevel !== null && this.currentZoneRiskLevel !== undefined) {
+      const riskLevel = this.currentZoneRiskLevel;
+      const riskText = this.getRiskLevelText(riskLevel);
+      const heatmapColorName = this.getHeatmapColorName(riskLevel);
+      const emoji = this.getHeatmapEmojiForRiskLevel(riskLevel);
+      const result = `${emoji} Currently in<br><strong>Level ${riskLevel} Risk Zone</strong><br><small>${heatmapColorName}</small>`;
+      console.log('✅ Returning local heatmap zone info (IN ZONE):', result);
+      return result;
     }
     
-    // Show "Currently in Low Risk Zone" when not in any specific zone
-    const result = `Currently in<br><strong>Low Risk Zone</strong>`;
-    console.log('✅ Returning default zone info text:', result);
+    
+    // Default: Not in any heatmap zone
+    const result = `📍 <strong>Not in Heatmap Zone</strong><br><small>Safe area</small>`;
+    console.log('✅ Returning not in heatmap zone text:', result);
     return result;
+  }
+
+  private getLevelFromRiskLevel(riskLevel: number): string {
+    switch (riskLevel) {
+      case 1: return 'Safe';
+      case 2: return 'Neutral';
+      case 3: return 'Caution';
+      case 4: return 'Danger';
+      case 5: return 'Danger';
+      default: return 'Safe';
+    }
+  }
+
+  private getRiskLevelFromSafetyStatus(): number {
+    switch (this.safetyStatus) {
+      case 'danger': return 4; // Critical
+      case 'warning': return 3; // High
+      case 'safe': return 1; // Low
+      default: return 1;
+    }
   }
 
   onNotificationClick(notification: any) {
@@ -570,6 +690,9 @@ export class HomePage implements OnInit, OnDestroy {
           this.zoneEngine.updateCurrentLocation(location);
           
           this.checkZoneNotifications(location);
+          
+          // Check for nearby incidents on every location update
+          this.checkNearbyZones(location);
           
           if (!this.lastAddressUpdate || Date.now() - this.lastAddressUpdate > 10000) {
             this.getCurrentAddress(location.lat, location.lng);
@@ -765,19 +888,19 @@ export class HomePage implements OnInit, OnDestroy {
             'interpolate',
             ['linear'],
             ['zoom'],
-            0, 1,
-            15, 3
+            0, 2,
+            15, 4
           ],
           'heatmap-color': [
             'interpolate',
             ['linear'],
             ['heatmap-density'],
-            0, 'rgba(33, 102, 172, 0)',
-            0.2, 'rgb(103, 169, 207)',
-            0.4, 'rgb(209, 229, 240)',
-            0.6, 'rgb(253, 219, 199)',
-            0.8, 'rgb(239, 138, 98)',
-            1, 'rgb(178, 24, 43)'
+            0, 'rgba(16, 185, 129, 0)',
+            0.2, 'rgba(16, 185, 129, 0.6)',
+            0.4, 'rgba(251, 191, 36, 0.7)',
+            0.6, 'rgba(249, 115, 22, 0.8)',
+            0.8, 'rgba(239, 68, 68, 0.9)',
+            1, 'rgba(220, 38, 38, 1)'
           ],
           'heatmap-radius': [
             'interpolate',
@@ -792,8 +915,8 @@ export class HomePage implements OnInit, OnDestroy {
             'interpolate',
             ['linear'],
             ['zoom'],
-            7, 1,
-            15, 0
+            7, 0.9,
+            15, 0.8
           ]
         }
       });
@@ -1058,6 +1181,9 @@ export class HomePage implements OnInit, OnDestroy {
       this.zoneEngine.updateCurrentLocation(location);
       
       this.checkZoneNotifications(location);
+      
+      // Check for nearby incidents when refreshing location
+      this.checkNearbyZones(location);
       
       await this.getCurrentAddress(location.lat, location.lng);
       
@@ -1786,28 +1912,28 @@ export class HomePage implements OnInit, OnDestroy {
     const heatLayers = [
       {
         id: 'heat-l1', level: 1, rgba: [16, 185, 129],
-        weight: 0.5,
-        intensityStops: [5, 0.8, 10, 1.0, 15, 1.2]
+        weight: 0.8,
+        intensityStops: [5, 1.5, 10, 2.0, 15, 2.5]
       },
       {
         id: 'heat-l2', level: 2, rgba: [251, 191, 36],
-        weight: 0.7,
-        intensityStops: [5, 0.9, 10, 1.1, 15, 1.3]
+        weight: 1.0,
+        intensityStops: [5, 1.8, 10, 2.3, 15, 2.8]
       },
       {
         id: 'heat-l3', level: 3, rgba: [249, 115, 22],
-        weight: 0.9,
-        intensityStops: [5, 1.0, 10, 1.2, 15, 1.5]
+        weight: 1.2,
+        intensityStops: [5, 2.0, 10, 2.5, 15, 3.0]
       },
       {
         id: 'heat-l4', level: 4, rgba: [239, 68, 68],
-        weight: 1.1,
-        intensityStops: [5, 1.2, 10, 1.5, 15, 1.8]
+        weight: 1.4,
+        intensityStops: [5, 2.2, 10, 2.7, 15, 3.2]
       },
       {
         id: 'heat-l5', level: 5, rgba: [220, 38, 38],
-        weight: 1.3,
-        intensityStops: [5, 1.4, 10, 1.7, 15, 2.0]
+        weight: 1.6,
+        intensityStops: [5, 2.5, 10, 3.0, 15, 3.5]
       }
     ];
 
@@ -1857,13 +1983,13 @@ export class HomePage implements OnInit, OnDestroy {
               layer.intensityStops[2], layer.intensityStops[3],
               layer.intensityStops[4], layer.intensityStops[5]
             ],
-            'heatmap-opacity': 0.6,
+            'heatmap-opacity': 0.9,
             'heatmap-color': [
               'interpolate', ['linear'], ['heatmap-density'],
               0.00, 'rgba(0,0,0,0)',
-              0.15, ['rgba', layer.rgba[0], layer.rgba[1], layer.rgba[2], 0.25],
-              0.40, ['rgba', layer.rgba[0], layer.rgba[1], layer.rgba[2], 0.6],
-              0.70, ['rgba', layer.rgba[0], layer.rgba[1], layer.rgba[2], 0.85],
+              0.10, ['rgba', layer.rgba[0], layer.rgba[1], layer.rgba[2], 0.6],
+              0.30, ['rgba', layer.rgba[0], layer.rgba[1], layer.rgba[2], 0.8],
+              0.60, ['rgba', layer.rgba[0], layer.rgba[1], layer.rgba[2], 0.95],
               1.00, ['rgba', layer.rgba[0], layer.rgba[1], layer.rgba[2], 1.0]
             ]
           }
@@ -2529,6 +2655,9 @@ export class HomePage implements OnInit, OnDestroy {
       this.currentLocation = dangerZoneLocation;
       this.zoneEngine.updateCurrentLocation(dangerZoneLocation);
       
+      // Test the new zone notification system with alert dialog and ringtone
+      this.checkZoneNotifications(dangerZoneLocation);
+      
       
       this.vibrateDevice();
       
@@ -2572,6 +2701,31 @@ export class HomePage implements OnInit, OnDestroy {
       console.log('🧪 Red zone entry test completed');
     } catch (error) {
       console.error('Error testing red zone entry:', error);
+    }
+  }
+
+  // Test method to simulate zone exit and stop ringtone
+  async testZoneExit() {
+    try {
+      // Move to a safe location outside any danger zones
+      const safeLocation = { lat: 10.3157, lng: 123.8854 }; // Default safe location
+      
+      this.currentLocation = safeLocation;
+      this.zoneEngine.updateCurrentLocation(safeLocation);
+      
+      // This should trigger zone exit detection and stop the ringtone
+      this.checkZoneNotifications(safeLocation);
+      
+      await this.notificationService.success(
+        'Zone Exit Test',
+        'You have moved to a safe location. Ringtone should have stopped.',
+        'OK',
+        3000
+      );
+      
+      console.log('🧪 Zone exit test completed - ringtone should be stopped');
+    } catch (error) {
+      console.error('Error testing zone exit:', error);
     }
   }
 
@@ -2673,90 +2827,172 @@ export class HomePage implements OnInit, OnDestroy {
     }
   }
 
+  private mapSeverityToLevel(severity: number): number {
+    // Map numeric severity (0-10) to risk level (1-5)
+    if (severity <= 2) return 1; // Low
+    if (severity <= 4) return 2; // Moderate  
+    if (severity <= 6) return 3; // High
+    if (severity <= 8) return 4; // Critical
+    return 5; // Extreme
+  }
+
   private checkNearbyZones(location: { lat: number; lng: number }) {
     const previousStatus = this.safetyStatus;
     const wasInZone = this.inDangerZone;
     
-    if (!this.validatedReports || this.validatedReports.length === 0) {
+    console.log('🔍 DEBUG: checkNearbyZones called with location:', location);
+    console.log('🔍 DEBUG: validatedReports count:', this.validatedReports?.length || 0);
+    console.log('🔍 DEBUG: validatedReports details:', this.validatedReports?.map(r => ({
+      id: r.id,
+      type: r.type,
+      location: r.location,
+      status: r.status,
+      riskLevel: r.riskLevel,
+      level: r.level
+    })));
+    
+    // Get incidents from both validated reports and zone danger engine
+    const zoneIncidents = this.zoneEngine.getNearbyIncidents(location, 1.0); // 1km radius
+    console.log('🔍 DEBUG: zoneIncidents count:', zoneIncidents.length);
+    console.log('🔍 DEBUG: zoneIncidents details:', zoneIncidents.map(z => ({
+      zone: z.zone.name,
+      incident: z.incident.type,
+      distance: z.distance
+    })));
+    
+    const allIncidents = [...(this.validatedReports || [])];
+    
+    // Convert zone incidents to a format compatible with the existing logic
+    const zoneIncidentsAsReports = zoneIncidents.map(({ zone, incident, distance }) => ({
+      id: incident.id,
+      type: incident.type,
+      description: incident.description || `${incident.type} incident`,
+      location: {
+        lat: zone.coordinates[0][1], // Use zone center as incident location
+        lng: zone.coordinates[0][0]
+      },
+      timestamp: incident.timestamp,
+      level: this.mapSeverityToLevel(incident.severity),
+      riskLevel: this.mapSeverityToLevel(incident.severity),
+      status: 'verified',
+      zoneName: zone.name,
+      zoneLevel: zone.level,
+      distanceFromUser: distance * 1000 // Convert to meters
+    }));
+    
+    console.log('🔍 DEBUG: zoneIncidentsAsReports count:', zoneIncidentsAsReports.length);
+    
+    // Combine all incidents and sort by distance
+    const allIncidentsWithDistance = [...allIncidents, ...zoneIncidentsAsReports].map(incident => {
+      const distance = incident.distanceFromUser || this.calculateDistance(
+        location.lat,
+        location.lng,
+        incident.location.lat,
+        incident.location.lng
+      ) * 1000; // Convert to meters
+      return { incident, distance };
+    });
+
+    allIncidentsWithDistance.sort((a, b) => a.distance - b.distance);
+    
+    console.log('🔍 DEBUG: allIncidentsWithDistance count:', allIncidentsWithDistance.length);
+    console.log('🔍 DEBUG: allIncidentsWithDistance details:', allIncidentsWithDistance.map(i => ({
+      id: i.incident.id,
+      type: i.incident.type,
+      distance: i.distance,
+      location: i.incident.location
+    })));
+    
+    if (allIncidentsWithDistance.length === 0) {
+      console.log('🔍 DEBUG: No incidents found, setting safe status');
       this.safetyStatus = 'safe';
       this.nearbyZoneAlert = '';
       this.nearestZoneDistance = null;
       this.hasNearbyReports = false;
       this.nearbyReportsCount = 0;
       this.inDangerZone = false;
-      this.locationSafetyMessage = '✓ Your location is SAFE - No incidents reported in this area';
+      this.locationSafetyMessage = '✓ Your location is SAFE - No incidents within 1KM';
+      
+      // Stop ringtone if user is in safe area with no incidents
+      if (wasInZone) {
+        console.log('🔕 Stopping ringtone - user moved to safe area with no incidents');
+        this.zoneNotificationService.stopRingtone();
+      }
+      
+      this.checkAndNotifyZoneChanges(previousStatus, wasInZone, location);
       
       this.previousSafetyStatus = this.safetyStatus;
       this.wasInDangerZone = this.inDangerZone;
       return;
     }
 
-    const reportsWithDistance = this.validatedReports.map(report => {
-      const distance = this.calculateDistance(
-        location.lat,
-        location.lng,
-        report.location.lat,
-        report.location.lng
-      );
-      return { report, distance };
-    });
-
-    reportsWithDistance.sort((a, b) => a.distance - b.distance);
-
-    const reportsAtLocation = reportsWithDistance.filter(r => r.distance * 1000 <= 50);
+    const reportsAtLocation = allIncidentsWithDistance.filter(r => r.distance <= 50);
+    console.log('🔍 DEBUG: reportsAtLocation count (within 50m):', reportsAtLocation.length);
     
     if (reportsAtLocation.length > 0) {
       const highestRiskReport = reportsAtLocation.reduce((prev, current) => 
-        (current.report.level || current.report.riskLevel || 0) > (prev.report.level || prev.report.riskLevel || 0) ? current : prev
+        (current.incident.level || current.incident.riskLevel || 0) > (prev.incident.level || prev.incident.riskLevel || 0) ? current : prev
       );
       
-      const riskLevel = highestRiskReport.report.level || highestRiskReport.report.riskLevel || 1;
+      const riskLevel = highestRiskReport.incident.level || highestRiskReport.incident.riskLevel || 1;
+      console.log('🔍 DEBUG: User at incident location, risk level:', riskLevel);
       
       if (riskLevel >= 5) {
         this.safetyStatus = 'danger';
         this.locationSafetyMessage = `🚨 EXTREME RISK - Level 5 incident at this location`;
-        this.nearbyZoneAlert = `EXTREME: ${reportsAtLocation.length} REPORT(S) HERE`;
+        this.nearbyZoneAlert = `EXTREME: ${reportsAtLocation.length} INCIDENT(S) HERE`;
       } else if (riskLevel >= 4) {
         this.safetyStatus = 'danger';
         this.locationSafetyMessage = `⚠ CRITICAL RISK - Level 4 incident at this location`;
-        this.nearbyZoneAlert = `CRITICAL: ${reportsAtLocation.length} REPORT(S) HERE`;
+        this.nearbyZoneAlert = `CRITICAL: ${reportsAtLocation.length} INCIDENT(S) HERE`;
       } else if (riskLevel >= 3) {
         this.safetyStatus = 'warning';
         this.locationSafetyMessage = `⚠ HIGH RISK - Level 3 incident at this location`;
-        this.nearbyZoneAlert = `HIGH RISK: ${reportsAtLocation.length} REPORT(S) HERE`;
+        this.nearbyZoneAlert = `HIGH RISK: ${reportsAtLocation.length} INCIDENT(S) HERE`;
       } else if (riskLevel >= 2) {
         this.safetyStatus = 'warning';
         this.locationSafetyMessage = `⚠ MODERATE RISK - Level 2 incident at this location`;
-        this.nearbyZoneAlert = `MODERATE: ${reportsAtLocation.length} REPORT(S) HERE`;
+        this.nearbyZoneAlert = `MODERATE: ${reportsAtLocation.length} INCIDENT(S) HERE`;
       } else {
         this.safetyStatus = 'safe';
         this.locationSafetyMessage = `✓ LOW RISK - Level 1 incident at this location`;
-        this.nearbyZoneAlert = `LOW RISK: ${reportsAtLocation.length} REPORT(S) HERE`;
+        this.nearbyZoneAlert = `LOW RISK: ${reportsAtLocation.length} INCIDENT(S) HERE`;
       }
       
       this.inDangerZone = true;
+      this.currentZoneRiskLevel = riskLevel; // Set the risk level for all levels including Level 1
       this.hasNearbyReports = true;
-      this.nearbyReportsCount = reportsAtLocation.length;
+      this.nearbyReportsCount = allIncidentsWithDistance.filter(r => r.distance <= 1000).length; // Count ALL incidents within 1km
       this.nearestZoneDistance = 0;
       
-
-      this.checkAndNotifyZoneChanges(previousStatus, wasInZone);
+      // Trigger ringtone immediately for being at incident location (no delay)
+      if (riskLevel >= 1) { // Play ringtone for ALL risk levels
+        console.log(`🔊 Triggering ringtone immediately for being at incident location (Risk Level ${riskLevel})`);
+        this.zoneNotificationService.playRingtoneAlert(this.getLevelFromRiskLevel(riskLevel));
+      }
+      
+      this.checkAndNotifyZoneChanges(previousStatus, wasInZone, location);
       
       this.previousSafetyStatus = this.safetyStatus;
       this.wasInDangerZone = this.inDangerZone;
       return;
     }
 
-    const nearest = reportsWithDistance[0];
-    const distanceInMeters = Math.round(nearest.distance * 1000);
+    const nearest = allIncidentsWithDistance[0];
+    const distanceInMeters = Math.round(nearest.distance);
     this.nearestZoneDistance = distanceInMeters;
 
-    const nearestRiskLevel = nearest.report.level || nearest.report.riskLevel || 1;
+    const nearestRiskLevel = nearest.incident.level || nearest.incident.riskLevel || 1;
     const zoneRadius = this.getZoneRadiusMeters(nearestRiskLevel);
 
-    const nearbyReports = reportsWithDistance.filter(r => r.distance * 1000 <= 30); // 30m for nearby reports (2x zone radius)
-    this.nearbyReportsCount = nearbyReports.length;
-    this.hasNearbyReports = nearbyReports.length > 0;
+    const nearbyReports = allIncidentsWithDistance.filter(r => r.distance <= 30); // 30m for nearby reports
+    const allNearbyIncidents = allIncidentsWithDistance.filter(r => r.distance <= 1000); // 1km for all nearby incidents
+    this.nearbyReportsCount = allNearbyIncidents.length; // Count ALL incidents within 1km
+    this.hasNearbyReports = allNearbyIncidents.length > 0; // Show "incidents nearby" if any incidents within 1km
+    
+    console.log('🔍 DEBUG: Final counts - nearbyReports (30m):', nearbyReports.length, 'allNearbyIncidents (1km):', allNearbyIncidents.length);
+    console.log('🔍 DEBUG: Final status - hasNearbyReports:', this.hasNearbyReports, 'nearestZoneDistance:', this.nearestZoneDistance);
+    console.log('🔍 DEBUG: Setting nearbyReportsCount to:', this.nearbyReportsCount);
 
     if (distanceInMeters <= zoneRadius) {
       const riskLevel = nearestRiskLevel;
@@ -2765,28 +3001,37 @@ export class HomePage implements OnInit, OnDestroy {
       if (riskLevel >= 5) {
         this.safetyStatus = 'danger';
         this.locationSafetyMessage = `🚨 EXTREME RISK - Level 5 incident ${distanceInMeters}m away`;
-        this.nearbyZoneAlert = `EXTREME: ${nearbyReports.length} REPORT(S) ${distanceInMeters}m AWAY`;
+        this.nearbyZoneAlert = `EXTREME: ${nearbyReports.length} INCIDENT(S) ${distanceInMeters}m AWAY`;
       } else if (riskLevel >= 4) {
         this.safetyStatus = 'danger';
         this.locationSafetyMessage = `⚠ CRITICAL RISK - Level 4 incident ${distanceInMeters}m away`;
-        this.nearbyZoneAlert = `CRITICAL: ${nearbyReports.length} REPORT(S) ${distanceInMeters}m AWAY`;
+        this.nearbyZoneAlert = `CRITICAL: ${nearbyReports.length} INCIDENT(S) ${distanceInMeters}m AWAY`;
       } else if (riskLevel >= 3) {
         this.safetyStatus = 'warning';
         this.locationSafetyMessage = `⚠ HIGH RISK - Level 3 incident ${distanceInMeters}m away`;
-        this.nearbyZoneAlert = `HIGH RISK: ${nearbyReports.length} REPORT(S) ${distanceInMeters}m AWAY`;
+        this.nearbyZoneAlert = `HIGH RISK: ${nearbyReports.length} INCIDENT(S) ${distanceInMeters}m AWAY`;
       } else if (riskLevel >= 2) {
         this.safetyStatus = 'warning';
         this.locationSafetyMessage = `⚠ MODERATE RISK - Level 2 incident ${distanceInMeters}m away`;
-        this.nearbyZoneAlert = `MODERATE: ${nearbyReports.length} REPORT(S) ${distanceInMeters}m AWAY`;
+        this.nearbyZoneAlert = `MODERATE: ${nearbyReports.length} INCIDENT(S) ${distanceInMeters}m AWAY`;
       } else {
         this.safetyStatus = 'safe';
         this.locationSafetyMessage = `✓ LOW RISK - Level 1 incident ${distanceInMeters}m away`;
-        this.nearbyZoneAlert = `LOW RISK: ${nearbyReports.length} REPORT(S) ${distanceInMeters}m AWAY`;
+        this.nearbyZoneAlert = `LOW RISK: ${nearbyReports.length} INCIDENT(S) ${distanceInMeters}m AWAY`;
       }
 
       this.inDangerZone = true;
       
-      this.checkAndNotifyZoneChanges(previousStatus, wasInZone);
+      // Trigger ringtone immediately for being within zone radius (no delay)
+      if (riskLevel >= 1) { // Play ringtone for ALL risk levels
+        console.log(`🔊 Triggering ringtone immediately for being within zone radius (Risk Level ${riskLevel})`);
+        this.zoneNotificationService.playRingtoneAlert(this.getLevelFromRiskLevel(riskLevel));
+      }
+      
+      this.checkAndNotifyZoneChanges(previousStatus, wasInZone, location);
+      
+      // Notify ZoneNotificationService about the zone detection
+      this.notifyZoneNotificationService(location, riskLevel);
       
       this.previousSafetyStatus = this.safetyStatus;
       this.wasInDangerZone = this.inDangerZone;
@@ -2798,11 +3043,10 @@ export class HomePage implements OnInit, OnDestroy {
     if (distanceInMeters <= 1000) {
       this.safetyStatus = 'safe';
       this.locationSafetyMessage = `✓ Your location is SAFE - Nearest incident is ${distanceInMeters}m away`;
-      this.nearbyZoneAlert = `ⓘ ${nearbyReports.length} REPORT(S) WITHIN 1KM`;
+      this.nearbyZoneAlert = `ⓘ ${allNearbyIncidents.length} INCIDENT(S) WITHIN 1KM`;
       this.inDangerZone = false;
-      this.stopAlertSound();
 
-      this.checkAndNotifyZoneChanges(previousStatus, wasInZone);
+      this.checkAndNotifyZoneChanges(previousStatus, wasInZone, location);
       
       this.previousSafetyStatus = this.safetyStatus;
       this.wasInDangerZone = this.inDangerZone;
@@ -2813,13 +3057,52 @@ export class HomePage implements OnInit, OnDestroy {
     this.nearbyZoneAlert = '';
     this.nearestZoneDistance = distanceInMeters;
     this.hasNearbyReports = false;
-    this.locationSafetyMessage = `✓ Your location is SAFE - No incidents reported nearby (nearest: ${(distanceInMeters/1000).toFixed(1)}km)`;
+    this.locationSafetyMessage = `✓ Your location is SAFE - No incidents within 1KM (nearest: ${(distanceInMeters/1000).toFixed(1)}km)`;
     this.inDangerZone = false;
     
-    this.checkAndNotifyZoneChanges(previousStatus, wasInZone);
+    // Stop ringtone if user is in safe area (outside zone radius)
+    if (wasInZone) {
+      console.log('🔕 Stopping ringtone - user moved outside zone radius to safe area');
+      this.zoneNotificationService.stopRingtone();
+    }
+    
+    this.checkAndNotifyZoneChanges(previousStatus, wasInZone, location);
     
     this.previousSafetyStatus = this.safetyStatus;
     this.wasInDangerZone = this.inDangerZone;
+  }
+
+
+  private getIncidentTypeDisplay(incidentType: string): string {
+    const typeMap: { [key: string]: string } = {
+      'crime-theft': '💰 Theft/Crime',
+      'crime-assault': '👊 Assault',
+      'crime-robbery': '🔫 Robbery',
+      'crime-murder': '💀 Murder',
+      'crime-drug': '💊 Drug Activity',
+      'crime-vandalism': '🎨 Vandalism',
+      'accident-traffic': '🚗 Traffic Accident',
+      'accident-pedestrian': '🚶 Pedestrian Accident',
+      'accident-fire': '🔥 Fire',
+      'accident-medical': '🏥 Medical Emergency',
+      'safety-hazard': '⚠️ Safety Hazard',
+      'safety-infrastructure': '🏗️ Infrastructure Issue',
+      'safety-environmental': '🌍 Environmental Hazard',
+      'other': '❓ Other Incident'
+    };
+    
+    return typeMap[incidentType] || `❓ ${incidentType}`;
+  }
+
+  private getRiskLevelEmoji(riskLevel: number): string {
+    switch (riskLevel) {
+      case 1: return '🟢'; // Green - Low risk
+      case 2: return '🟡'; // Yellow - Moderate risk
+      case 3: return '🟠'; // Orange - High risk
+      case 4: return '🔴'; // Red - Critical risk
+      case 5: return '🔴'; // Dark Red - Extreme risk
+      default: return '⚪';
+    }
   }
 
   private getRiskLevelText(riskLevel: number): string {
@@ -2833,10 +3116,51 @@ export class HomePage implements OnInit, OnDestroy {
     }
   }
 
+  private getRiskWarningMessage(riskLevel: number): string {
+    switch (riskLevel) {
+      case 5:
+        return 'Leave this area immediately and stay alert!';
+      case 4:
+        return 'Consider leaving this area immediately!';
+      case 3:
+        return 'Stay alert and exercise caution!';
+      case 2:
+        return 'Stay aware of your surroundings!';
+      case 1:
+        return 'Stay aware of your surroundings.';
+      default:
+        return 'Stay aware of your surroundings.';
+    }
+  }
+
+  private getHeatmapEmojiForRiskLevel(riskLevel: number): string {
+    switch (riskLevel) {
+      case 1: return '🟢'; // Green - Low risk
+      case 2: return '🟡'; // Yellow - Moderate risk
+      case 3: return '🟠'; // Orange - High risk
+      case 4: return '🔴'; // Red - Critical risk
+      case 5: return '🔴'; // Dark Red - Extreme risk
+      default: return '⚪';
+    }
+  }
+
+  private getHeatmapColorName(riskLevel: number): string {
+    switch (riskLevel) {
+      case 1: return 'Green (Low)';
+      case 2: return 'Yellow (Moderate)';
+      case 3: return 'Orange (High)';
+      case 4: return 'Red (Critical)';
+      case 5: return 'Dark Red (Extreme)';
+      default: return 'Unknown';
+    }
+  }
+
   private getZoneRadiusMeters(riskLevel: number): number {
-    // Increased radius for more practical zone detection
-    // 15 meters radius for all risk levels - allows for reasonable proximity detection
-    return 15;
+    // Combined radius for blue dot intersection detection
+    // Blue dot is 16px diameter (~8cm radius), heatmap is 15cm radius
+    const heatmapRadius = 0.15; // 15 centimeters radius - matches visual heatmap zones on map
+    const blueDotRadius = 0.08; // 8 centimeters radius (16px diameter at typical zoom levels)
+    return heatmapRadius + blueDotRadius; // Combined radius for intersection detection
   }
 
   private generateZoneId(): string {
@@ -2867,53 +3191,49 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   private async showHeatmapZoneAlert(incident: any, riskLevel: number, zoneId: string) {
-    const alertTitle = riskLevel >= 5 ? `🚨 EXTREME ZONE ENTERED!` : 
-                      riskLevel >= 4 ? `🚨 CRITICAL ZONE ENTERED!` : 
-                      riskLevel >= 3 ? `⚠️ HIGH RISK ZONE ENTERED!` : 
-                      riskLevel >= 2 ? `⚠️ MODERATE ZONE ENTERED!` : 
-                      `📍 LOW RISK ZONE ENTERED!`;
+    // Professional alert titles
+    const alertTitle = riskLevel >= 5 ? `EXTREME RISK ZONE ENTERED` : 
+                      riskLevel >= 4 ? `CRITICAL RISK ZONE ENTERED` : 
+                      riskLevel >= 3 ? `HIGH RISK ZONE ENTERED` : 
+                      riskLevel >= 2 ? `MODERATE RISK ZONE ENTERED` : 
+                      `LOW RISK ZONE ENTERED`;
     
-    const alertMessage = riskLevel >= 5 ? 
-      `🚨 You have entered an EXTREME RISK zone!\n\n` +
-      `📍 Location: ${incident.locationAddress || incident.location.fullAddress || incident.location.simplifiedAddress || 'Unknown'}\n` +
-      `📊 Risk Level: ${riskLevel}/5 (${this.getRiskLevelText(riskLevel)})\n` +
-      `📝 Incident: ${incident.type || 'Unknown'}\n` +
-      `📅 Reported: ${incident.createdAt ? new Date(incident.createdAt).toLocaleDateString() : 'Unknown'}\n\n` +
-      `🚨 IMMEDIATE DANGER: Leave this area immediately and stay alert!` :
-      riskLevel >= 4 ? 
-      `⚠️ You have entered a CRITICAL RISK zone!\n\n` +
-      `📍 Location: ${incident.locationAddress || incident.location.fullAddress || incident.location.simplifiedAddress || 'Unknown'}\n` +
-      `📊 Risk Level: ${riskLevel}/5 (${this.getRiskLevelText(riskLevel)})\n` +
-      `📝 Incident: ${incident.type || 'Unknown'}\n` +
-      `📅 Reported: ${incident.createdAt ? new Date(incident.createdAt).toLocaleDateString() : 'Unknown'}\n\n` +
-      `🚨 HIGH DANGER: Consider leaving this area immediately!` :
-      riskLevel >= 3 ?
-      `⚠️ You have entered a HIGH RISK zone!\n\n` +
-      `📍 Location: ${incident.locationAddress || incident.location.fullAddress || incident.location.simplifiedAddress || 'Unknown'}\n` +
-      `📊 Risk Level: ${riskLevel}/5 (${this.getRiskLevelText(riskLevel)})\n` +
-      `📝 Incident: ${incident.type || 'Unknown'}\n` +
-      `📅 Reported: ${incident.createdAt ? new Date(incident.createdAt).toLocaleDateString() : 'Unknown'}\n\n` +
-      `⚠️ HIGH RISK: Stay alert and exercise caution!` :
-      riskLevel >= 2 ?
-      `⚠️ You have entered a MODERATE RISK zone!\n\n` +
-      `📍 Location: ${incident.locationAddress || incident.location.fullAddress || incident.location.simplifiedAddress || 'Unknown'}\n` +
-      `📊 Risk Level: ${riskLevel}/5 (${this.getRiskLevelText(riskLevel)})\n` +
-      `📝 Incident: ${incident.type || 'Unknown'}\n` +
-      `📅 Reported: ${incident.createdAt ? new Date(incident.createdAt).toLocaleDateString() : 'Unknown'}\n\n` +
-      `⚠️ MODERATE RISK: Stay aware of your surroundings!` :
-      `📍 You have entered a LOW RISK zone!\n\n` +
-      `📍 Location: ${incident.locationAddress || incident.location.fullAddress || incident.location.simplifiedAddress || 'Unknown'}\n` +
-      `📊 Risk Level: ${riskLevel}/5 (${this.getRiskLevelText(riskLevel)})\n` +
-      `📝 Incident: ${incident.type || 'Unknown'}\n` +
-      `📅 Reported: ${incident.createdAt ? new Date(incident.createdAt).toLocaleDateString() : 'Unknown'}\n\n` +
-      `📍 LOW RISK: Stay aware of your surroundings.`;
+    // Get clean data
+    const location = incident.locationAddress || 
+                    incident.location?.fullAddress || 
+                    incident.location?.simplifiedAddress || 
+                    'Location Not Available';
+    
+    const incidentType = incident.type || 'Unknown Incident';
+    
+    const reportedDate = incident.createdAt ? 
+                        new Date(incident.createdAt).toLocaleDateString() : 
+                        'Date Not Available';
+    
+    // Create enhanced message with icons and better formatting
+    const alertMessage = `🚨 You have entered a ${this.getRiskLevelText(riskLevel).toUpperCase()} RISK zone!
+
+📍 Location:
+${location}
+
+⚠️ Risk Level:
+${riskLevel}/5 (${this.getRiskLevelText(riskLevel)})
+
+🔍 Incident Type:
+${this.getIncidentTypeDisplay(incidentType)}
+
+📅 Reported:
+${reportedDate}
+
+${this.getRiskLevelEmoji(riskLevel)} ${this.getRiskLevelText(riskLevel).toUpperCase()} RISK:
+${this.getRiskWarningMessage(riskLevel)}`;
 
     const alert = await this.alertController.create({
       header: alertTitle,
       message: alertMessage,
       buttons: [
         {
-          text: 'I Understand',
+          text: 'OK',
           handler: () => {
             this.alertAcknowledged = true;
             this.lastAlertedZoneId = zoneId;
@@ -2921,7 +3241,7 @@ export class HomePage implements OnInit, OnDestroy {
           }
         }
       ],
-      cssClass: `zone-alert-${this.getAlertClassForRiskLevel(riskLevel)} full-screen-alert`,
+      cssClass: `zone-alert-${this.getAlertClassForRiskLevel(riskLevel)} full-screen-alert card-style-alert`,
       backdropDismiss: false,
       translucent: false
     });
@@ -2931,11 +3251,8 @@ export class HomePage implements OnInit, OnDestroy {
     console.log('🚨 Heatmap zone alert shown:', alertTitle);
   }
 
-  private checkAndNotifyZoneChanges(previousStatus: 'safe' | 'warning' | 'danger', wasInZone: boolean) {
+  private checkAndNotifyZoneChanges(previousStatus: 'safe' | 'warning' | 'danger', wasInZone: boolean, location?: { lat: number; lng: number }) {
     const now = Date.now();
-    if (now - this.lastNotificationTime < 10000) {
-      return;
-    }
 
     console.log('📍 Zone detection active - checking for zone entry alerts');
     console.log('📍 Current status:', {
@@ -2950,16 +3267,20 @@ export class HomePage implements OnInit, OnDestroy {
 
     // Check if user entered a heatmap zone - now includes ALL risk levels
     if (!wasInZone && this.inDangerZone) {
-      this.lastNotificationTime = now;
+      // Only apply cooldown for UI alerts, not for ringtone
+      const shouldShowAlert = now - this.lastNotificationTime >= 10000;
       
-      const nearestIncident = this.validatedReports
+      if (shouldShowAlert) {
+        this.lastNotificationTime = now;
+        
+        const nearestIncident = this.validatedReports
         .filter(report => {
           const distance = this.calculateDistance(
             this.currentLocation!.lat, this.currentLocation!.lng,
             report.location.lat, report.location.lng
           );
           const riskLevel = report.level || report.riskLevel || 1;
-          return distance * 1000 <= 25 && riskLevel >= 1 && riskLevel <= 5;
+          return distance * 1000 <= 100 && riskLevel >= 1 && riskLevel <= 5;
         })
         .sort((a, b) => {
           const distA = this.calculateDistance(this.currentLocation!.lat, this.currentLocation!.lng, a.location.lat, a.location.lng);
@@ -2975,20 +3296,27 @@ export class HomePage implements OnInit, OnDestroy {
           this.showHeatmapZoneAlert(nearestIncident, riskLevel, currentZoneId);
         }
         
-        // Start ringtone if not already playing (for all risk levels)
-        if (!this.alertSoundInterval) {
-          this.startContinuousAlertSoundForRiskLevel(riskLevel);
+        // Always trigger ringtone immediately when entering zone (no cooldown)
+        if (riskLevel >= 1) { // Play ringtone for ALL risk levels
+          console.log(`🔊 Triggering ringtone immediately for zone entry (Risk Level ${riskLevel})`);
+          this.zoneNotificationService.playRingtoneAlert(this.getLevelFromRiskLevel(riskLevel));
         }
         
         console.log(`🔊 HEATMAP ZONE ALERT (Risk Level ${riskLevel}):`, nearestIncident.type);
+      }
       }
       return;
     }
 
     // Check if user exited the zone
     if (wasInZone && !this.inDangerZone) {
-      console.log('📍 User exited heatmap zone - stopping ringtone');
-      this.stopAlertSound();
+      console.log('📍 User exited heatmap zone - stopping ringtone explicitly');
+      // Explicitly stop the ringtone when exiting zone
+      this.zoneNotificationService.stopRingtone();
+      // Force zone re-evaluation to ensure ZoneNotificationService detects zone exit
+      if (location) {
+        this.zoneNotificationService.forceZoneReevaluation(location);
+      }
       this.alertAcknowledged = false;
       this.lastAlertedZoneId = null;
     }
@@ -3021,218 +3349,6 @@ export class HomePage implements OnInit, OnDestroy {
         console.log('ℹ️ Nearby Reports Info:', this.nearbyReportsCount, 'reports within 1km');
       }
     }
-  }
-
-  private startContinuousAlertSound(zoneLevel: string) {
-    this.stopAlertSound();
-    
-    try {
-      const audio = new Audio();
-      
-      let ringtoneFile: string;
-      let interval: number;
-      
-      ringtoneFile = '/assets/sounds/GuardianCare - Ringtone.mp3';
-      
-      switch (zoneLevel.toLowerCase()) {
-        case 'danger':
-          interval = 2500;
-          break;
-        case 'caution':
-          interval = 3500;
-          break;
-        default:
-          interval = 4500;
-      }
-      
-      audio.src = ringtoneFile;
-      audio.volume = 0.8;
-      audio.loop = false;
-      
-      const playRingtone = () => {
-        if (audio.paused || audio.ended) {
-          audio.currentTime = 0;
-          audio.play().catch(error => {
-            console.warn('Could not play ringtone:', error);
-          });
-        }
-      };
-      
-      playRingtone();
-      
-      this.vibrateDevice();
-      
-      this.alertSoundInterval = setInterval(() => {
-        playRingtone();
-        if (Math.random() < 0.4) { 
-          this.vibrateDevice();
-        }
-      }, interval);
-      
-
-      this.currentAlertSound = audio;
-      
-      console.log('🔊 Continuous ringtone alert started:', zoneLevel, `(${ringtoneFile}, ${interval}ms interval)`);
-    } catch (error) {
-      console.warn('Could not start ringtone alert:', error);
-    }
-  }
-  
-  private startContinuousAlertSoundForRiskLevel(riskLevel: number) {
-    this.stopAlertSound();
-    
-    try {
-      const audio = new Audio();
-      
-      let ringtoneFile: string;
-      let interval: number;
-      
-      ringtoneFile = '/assets/sounds/GuardianCare - Ringtone.mp3';
-      
-      switch (riskLevel) {
-        case 1:
-          interval = 10000; 
-          break;
-        case 2:
-          interval = 8000; 
-          break;
-        case 3:
-          interval = 6000; 
-          break;
-        case 4:
-          interval = 4000; 
-          break;
-        case 5:
-          interval = 2000; 
-          break;
-        default:
-          interval = 8000; 
-      }
-      
-      audio.src = ringtoneFile;
-      audio.volume = 0.8;
-      audio.loop = false; 
-      
-
-      const playRingtone = () => {
-        if (audio.paused || audio.ended) {
-          audio.currentTime = 0; 
-          audio.play().catch(error => {
-            console.warn('Could not play ringtone:', error);
-          });
-        }
-      };
-      
-      playRingtone();
-      
-      this.vibrateDevice();
-      
-      this.alertSoundInterval = setInterval(() => {
-        playRingtone();
-        if (Math.random() < 0.4) {
-          this.vibrateDevice();
-        }
-      }, interval);
-      
-      this.currentAlertSound = audio;
-      
-      console.log('🔊 Continuous ringtone alert started for risk level:', riskLevel, `(${ringtoneFile}, ${interval}ms interval)`);
-    } catch (error) {
-      console.warn('Could not start ringtone alert for risk level:', riskLevel, error);
-    }
-  }
-  
-  private stopAlertSound() {
-    if (this.alertSoundInterval) {
-      clearInterval(this.alertSoundInterval);
-      this.alertSoundInterval = null;
-      console.log('🔇 Alert sound stopped');
-    }
-    
-    if (this.currentAlertSound) {
-      try {
-        this.currentAlertSound.pause();
-        this.currentAlertSound.currentTime = 0;
-        this.currentAlertSound = null;
-        console.log('🔇 Ringtone stopped');
-      } catch (error) {
-        console.warn('Error stopping ringtone:', error);
-      }
-    }
-    
-    // Reset acknowledgment state when sound is stopped
-    this.alertAcknowledged = false;
-    this.lastAlertedZoneId = null;
-  }
-  
-  private async showZoneAlert(icon: string, title: string, message: string, zoneLevel: string) {
-    const alert = await this.alertController.create({
-      header: `${icon} ${title}`,
-      message: message,
-      buttons: [
-        {
-          text: 'View Safety Tips',
-          handler: () => {
-            this.showZoneSafetyTips(zoneLevel);
-          }
-        },
-        {
-          text: 'OK',
-          role: 'cancel',
-          handler: () => {
-            // Don't stop the ringtone - let it continue after acknowledgment
-            console.log('✅ Alert acknowledged - ringtone continues');
-          }
-        }
-      ],
-      cssClass: `zone-alert-${zoneLevel.toLowerCase()} full-screen-alert`,
-      backdropDismiss: false,
-      translucent: false
-    });
-    
-    await alert.present();
-    
-    console.log('🚨 Full-screen zone alert dialog shown:', title);
-  }
-  
-  private async showZoneSafetyTips(zoneLevel: string) {
-    let tips = '';
-    
-    switch (zoneLevel.toLowerCase()) {
-      case 'danger':
-        tips = `🚨 DANGER ZONE SAFETY TIPS:\n\n` +
-               `• Consider leaving the area immediately\n` +
-               `• Keep emergency contacts ready\n` +
-               `• Stay in well-lit, populated areas\n` +
-               `• Avoid isolated locations\n` +
-               `• Use the panic button if you feel threatened\n` +
-               `• Trust your instincts`;
-        break;
-      case 'caution':
-        tips = `⚠️ CAUTION ZONE SAFETY TIPS:\n\n` +
-               `• Stay alert and aware of your surroundings\n` +
-               `• Keep your phone accessible\n` +
-               `• Avoid walking alone if possible\n` +
-               `• Stay in populated areas\n` +
-               `• Be observant of unusual activity\n` +
-               `• Have emergency contacts ready`;
-        break;
-      default:
-        tips = `ℹ️ GENERAL SAFETY TIPS:\n\n` +
-               `• Stay aware of your surroundings\n` +
-               `• Keep your phone charged\n` +
-               `• Share your location with trusted contacts\n` +
-               `• Be observant of your environment`;
-    }
-    
-    const tipsAlert = await this.alertController.create({
-      header: '📋 Safety Tips',
-      message: tips,
-      buttons: ['Close'],
-      cssClass: 'zone-recommendations-alert'
-    });
-    
-    await tipsAlert.present();
   }
 
   private isPointInPolygon(lat: number, lng: number, coordinates: [number, number][]): boolean {
@@ -3280,61 +3396,58 @@ export class HomePage implements OnInit, OnDestroy {
     }
   }
 
+  private getCurrentRiskLevel(): number | null {
+    // Priority 1: If user is in a heatmap zone detected by zone notification service
+    const zoneStatus = this.zoneNotificationService.getZoneStatus();
+    const currentZone = zoneStatus.currentZone;
+    
+    if (currentZone && currentZone.riskLevel) {
+      console.log('🔍 getCurrentRiskLevel: Using zone notification service risk level:', currentZone.riskLevel);
+      return currentZone.riskLevel;
+    }
+    
+    // Priority 2: If user is in a heatmap zone detected by local system
+    if (this.inDangerZone && this.currentZoneRiskLevel !== null && this.currentZoneRiskLevel !== undefined) {
+      console.log('🔍 getCurrentRiskLevel: Using local system risk level:', this.currentZoneRiskLevel);
+      return this.currentZoneRiskLevel;
+    }
+    
+    
+    console.log('🔍 getCurrentRiskLevel: No risk level detected');
+    return null;
+  }
+
   getSafetyStatusClass(): string {
-    // Use currentZoneRiskLevel if available
-    if (this.currentZoneRiskLevel !== null && this.currentZoneRiskLevel !== undefined) {
-      switch (this.currentZoneRiskLevel) {
-        case 1: return 'low-risk';
-        case 2: return 'moderate-risk';
-        case 3: return 'high-risk';
-        case 4: return 'critical-risk';
-        case 5: return 'extreme-risk';
-        default: return 'low-risk';
-      }
+    const riskLevel = this.getCurrentRiskLevel();
+    
+    if (riskLevel === null) {
+      return 'safe';
     }
     
-    // If in danger zone but no specific risk level, determine from nearby reports
-    if (this.inDangerZone && this.hasNearbyReports && this.nearbyReportsCount > 0) {
-      const nearbyReports = this.validatedReports.filter(report => {
-        if (!this.currentLocation) return false;
-        const distance = this.calculateDistance(
-          this.currentLocation.lat,
-          this.currentLocation.lng,
-          report.location.lat,
-          report.location.lng
-        );
-        return distance * 1000 <= 30; // Within 30m
-      });
-      
-      if (nearbyReports.length > 0) {
-        const highestRiskLevel = nearbyReports.reduce((max, report) => 
-          Math.max(max, report.level || report.riskLevel || 1), 1
-        );
-        
-        switch (highestRiskLevel) {
-          case 1: return 'low-risk';
-          case 2: return 'moderate-risk';
-          case 3: return 'high-risk';
-          case 4: return 'critical-risk';
-          case 5: return 'extreme-risk';
-          default: return 'low-risk';
-        }
-      }
+    switch (riskLevel) {
+      case 1: return 'level-1'; // Green - Low risk
+      case 2: return 'level-2'; // Yellow - Moderate risk
+      case 3: return 'level-3'; // Orange - High risk
+      case 4: return 'level-4'; // Red - Critical risk
+      case 5: return 'level-5'; // Dark Red - Extreme risk
+      default: return 'level-1';
     }
-    
-    return 'low-risk'; // Default to low-risk when not in any specific zone
   }
 
   getSafetyIcon(): string {
-    switch (this.safetyStatus) {
-      case 'safe':
-        return 'shield-checkmark-outline';
-      case 'warning':
-        return 'alert-circle-outline';
-      case 'danger':
-        return 'warning-outline';
-      default:
-        return 'shield-outline';
+    const riskLevel = this.getCurrentRiskLevel();
+    
+    if (riskLevel === null) {
+      return 'shield-checkmark-outline';
+    }
+    
+    switch (riskLevel) {
+      case 1: return 'shield-checkmark-outline'; // Green - Low risk
+      case 2: return 'alert-circle-outline'; // Yellow - Moderate risk
+      case 3: return 'warning-outline'; // Orange - High risk
+      case 4: return 'warning-outline'; // Red - Critical risk
+      case 5: return 'alert-circle'; // Dark Red - Extreme risk (filled)
+      default: return 'shield-outline';
     }
   }
 

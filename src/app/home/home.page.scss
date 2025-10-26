@@ -13,7 +13,7 @@
 }
 
 .modern-content {
-  --background: #f5f7fa;
+  --background: #ffffff;
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -38,11 +38,9 @@ ion-content {
   position: sticky;
   top: 0;
   z-index: 1000;
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  background: #ffffff;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   animation: slideDownFade 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -217,7 +215,7 @@ ion-content {
   transition: all 0.3s ease;
   
   &.safe {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.9));
+    background: #ffffff;
     border: 1px solid rgba(209, 213, 219, 0.5);
     color: #374151;
   }
@@ -235,7 +233,7 @@ ion-content {
   
   // Risk level specific colors matching heatmap legend
   &.low-risk {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(52, 211, 153, 0.15));
+    background: #ffffff;
     border: 1px solid rgba(16, 185, 129, 0.3);
   }
   
@@ -260,6 +258,39 @@ ion-content {
     border: 1px solid rgba(220, 38, 38, 0.3);
     animation: dangerGlow 1.5s ease-in-out infinite;
   }
+  
+  &.no-heatmap-zone {
+    background: #ffffff;
+    border: 1px solid rgba(107, 114, 128, 0.3);
+  }
+  
+  // Heatmap level classes (level-1 to level-5)
+  &.level-1 {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(52, 211, 153, 0.15));
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+  
+  &.level-2 {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(252, 211, 77, 0.15));
+    border: 1px solid rgba(251, 191, 36, 0.3);
+  }
+  
+  &.level-3 {
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(251, 146, 60, 0.15));
+    border: 1px solid rgba(249, 115, 22, 0.3);
+  }
+  
+  &.level-4 {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(248, 113, 113, 0.15));
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    animation: dangerGlow 2s ease-in-out infinite;
+  }
+  
+  &.level-5 {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.15), rgba(239, 68, 68, 0.15));
+    border: 1px solid rgba(220, 38, 38, 0.3);
+    animation: dangerGlow 1.5s ease-in-out infinite;
+  }
 }
 
 .safety-icon-box {
@@ -273,7 +304,7 @@ ion-content {
   flex-shrink: 0;
   
   .safe & {
-    background: rgba(255, 255, 255, 0.8);
+    background: #ffffff;
     color: #6b7280;
   }
   
@@ -289,7 +320,7 @@ ion-content {
   
   // Risk level specific icon colors matching heatmap legend
   .low-risk & {
-    background: rgba(16, 185, 129, 0.2);
+    background: #ffffff;
     color: #059669;
   }
   
@@ -309,6 +340,37 @@ ion-content {
   }
   
   .extreme-risk & {
+    background: rgba(220, 38, 38, 0.2);
+    color: #b91c1c;
+  }
+  
+  .no-heatmap-zone & {
+    background: #ffffff;
+    color: #6b7280;
+  }
+  
+  // Heatmap level specific icon colors (level-1 to level-5)
+  .level-1 & {
+    background: rgba(16, 185, 129, 0.2);
+    color: #059669;
+  }
+  
+  .level-2 & {
+    background: rgba(251, 191, 36, 0.2);
+    color: #d97706;
+  }
+  
+  .level-3 & {
+    background: rgba(249, 115, 22, 0.2);
+    color: #ea580c;
+  }
+  
+  .level-4 & {
+    background: rgba(239, 68, 68, 0.2);
+    color: #dc2626;
+  }
+  
+  .level-5 & {
     background: rgba(220, 38, 38, 0.2);
     color: #b91c1c;
   }
@@ -335,6 +397,14 @@ ion-content {
   .high-risk & { color: #ea580c; }
   .critical-risk & { color: #dc2626; }
   .extreme-risk & { color: #b91c1c; }
+  .no-heatmap-zone & { color: #6b7280; }
+  
+  // Heatmap level specific text colors (level-1 to level-5)
+  .level-1 & { color: #059669; }
+  .level-2 & { color: #d97706; }
+  .level-3 & { color: #ea580c; }
+  .level-4 & { color: #dc2626; }
+  .level-5 & { color: #b91c1c; }
 }
 
 .safety-description {
@@ -354,6 +424,14 @@ ion-content {
   .high-risk & { color: #ea580c; }
   .critical-risk & { color: #dc2626; }
   .extreme-risk & { color: #b91c1c; }
+  .no-heatmap-zone & { color: #6b7280; }
+  
+  // Heatmap level specific description colors (level-1 to level-5)
+  .level-1 & { color: #059669; }
+  .level-2 & { color: #d97706; }
+  .level-3 & { color: #ea580c; }
+  .level-4 & { color: #dc2626; }
+  .level-5 & { color: #b91c1c; }
   
   // Ensure bold text is properly styled
   strong {
@@ -426,6 +504,43 @@ ion-content {
   letter-spacing: 0.3px;
 }
 
+.no-incidents-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 12px;
+  flex: 1;
+  background: #ffffff;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.no-incidents-icon-box {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.no-incidents-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.no-incidents-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #10b981;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
 .modern-legend {
   position: absolute;
   bottom: 80px;
@@ -450,11 +565,12 @@ ion-content {
   gap: 8px;
   margin-bottom: 12px;
   color: #1f2937;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   
   ion-icon {
     font-size: 18px;
+    color: #6366f1;
   }
 }
 
@@ -468,9 +584,9 @@ ion-content {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 12px;
+  font-size: 14px;
   color: #4b5563;
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .legend-color {
@@ -915,21 +1031,175 @@ button:active .fab-ripple {
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  .app-header,
-  .legend-card {
-    background: rgba(30, 30, 30, 0.95);
-    border-color: rgba(255, 255, 255, 0.1);
-    
-    .location-address,
-    .legend-header {
-      color: #e5e7eb;
+/* Dark mode disabled - keeping white theme */
+
+// Card-Style Alert - Force override Ionic defaults
+.card-style-alert {
+  // Ultra-specific targeting for Ionic alerts
+  &.zone-alert-warning {
+    .alert-wrapper {
+      background: linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(251, 146, 60, 0.15)) !important;
+      border: 1px solid rgba(249, 115, 22, 0.3) !important;
+      border-radius: 12px !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+      
+      .alert-head {
+        background: transparent !important;
+        border-radius: 12px 12px 0 0 !important;
+        padding: 16px 20px !important;
+        
+        h2 {
+          color: #ea580c !important;
+          font-size: 16px !important;
+          font-weight: 700 !important;
+          text-transform: uppercase !important;
+          letter-spacing: 0.5px !important;
+          margin: 0 !important;
+        }
+      }
+      
+      .alert-message {
+        color: #ea580c !important;
+        font-size: 12px !important;
+        font-weight: 500 !important;
+        line-height: 1.3 !important;
+        padding: 16px 20px !important;
+        white-space: pre-line !important;
+        
+        strong {
+          font-weight: 700 !important;
+          font-size: 13px !important;
+        }
+      }
+      
+      .alert-button-group {
+        background: transparent !important;
+        border-radius: 0 0 12px 12px !important;
+        
+        button {
+          background: #ea580c !important;
+          color: #ffffff !important;
+          border: none !important;
+          border-radius: 0 0 12px 12px !important;
+          font-size: 14px !important;
+          font-weight: 600 !important;
+          padding: 12px 20px !important;
+          text-transform: none !important;
+          margin: 0 !important;
+        }
+      }
     }
+  }
+}
+
+// Global override for all alerts with our classes
+.zone-alert-warning.card-style-alert {
+  .alert-wrapper {
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(251, 146, 60, 0.15)) !important;
+    border: 1px solid rgba(249, 115, 22, 0.3) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  }
+  
+  .alert-head {
+    background: transparent !important;
+    border-radius: 12px 12px 0 0 !important;
+    padding: 16px 20px !important;
     
-    .location-coords,
-    .safety-description,
-    .legend-item {
-      color: #9ca3af;
+    h2 {
+      color: #ea580c !important;
+      font-size: 16px !important;
+      font-weight: 700 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.5px !important;
+      margin: 0 !important;
+    }
+  }
+  
+  .alert-message {
+    color: #ea580c !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    line-height: 1.3 !important;
+    padding: 16px 20px !important;
+    white-space: pre-line !important;
+    
+    strong {
+      font-weight: 700 !important;
+      font-size: 13px !important;
+    }
+  }
+  
+  .alert-button-group {
+    background: transparent !important;
+    border-radius: 0 0 12px 12px !important;
+    
+    button {
+      background: #ea580c !important;
+      color: #ffffff !important;
+      border: none !important;
+      border-radius: 0 0 12px 12px !important;
+      font-size: 14px !important;
+      font-weight: 600 !important;
+      padding: 12px 20px !important;
+      text-transform: none !important;
+      margin: 0 !important;
+    }
+  }
+}
+
+// Additional global overrides for Ionic alerts
+ion-alert.zone-alert-warning.card-style-alert {
+  .alert-wrapper {
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(251, 146, 60, 0.15)) !important;
+    border: 1px solid rgba(249, 115, 22, 0.3) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  }
+  
+  .alert-head {
+    background: transparent !important;
+    border-radius: 12px 12px 0 0 !important;
+    padding: 16px 20px !important;
+    
+    h2 {
+      color: #ea580c !important;
+      font-size: 16px !important;
+      font-weight: 700 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.5px !important;
+      margin: 0 !important;
+    }
+  }
+  
+  .alert-message {
+    color: #ea580c !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    line-height: 1.3 !important;
+    padding: 16px 20px !important;
+    white-space: pre-line !important;
+    
+    strong {
+      font-weight: 700 !important;
+      font-size: 13px !important;
+    }
+  }
+  
+  .alert-button-group {
+    background: transparent !important;
+    border-radius: 0 0 12px 12px !important;
+    
+    button {
+      background: #ea580c !important;
+      color: #ffffff !important;
+      border: none !important;
+      border-radius: 0 0 12px 12px !important;
+      font-size: 14px !important;
+      font-weight: 600 !important;
+      padding: 12px 20px !important;
+      text-transform: none !important;
+      margin: 0 !important;
     }
   }
 }
@@ -947,36 +1217,57 @@ button:active .fab-ripple {
     top: 50% !important;
     left: 50% !important;
     transform: translate(-50%, -50%) !important;
-    border-radius: 16px !important;
+    border-radius: 20px !important;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     
     .alert-head {
       padding: 24px 20px !important;
-      border-radius: 16px 16px 0 0 !important;
+      border-radius: 20px 20px 0 0 !important;
       
       h2 {
-        font-size: 24px !important;
-        font-weight: 800 !important;
+        font-size: 22px !important;
+        font-weight: 700 !important;
         text-align: center !important;
         margin: 0 !important;
+        line-height: 1.3 !important;
+        letter-spacing: 0.5px !important;
       }
       
       .alert-sub-title {
         font-size: 16px !important;
         text-align: center !important;
         margin-top: 8px !important;
+        opacity: 0.9 !important;
       }
     }
     
     .alert-message {
-      padding: 30px 24px !important;
-      font-size: 18px !important;
+      padding: 32px 24px !important;
+      font-size: 16px !important;
       line-height: 1.8 !important;
-      text-align: center !important;
+      text-align: left !important;
       flex: 1 !important;
       display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
+      align-items: flex-start !important;
+      justify-content: flex-start !important;
+      font-weight: 400 !important;
+      white-space: pre-line !important;
+      word-wrap: break-word !important;
+      overflow-wrap: break-word !important;
+      
+      // Better spacing for professional look
+      strong {
+        font-weight: 600 !important;
+        color: inherit !important;
+      }
+      
+      // Ensure proper line breaks
+      br {
+        display: block !important;
+        margin: 8px 0 !important;
+        content: "" !important;
+      }
     }
     
     .alert-button-group {
@@ -984,15 +1275,16 @@ button:active .fab-ripple {
       padding: 0 !important;
       
       button {
-        font-size: 16px !important;
-        font-weight: 700 !important;
-        padding: 16px 24px !important;
-        min-height: 56px !important;
-        text-transform: uppercase !important;
-        letter-spacing: 1px !important;
+        font-size: 18px !important;
+        font-weight: 600 !important;
+        padding: 18px 24px !important;
+        min-height: 60px !important;
+        text-transform: none !important;
+        letter-spacing: 0.3px !important;
+        border-radius: 0 0 20px 20px !important;
         
         &:first-child {
-          border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+          border-right: none !important;
         }
       }
     }

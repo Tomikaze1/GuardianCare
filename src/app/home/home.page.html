@@ -46,7 +46,16 @@
             <ion-icon name="warning-outline"></ion-icon>
           </div>
           <div class="incidents-info">
-            <div class="incidents-title">{{ nearbyReportsCount }} Incidents Nearby<span *ngIf="nearestZoneDistance !== null"> • {{ getNearestDistanceText() }} away</span></div>
+            <div class="incidents-title">{{ nearbyReportsCount }} Incidents Within 1KM<span *ngIf="nearestZoneDistance !== null"> • Nearest {{ getNearestDistanceText() }} away</span></div>
+          </div>
+        </div>
+        
+        <div class="no-incidents-row" *ngIf="!hasNearbyReports && currentLocation">
+          <div class="no-incidents-icon-box">
+            <ion-icon name="checkmark-circle-outline"></ion-icon>
+          </div>
+          <div class="no-incidents-info">
+            <div class="no-incidents-title">No incidents within 1KM</div>
           </div>
         </div>
       </div>
@@ -100,6 +109,7 @@
       <ion-icon name="flame-outline"></ion-icon>
       <div class="fab-ripple"></div>
     </button>
+    
   </div>
   
 

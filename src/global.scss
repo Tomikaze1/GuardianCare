@@ -39,6 +39,314 @@
   }
 }
 
+// Zone alert dialog styles - Updated to match notification card styling
+.zone-alert-info {
+  .alert-wrapper {
+    background: #ffffff !important;
+    border: 2px solid rgba(16, 185, 129, 0.4) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+    max-width: 90vw !important;
+    width: 90vw !important;
+  }
+  
+  .alert-head {
+    background: transparent !important;
+    border-radius: 16px 16px 0 0 !important;
+    padding: 20px 24px 16px 24px !important;
+    
+    h2 {
+      color: #059669 !important;
+      font-size: 18px !important;
+      font-weight: 800 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 1px !important;
+      margin: 0 !important;
+      text-align: center !important;
+    }
+  }
+  
+  .alert-message {
+    color: #059669 !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    line-height: 1.5 !important;
+    padding: 20px 24px !important;
+    white-space: pre-line !important;
+    
+    strong {
+      font-weight: 800 !important;
+      font-size: 15px !important;
+    }
+  }
+  
+  .alert-button-group {
+    background: transparent !important;
+    border-radius: 0 0 16px 16px !important;
+    padding: 0 24px 20px 24px !important;
+    
+    button {
+      background: #059669 !important;
+      color: #ffffff !important;
+      border: none !important;
+      border-radius: 8px !important;
+      font-size: 16px !important;
+      font-weight: 700 !important;
+      padding: 14px 24px !important;
+      text-transform: none !important;
+      margin: 0 !important;
+      width: 100% !important;
+      box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3) !important;
+    }
+  }
+}
+
+.zone-alert-moderate {
+  .alert-wrapper {
+    background: #ffffff !important;
+    border: 2px solid rgba(251, 191, 36, 0.4) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+    max-width: 90vw !important;
+    width: 90vw !important;
+  }
+  
+  .alert-head {
+    background: transparent !important;
+    border-radius: 16px 16px 0 0 !important;
+    padding: 20px 24px 16px 24px !important;
+    
+    h2 {
+      color: #d97706 !important;
+      font-size: 18px !important;
+      font-weight: 800 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 1px !important;
+      margin: 0 !important;
+      text-align: center !important;
+    }
+  }
+  
+  .alert-message {
+    color: #d97706 !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    line-height: 1.5 !important;
+    padding: 20px 24px !important;
+    white-space: pre-line !important;
+    
+    strong {
+      font-weight: 800 !important;
+      font-size: 15px !important;
+    }
+  }
+  
+  .alert-button-group {
+    background: transparent !important;
+    border-radius: 0 0 16px 16px !important;
+    padding: 0 24px 20px 24px !important;
+    
+    button {
+      background: #d97706 !important;
+      color: #ffffff !important;
+      border: none !important;
+      border-radius: 8px !important;
+      font-size: 16px !important;
+      font-weight: 700 !important;
+      padding: 14px 24px !important;
+      text-transform: none !important;
+      margin: 0 !important;
+      width: 100% !important;
+      box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3) !important;
+    }
+  }
+}
+
+.zone-alert-warning {
+  .alert-wrapper {
+    background: #ffffff !important;
+    border: 2px solid rgba(249, 115, 22, 0.4) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+    max-width: 90vw !important;
+    width: 90vw !important;
+  }
+  
+  .alert-head {
+    background: transparent !important;
+    border-radius: 16px 16px 0 0 !important;
+    padding: 20px 24px 16px 24px !important;
+    
+    h2 {
+      color: #ea580c !important;
+      font-size: 18px !important;
+      font-weight: 800 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 1px !important;
+      margin: 0 !important;
+      text-align: center !important;
+    }
+  }
+  
+  .alert-message {
+    color: #ea580c !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    line-height: 1.5 !important;
+    padding: 20px 24px !important;
+    white-space: pre-line !important;
+    
+    strong {
+      font-weight: 800 !important;
+      font-size: 15px !important;
+    }
+  }
+  
+  .alert-button-group {
+    background: transparent !important;
+    border-radius: 0 0 16px 16px !important;
+    padding: 0 24px 20px 24px !important;
+    
+    button {
+      background: #ea580c !important;
+      color: #ffffff !important;
+      border: none !important;
+      border-radius: 8px !important;
+      font-size: 16px !important;
+      font-weight: 700 !important;
+      padding: 14px 24px !important;
+      text-transform: none !important;
+      margin: 0 !important;
+      width: 100% !important;
+      box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3) !important;
+    }
+  }
+}
+
+.zone-alert-critical {
+  .alert-wrapper {
+    background: #ffffff !important;
+    border: 2px solid rgba(239, 68, 68, 0.4) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+    max-width: 90vw !important;
+    width: 90vw !important;
+    animation: dangerGlow 2s ease-in-out infinite !important;
+  }
+  
+  .alert-head {
+    background: transparent !important;
+    border-radius: 16px 16px 0 0 !important;
+    padding: 20px 24px 16px 24px !important;
+    
+    h2 {
+      color: #dc2626 !important;
+      font-size: 18px !important;
+      font-weight: 800 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 1px !important;
+      margin: 0 !important;
+      text-align: center !important;
+    }
+  }
+  
+  .alert-message {
+    color: #dc2626 !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    line-height: 1.5 !important;
+    padding: 20px 24px !important;
+    white-space: pre-line !important;
+    
+    strong {
+      font-weight: 800 !important;
+      font-size: 15px !important;
+    }
+  }
+  
+  .alert-button-group {
+    background: transparent !important;
+    border-radius: 0 0 16px 16px !important;
+    padding: 0 24px 20px 24px !important;
+    
+    button {
+      background: #dc2626 !important;
+      color: #ffffff !important;
+      border: none !important;
+      border-radius: 8px !important;
+      font-size: 16px !important;
+      font-weight: 700 !important;
+      padding: 14px 24px !important;
+      text-transform: none !important;
+      margin: 0 !important;
+      width: 100% !important;
+      box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3) !important;
+    }
+  }
+}
+
+.zone-alert-danger {
+  .alert-wrapper {
+    background: #ffffff !important;
+    border: 2px solid rgba(220, 38, 38, 0.4) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+    max-width: 90vw !important;
+    width: 90vw !important;
+    animation: dangerGlow 1.5s ease-in-out infinite !important;
+  }
+  
+  .alert-head {
+    background: transparent !important;
+    border-radius: 16px 16px 0 0 !important;
+    padding: 20px 24px 16px 24px !important;
+    
+    h2 {
+      color: #b91c1c !important;
+      font-size: 18px !important;
+      font-weight: 800 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 1px !important;
+      margin: 0 !important;
+      text-align: center !important;
+    }
+  }
+  
+  .alert-message {
+    color: #b91c1c !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    line-height: 1.5 !important;
+    padding: 20px 24px !important;
+    white-space: pre-line !important;
+    
+    strong {
+      font-weight: 800 !important;
+      font-size: 15px !important;
+    }
+  }
+  
+  .alert-button-group {
+    background: transparent !important;
+    border-radius: 0 0 16px 16px !important;
+    padding: 0 24px 20px 24px !important;
+    
+    button {
+      background: #b91c1c !important;
+      color: #ffffff !important;
+      border: none !important;
+      border-radius: 8px !important;
+      font-size: 16px !important;
+      font-weight: 700 !important;
+      padding: 14px 24px !important;
+      text-transform: none !important;
+      margin: 0 !important;
+      width: 100% !important;
+      box-shadow: 0 2px 8px rgba(185, 28, 28, 0.3) !important;
+    }
+  }
+}
+
 /* Core CSS required for Ionic components to work properly */
 @import "@ionic/angular/css/core.css";
 
@@ -64,7 +372,7 @@
 
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
-@import "@ionic/angular/css/palettes/dark.system.css";
+/* @import "@ionic/angular/css/palettes/dark.system.css"; */
 
 
 :root {

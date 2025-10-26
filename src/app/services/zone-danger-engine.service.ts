@@ -57,7 +57,6 @@ interface AlertSettings {
   enablePushNotifications: boolean;
   enableVibration: boolean;
   enableSound: boolean;
-  soundType: 'beep' | 'siren' | 'chime';
   vibrationPattern: number[];
   alertThreshold: number;
 }
@@ -90,7 +89,8 @@ export class ZoneDangerEngineService {
 
   private startPeriodicUpdates() {
     setInterval(() => this.updateAllZones(), 60 * 60 * 1000);
-    setInterval(() => this.checkForAlerts(), 30 * 1000);
+    // Disabled: setInterval(() => this.checkForAlerts(), 30 * 1000);
+    // Alert system is now handled by ZoneNotificationService to avoid duplication
   }
 
   public initializeZones() {
@@ -139,29 +139,33 @@ export class ZoneDangerEngineService {
   }
 
   private convertReportToZone(report: any): DangerZone {
-    const riskLevel = Number(report.riskLevel || report.level || report.validationLevel || 1);
+    // Use heatmap risk levels directly from admin validation
+    const heatmapRiskLevel = Number(report.riskLevel || report.level || report.validationLevel || 1);
     
     console.log(`🔍 convertReportToZone: ${report.locationAddress || report.location?.simplifiedAddress || 'Unknown'}`, {
       reportId: report.id,
       riskLevel: report.riskLevel,
       level: report.level,
       validationLevel: report.validationLevel,
-      finalRiskLevel: riskLevel,
+      finalHeatmapRiskLevel: heatmapRiskLevel,
       type: report.type,
       status: report.status
     });
     
-    const currentSeverity = (riskLevel / 5) * 10;
+    const currentSeverity = (heatmapRiskLevel / 5) * 10;
     
+    // Map heatmap risk levels to zone levels for compatibility
     let level: 'Safe' | 'Neutral' | 'Caution' | 'Danger';
-    if (riskLevel <= 1) {
-      level = 'Safe';
-    } else if (riskLevel <= 2) {
-      level = 'Neutral';
-    } else if (riskLevel <= 3) {
-      level = 'Caution';
+    if (heatmapRiskLevel <= 0) {
+      level = 'Safe'; // Only truly safe areas (risk level 0)
+    } else if (heatmapRiskLevel <= 1) {
+      level = 'Neutral'; // Green zones (heatmap level 1) - LOW
+    } else if (heatmapRiskLevel <= 2) {
+      level = 'Neutral'; // Yellow zones (heatmap level 2) - MODERATE
+    } else if (heatmapRiskLevel <= 3) {
+      level = 'Caution'; // Orange zones (heatmap level 3) - HIGH
     } else {
-      level = 'Danger';
+      level = 'Danger'; // Red/Dark Red zones (heatmap level 4-5) - CRITICAL/EXTREME
     }
     
     // 15 meters radius converted to degrees for Cebu latitude (~10.3°)
@@ -175,7 +179,7 @@ export class ZoneDangerEngineService {
       id: report.id || `report-${Date.now()}`,
       name: report.location.simplifiedAddress || report.locationAddress || 'Reported Incident',
       level: level,
-      riskLevel: riskLevel, 
+      riskLevel: heatmapRiskLevel, // Use heatmap risk level directly
       coordinates: [
         [lng - radius, lat - radius],
         [lng + radius, lat - radius],
@@ -187,7 +191,7 @@ export class ZoneDangerEngineService {
       incidents: [{
         id: report.id || `incident-${Date.now()}`,
         timestamp: report.createdAt?.toDate ? report.createdAt.toDate() : new Date(report.createdAt),
-        severity: riskLevel * 2, 
+        severity: heatmapRiskLevel * 2, 
         type: this.mapReportTypeToIncidentType(report.type),
         description: report.description
       }],
@@ -208,11 +212,10 @@ export class ZoneDangerEngineService {
         weekday: currentSeverity / 10
       },
       alertSettings: {
-        enablePushNotifications: riskLevel >= 3,
-        enableVibration: riskLevel >= 3,
-        enableSound: riskLevel >= 4,
-        soundType: riskLevel >= 4 ? 'siren' : 'beep',
-        vibrationPattern: riskLevel >= 4 ? [200, 100, 200, 100, 200] : [200, 200],
+        enablePushNotifications: heatmapRiskLevel >= 1, // Enable for all heatmap zones
+        enableVibration: heatmapRiskLevel >= 1, // Enable for all heatmap zones
+        enableSound: heatmapRiskLevel >= 1, // Enable for all heatmap zones
+        vibrationPattern: heatmapRiskLevel >= 4 ? [200, 100, 200, 100, 200] : [200, 200],
         alertThreshold: currentSeverity * 0.8
       }
     };
@@ -357,6 +360,38 @@ export class ZoneDangerEngineService {
     this.currentLocation.next(location);
   }
 
+  public getNearbyIncidents(location: { lat: number; lng: number }, radiusKm: number = 0.5): Array<{ zone: DangerZone; incident: ZoneIncident; distance: number }> {
+    const zones = this.zones.value;
+    const now = new Date();
+    const recentThreshold = 24 * 60 * 60 * 1000; // 24 hours
+    const nearbyIncidents: Array<{ zone: DangerZone; incident: ZoneIncident; distance: number }> = [];
+
+    zones.forEach(zone => {
+      const zoneCenter = this.calculateZoneCenter(zone.coordinates);
+      const distance = this.calculateDistance(
+        location.lat, location.lng,
+        zoneCenter[1], zoneCenter[0]
+      );
+
+      if (distance <= radiusKm) {
+        const recentIncidents = zone.incidents.filter(incident => {
+          const incidentTime = new Date(incident.timestamp);
+          return (now.getTime() - incidentTime.getTime()) < recentThreshold;
+        });
+
+        recentIncidents.forEach(incident => {
+          nearbyIncidents.push({
+            zone: zone,
+            incident: incident,
+            distance: distance
+          });
+        });
+      }
+    });
+
+    return nearbyIncidents.sort((a, b) => a.distance - b.distance);
+  }
+
   private checkForAlerts() {
     const currentLocation = this.currentLocation.value;
     const zones = this.zones.value;
@@ -393,99 +428,20 @@ export class ZoneDangerEngineService {
   }
 
   private triggerSmartAlert(zone: DangerZone, severity: number, timeRisk: number, location: { lat: number; lng: number }) {
-    const alertData = {
+    // DISABLED: Alert system is now handled by ZoneNotificationService to avoid duplication
+    console.log('🚨 SMART ALERT DISABLED - Using ZoneNotificationService instead:', {
       zoneId: zone.id,
       zoneName: zone.name,
       severity: severity,
       timeRisk: timeRisk,
-      location: location,
-      timestamp: new Date(),
-      recommendations: this.generateRecommendations(zone, severity, timeRisk)
-    };
-
-    if (zone.alertSettings.enableVibration) {
-      this.triggerVibrationAlert(zone.alertSettings.vibrationPattern);
-    }
-    
-    if (zone.alertSettings.enableSound) {
-      this.triggerSoundAlert(zone.alertSettings.soundType);
-    }
-    
-    if (zone.alertSettings.enablePushNotifications) {
-      this.triggerPushNotification(alertData);
-    }
-
-    console.log('🚨 SMART ALERT TRIGGERED:', alertData);
+      location: location
+    });
   }
 
   private triggerVibrationAlert(pattern: number[]) {
     if ('vibrate' in navigator) {
       navigator.vibrate(pattern);
     }
-  }
-
-  private triggerSoundAlert(soundType: 'beep' | 'siren' | 'chime') {
-    const isLocalhost = window.location.hostname === 'localhost' || 
-                       window.location.hostname === '127.0.0.1' ||
-                       window.location.hostname.includes('localhost');
-    
-    if (isLocalhost) {
-      console.log('🔕 Zone danger sound disabled in localhost environment:', soundType);
-      return;
-    }
-    
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    switch (soundType) {
-      case 'beep':
-        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-        oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
-        break;
-      case 'siren':
-        
-        const startTime = audioContext.currentTime;
-        const duration = 2.0; 
-        const pulseDuration = 0.5; 
-        
-        
-        for (let i = 0; i < duration / pulseDuration; i++) {
-          const pulseStart = startTime + (i * pulseDuration);
-          
-          
-          oscillator.frequency.setValueAtTime(800, pulseStart);
-          oscillator.frequency.setValueAtTime(600, pulseStart + 0.1);
-          oscillator.frequency.setValueAtTime(800, pulseStart + 0.2);
-          oscillator.frequency.setValueAtTime(600, pulseStart + 0.3);
-          oscillator.frequency.setValueAtTime(800, pulseStart + 0.4);
-          
-          
-          gainNode.gain.setValueAtTime(0, pulseStart);
-          gainNode.gain.linearRampToValueAtTime(0.4, pulseStart + 0.05);
-          gainNode.gain.linearRampToValueAtTime(0, pulseStart + 0.45);
-        }
-        
-        oscillator.start(startTime);
-        oscillator.stop(startTime + duration);
-        return; 
-        break;
-      case 'chime':
-        oscillator.frequency.setValueAtTime(523, audioContext.currentTime);
-        oscillator.frequency.setValueAtTime(659, audioContext.currentTime + 0.1);
-        oscillator.frequency.setValueAtTime(784, audioContext.currentTime + 0.2);
-        break;
-    }
-    
-    
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-    
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.3);
   }
 
   private triggerPushNotification(alertData: any) {
@@ -660,26 +616,8 @@ export class ZoneDangerEngineService {
   }
 
   private triggerEnhancedAlert(alertData: any, alertType: 'recent' | 'nearby') {
-    const isRecent = alertType === 'recent';
-    const title = isRecent ? '🚨 RECENT INCIDENT ALERT' : '⚠️ NEARBY INCIDENT WARNING';
-    
-    const vibrationPattern = isRecent ? [300, 100, 300, 100, 300, 100, 300] : [200, 100, 200, 100, 200];
-    
-    const soundType = isRecent ? 'siren' : 'beep';
-
-    if (this.shouldTriggerVibration()) {
-      this.triggerVibrationAlert(vibrationPattern);
-    }
-    
-    if (this.shouldTriggerSound()) {
-      this.triggerSoundAlert(soundType);
-    }
-    
-    if (this.shouldTriggerNotification()) {
-      this.triggerEnhancedNotification(title, alertData);
-    }
-
-    console.log(`🚨 ${title}:`, alertData);
+    // DISABLED: Alert system is now handled by ZoneNotificationService to avoid duplication
+    console.log('🚨 ENHANCED ALERT DISABLED - Using ZoneNotificationService instead:', alertData);
   }
 
   private triggerEnhancedNotification(title: string, alertData: any) {
@@ -764,10 +702,6 @@ export class ZoneDangerEngineService {
 
   private shouldTriggerVibration(): boolean {
     return true;
-  }
-
-  private shouldTriggerSound(): boolean {
-    return true; 
   }
 
   private shouldTriggerNotification(): boolean {
@@ -893,26 +827,8 @@ export class ZoneDangerEngineService {
   }
 
   private triggerTimeBasedAlert(alertData: any) {
-    const title = `🕐 ZONE LEVEL CHANGE: ${alertData.zoneName}`;
-    const levelEmoji = this.getLevelEmoji(alertData.newLevel);
-    const levelColor = this.getLevelColor(alertData.newLevel);
-    
-    const vibrationPattern = alertData.newLevel === 'Danger' ? [300, 100, 300, 100, 300] : [200, 200];
-    const soundType = alertData.newLevel === 'Danger' ? 'siren' : 'beep';
-    
-    if (this.shouldTriggerVibration()) {
-      this.triggerVibrationAlert(vibrationPattern);
-    }
-    
-    if (this.shouldTriggerSound()) {
-      this.triggerSoundAlert(soundType);
-    }
-    
-    if (this.shouldTriggerNotification()) {
-      this.triggerTimeBasedNotification(title, alertData);
-    }
-    
-    console.log(`🕐 ${title}: ${alertData.oldLevel} → ${alertData.newLevel} (${alertData.timeSlot})`);
+    // DISABLED: Alert system is now handled by ZoneNotificationService to avoid duplication
+    console.log('🚨 TIME-BASED ALERT DISABLED - Using ZoneNotificationService instead:', alertData);
   }
 
   private getLevelEmoji(level: string): string {

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { Platform } from '@ionic/angular';
+import { AdminNotificationService } from './services/admin-notification.service';
 
 @Component({
   selector: 'app-root',
@@ -13,13 +14,21 @@ export class AppComponent implements OnInit {
   constructor(
     private afAuth: AngularFireAuth,
     private platform: Platform,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private adminNotificationService: AdminNotificationService
   ) {
     this.initializeApp();
+    console.log('🔔 AppComponent: AdminNotificationService injected and initialized');
   }
 
   ngOnInit() {
     this.setupAuthStateMonitoring();
+    
+    // Test AdminNotificationService initialization
+    setTimeout(() => {
+      console.log('🔔 AppComponent: Testing AdminNotificationService...');
+      // The service should be listening for admin validations now
+    }, 2000);
   }
 
   private initializeApp(): void {

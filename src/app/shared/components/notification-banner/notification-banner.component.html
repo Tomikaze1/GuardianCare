@@ -15,6 +15,12 @@
         {{ notification.actionText }}
       </button>
       <button 
+        *ngIf="notification.acknowledgeText"
+        class="acknowledge-button"
+        (click)="onAcknowledge()">
+        {{ notification.acknowledgeText }}
+      </button>
+      <button 
         *ngIf="notification.dismissible !== false"
         class="dismiss-button"
         (click)="onDismiss()"
