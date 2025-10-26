@@ -16,11 +16,6 @@
                 <ion-icon name="navigate-outline" class="coord-icon"></ion-icon>
                 {{ currentLocation.lat.toFixed(5) }}, {{ currentLocation.lng.toFixed(5) }}
               </div>
-              <div class="live-badge" *ngIf="isRealTimeTracking">
-                <div class="live-pulse"></div>
-                <span class="live-label">LIVE</span>
-                <div class="live-indicator"></div>
-              </div>
             </div>
             <div class="location-accuracy" *ngIf="gpsAccuracy">
               <ion-icon name="cellular-outline" class="accuracy-icon"></ion-icon>
