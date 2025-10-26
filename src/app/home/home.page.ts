@@ -1912,28 +1912,28 @@ export class HomePage implements OnInit, OnDestroy {
     const heatLayers = [
       {
         id: 'heat-l1', level: 1, rgba: [16, 185, 129],
-        weight: 0.8,
+        weight: 1.0,
         intensityStops: [5, 1.5, 10, 2.0, 15, 2.5]
       },
       {
         id: 'heat-l2', level: 2, rgba: [251, 191, 36],
         weight: 1.0,
-        intensityStops: [5, 1.8, 10, 2.3, 15, 2.8]
+        intensityStops: [5, 1.5, 10, 2.0, 15, 2.5]
       },
       {
         id: 'heat-l3', level: 3, rgba: [249, 115, 22],
-        weight: 1.2,
-        intensityStops: [5, 2.0, 10, 2.5, 15, 3.0]
+        weight: 1.0,
+        intensityStops: [5, 1.5, 10, 2.0, 15, 2.5]
       },
       {
         id: 'heat-l4', level: 4, rgba: [239, 68, 68],
-        weight: 1.4,
-        intensityStops: [5, 2.2, 10, 2.7, 15, 3.2]
+        weight: 1.0,
+        intensityStops: [5, 1.5, 10, 2.0, 15, 2.5]
       },
       {
         id: 'heat-l5', level: 5, rgba: [220, 38, 38],
-        weight: 1.6,
-        intensityStops: [5, 2.5, 10, 3.0, 15, 3.5]
+        weight: 1.0,
+        intensityStops: [5, 1.5, 10, 2.0, 15, 2.5]
       }
     ];
 
@@ -2852,7 +2852,7 @@ export class HomePage implements OnInit, OnDestroy {
     })));
     
     // Get incidents from both validated reports and zone danger engine
-    const zoneIncidents = this.zoneEngine.getNearbyIncidents(location, 1.0); // 1km radius
+    const zoneIncidents = this.zoneEngine.getNearbyIncidents(location, 0.5); // 500m radius
     console.log('🔍 DEBUG: zoneIncidents count:', zoneIncidents.length);
     console.log('🔍 DEBUG: zoneIncidents details:', zoneIncidents.map(z => ({
       zone: z.zone.name,
@@ -2911,7 +2911,7 @@ export class HomePage implements OnInit, OnDestroy {
       this.hasNearbyReports = false;
       this.nearbyReportsCount = 0;
       this.inDangerZone = false;
-      this.locationSafetyMessage = '✓ Your location is SAFE - No incidents within 1KM';
+      this.locationSafetyMessage = '✓ Your location is SAFE - No incidents within 500m';
       
       // Stop ringtone if user is in safe area with no incidents
       if (wasInZone) {
@@ -2962,7 +2962,7 @@ export class HomePage implements OnInit, OnDestroy {
       this.inDangerZone = true;
       this.currentZoneRiskLevel = riskLevel; // Set the risk level for all levels including Level 1
       this.hasNearbyReports = true;
-      this.nearbyReportsCount = allIncidentsWithDistance.filter(r => r.distance <= 1000).length; // Count ALL incidents within 1km
+      this.nearbyReportsCount = allIncidentsWithDistance.filter(r => r.distance > 10 && r.distance <= 500).length; // Count OTHER incidents within 500m (exclude current zone within 50m)
       this.nearestZoneDistance = 0;
       
       // Trigger ringtone immediately for being at incident location (no delay)
@@ -2986,9 +2986,9 @@ export class HomePage implements OnInit, OnDestroy {
     const zoneRadius = this.getZoneRadiusMeters(nearestRiskLevel);
 
     const nearbyReports = allIncidentsWithDistance.filter(r => r.distance <= 30); // 30m for nearby reports
-    const allNearbyIncidents = allIncidentsWithDistance.filter(r => r.distance <= 1000); // 1km for all nearby incidents
-    this.nearbyReportsCount = allNearbyIncidents.length; // Count ALL incidents within 1km
-    this.hasNearbyReports = allNearbyIncidents.length > 0; // Show "incidents nearby" if any incidents within 1km
+    const allNearbyIncidents = allIncidentsWithDistance.filter(r => r.distance > 10 && r.distance <= 500); // 1km for all nearby incidents
+    this.nearbyReportsCount = allNearbyIncidents.length; // Count OTHER incidents within 500m (exclude current zone within 50m)
+    this.hasNearbyReports = allNearbyIncidents.length > 0; // Show "incidents nearby" if any incidents within 500m
     
     console.log('🔍 DEBUG: Final counts - nearbyReports (30m):', nearbyReports.length, 'allNearbyIncidents (1km):', allNearbyIncidents.length);
     console.log('🔍 DEBUG: Final status - hasNearbyReports:', this.hasNearbyReports, 'nearestZoneDistance:', this.nearestZoneDistance);
@@ -3043,7 +3043,7 @@ export class HomePage implements OnInit, OnDestroy {
     if (distanceInMeters <= 1000) {
       this.safetyStatus = 'safe';
       this.locationSafetyMessage = `✓ Your location is SAFE - Nearest incident is ${distanceInMeters}m away`;
-      this.nearbyZoneAlert = `ⓘ ${allNearbyIncidents.length} INCIDENT(S) WITHIN 1KM`;
+      this.nearbyZoneAlert = `ⓘ ${allNearbyIncidents.length} INCIDENT(S) within 500m`;
       this.inDangerZone = false;
 
       this.checkAndNotifyZoneChanges(previousStatus, wasInZone, location);
@@ -3057,7 +3057,7 @@ export class HomePage implements OnInit, OnDestroy {
     this.nearbyZoneAlert = '';
     this.nearestZoneDistance = distanceInMeters;
     this.hasNearbyReports = false;
-    this.locationSafetyMessage = `✓ Your location is SAFE - No incidents within 1KM (nearest: ${(distanceInMeters/1000).toFixed(1)}km)`;
+    this.locationSafetyMessage = `✓ Your location is SAFE - No incidents within 500m (nearest: ${(distanceInMeters/1000).toFixed(1)}km)`;
     this.inDangerZone = false;
     
     // Stop ringtone if user is in safe area (outside zone radius)
@@ -3341,12 +3341,12 @@ ${this.getRiskWarningMessage(riskLevel)}`;
         
         this.notificationService.info(
           'ℹ️ INFORMATION',
-          `ℹ️ Your location is SAFE\n\nThere are ${this.nearbyReportsCount} incident report(s) within 1km of your location.\n\nYour current area is safe, but stay alert.`,
+          `ℹ️ Your location is SAFE\n\nThere are ${this.nearbyReportsCount} incident report(s) within 500m of your location.\n\nYour current area is safe, but stay alert.`,
           'OK',
           3000
         );
         
-        console.log('ℹ️ Nearby Reports Info:', this.nearbyReportsCount, 'reports within 1km');
+        console.log('ℹ️ Nearby Reports Info:', this.nearbyReportsCount, 'reports within 500m');
       }
     }
   }

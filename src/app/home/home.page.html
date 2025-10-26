@@ -1,60 +1,63 @@
 <ion-content [fullscreen]="true" [scrollY]="false" id="home-content" class="modern-content">
 
   <div class="app-header">
-    <div class="header-content">
-      <div class="location-row">
-        <div class="location-icon-box">
-          <ion-icon name="location-sharp"></ion-icon>
-        </div>
-        <div class="location-info">
-          <div class="location-address-row">
-            <span class="location-address">{{ currentAddress || 'Getting your location...' }}</span>
-          </div>
-          <div class="location-details" *ngIf="currentLocation">
-            <div class="location-coords-row">
-              <div class="location-coords">
-                <ion-icon name="navigate-outline" class="coord-icon"></ion-icon>
-                {{ currentLocation.lat.toFixed(5) }}, {{ currentLocation.lng.toFixed(5) }}
-              </div>
-            </div>
-            <div class="location-accuracy" *ngIf="gpsAccuracy">
-              <ion-icon name="cellular-outline" class="accuracy-icon"></ion-icon>
-              {{ gpsAccuracy.accuracy }}m accuracy
-            </div>
-          </div>
-        </div>
-        
+    
+    <!-- Location Section -->
+    <div class="location-section">
+      <div class="location-title-bar">
+        <ion-icon name="location"></ion-icon>
+        <span class="section-label">Current Location</span>
       </div>
-      
-      <div class="safety-reports-row">
-        <div class="safety-row" [class]="getSafetyStatusClass()">
-          <div class="safety-icon-box">
-            <ion-icon [name]="getSafetyIcon()"></ion-icon>
-          </div>
-          <div class="safety-info">
-            <div class="safety-description" *ngIf="getCurrentZoneInfoText()" [innerHTML]="getCurrentZoneInfoText()"></div>
-          </div>
-        </div>
-        
-        <div class="incidents-row" *ngIf="hasNearbyReports">
-          <div class="incidents-icon-box">
-            <ion-icon name="warning-outline"></ion-icon>
-          </div>
-          <div class="incidents-info">
-            <div class="incidents-title">{{ nearbyReportsCount }} Incidents Within 1KM<span *ngIf="nearestZoneDistance !== null"> • Nearest {{ getNearestDistanceText() }} away</span></div>
-          </div>
-        </div>
-        
-        <div class="no-incidents-row" *ngIf="!hasNearbyReports && currentLocation">
-          <div class="no-incidents-icon-box">
-            <ion-icon name="checkmark-circle-outline"></ion-icon>
-          </div>
-          <div class="no-incidents-info">
-            <div class="no-incidents-title">No incidents within 1KM</div>
-          </div>
+      <div class="location-content">
+        <p class="location-address-text">{{ currentAddress || 'Getting your location...' }}</p>
+        <div class="location-coordinates" *ngIf="currentLocation">
+          <ion-icon name="map-outline" class="coord-icon"></ion-icon>
+          <span class="coord-data">{{ currentLocation.lat.toFixed(5) }}, {{ currentLocation.lng.toFixed(5) }}</span>
+          <span class="acc-data" *ngIf="gpsAccuracy">±{{ gpsAccuracy.accuracy }}m</span>
         </div>
       </div>
     </div>
+
+    <!-- Status Cards -->
+    <div class="status-cards">
+      <div class="status-card" [class]="getSafetyStatusClass()">
+        <div class="card-top">
+          <ion-icon name="pulse" class="card-icon"></ion-icon>
+          <span class="card-label">Risk Level</span>
+        </div>
+        <div class="card-content-simple">
+          <span class="risk-level-display">
+            <span *ngIf="getSafetyStatusClass() === 'level-1'">1 - Low Zone</span>
+            <span *ngIf="getSafetyStatusClass() === 'level-2'">2 - Moderate Zone</span>
+            <span *ngIf="getSafetyStatusClass() === 'level-3'">3 - High Zone</span>
+            <span *ngIf="getSafetyStatusClass() === 'level-4'">4 - Critical Zone</span>
+            <span *ngIf="getSafetyStatusClass() === 'level-5'">5 - Extreme Zone</span>
+            <span *ngIf="getSafetyStatusClass() === 'safe' || getSafetyStatusClass() === 'low-risk' || getSafetyStatusClass() === 'no-heatmap-zone'">Safe Area</span>
+          </span>
+        </div>
+      </div>
+      
+      <div class="status-card incident-card" *ngIf="hasNearbyReports">
+        <div class="card-top">
+          <ion-icon name="alert-circle" class="card-icon"></ion-icon>
+          <span class="card-label">Nearby Incidents</span>
+        </div>
+        <div class="card-content-simple">
+          <span class="incident-display">{{ nearbyReportsCount }} - within 500m radius </span>
+        </div>
+      </div>
+      
+      <div class="status-card safe-card" *ngIf="!hasNearbyReports && currentLocation">
+        <div class="card-top">
+          <ion-icon name="shield-checkmark" class="card-icon"></ion-icon>
+          <span class="card-label">Zone Status</span>
+        </div>
+        <div class="card-content-simple">
+          <span class="safe-display">Clear - No threats nearby</span>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <div id="map" class="modern-map"></div>
