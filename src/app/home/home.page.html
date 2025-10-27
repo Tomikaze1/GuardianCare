@@ -94,6 +94,12 @@
   </div>
   
   <div class="fab-container">
+    <button class="fab-secondary emergency-fab" 
+            (click)="callEmergency()">
+      <ion-icon name="call-outline"></ion-icon>
+      <div class="fab-ripple"></div>
+    </button>
+    
     <button class="fab-main panic-fab" 
             (click)="triggerPanicButton()" 
             [disabled]="isPanicActive">

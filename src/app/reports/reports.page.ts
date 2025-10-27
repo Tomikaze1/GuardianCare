@@ -675,48 +675,6 @@ export class ReportsPage implements OnInit, OnDestroy {
   }
 
 
-  async callEmergency() {
-    const alert = await this.alertController.create({
-      header: 'Emergency Call (911)',
-      message: 'Are you sure you want to call emergency services? This will initiate a call to 911.',
-      buttons: [
-        {
-          text: 'Cancel',
-          role: 'cancel',
-          cssClass: 'secondary'
-        },
-        {
-          text: 'Call 911',
-          handler: () => {
-            this.initiateEmergencyCall();
-          }
-        }
-      ]
-    });
-    await alert.present();
-  }
-
-  private initiateEmergencyCall() {
-    try {
-      if (this.selectedLocation) {
-        const coordinates = `${this.selectedLocation.lat}, ${this.selectedLocation.lng}`;
-        const message = `Emergency at coordinates: ${coordinates}`;
-        
-        this.notificationService.warning('Emergency Call', 'Initiating call to 911...', 'OK', 5000);
-        
-        setTimeout(() => {
-          this.notificationService.success('Emergency Call', '911 call initiated successfully!', 'OK', 3000);
-          console.log('Emergency call to 911 initiated with location:', coordinates);
-        }, 2000);
-        
-      } else {
-        this.notificationService.error('Error', 'No location available for emergency call', 'OK', 3000);
-      }
-    } catch (error) {
-      console.error('Error initiating emergency call:', error);
-      this.notificationService.error('Error', 'Failed to initiate emergency call', 'OK', 3000);
-    }
-  }
 
   async testOfflineMode() {
     this.isOffline = true;

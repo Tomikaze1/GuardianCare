@@ -413,11 +413,6 @@
     </div>
 
     <div class="button-row">
-      <ion-button expand="block" color="danger" fill="solid" class="call-btn" (click)="callEmergency()">
-        <ion-icon name="call" slot="start"></ion-icon>
-        {{ 'REPORTS.EMERGENCY_CALL' | translate }}
-      </ion-button>
-      
       <button type="submit" class="submit-btn" [disabled]="rateLimitStatus.isBlocked">
         <span>
           <ion-icon name="send-outline"></ion-icon>
