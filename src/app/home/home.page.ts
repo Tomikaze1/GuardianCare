@@ -2860,27 +2860,54 @@ export class HomePage implements OnInit, OnDestroy {
     const allIncidents = [...(this.validatedReports || [])];
     
     // Convert zone incidents to a format compatible with the existing logic
-    const zoneIncidentsAsReports = zoneIncidents.map(({ zone, incident, distance }) => ({
-      id: incident.id,
-      type: incident.type,
-      description: incident.description || `${incident.type} incident`,
-      location: {
-        lat: zone.coordinates[0][1], // Use zone center as incident location
-        lng: zone.coordinates[0][0]
-      },
-      timestamp: incident.timestamp,
-      level: this.mapSeverityToLevel(incident.severity),
-      riskLevel: this.mapSeverityToLevel(incident.severity),
-      status: 'verified',
-      zoneName: zone.name,
-      zoneLevel: zone.level,
-      distanceFromUser: distance * 1000 // Convert to meters
-    }));
+    // Calculate zone center for accurate location
+    const calculateZoneCenter = (coords: [number, number][]) => {
+      const lngSum = coords.reduce((sum, coord) => sum + coord[0], 0);
+      const latSum = coords.reduce((sum, coord) => sum + coord[1], 0);
+      return [lngSum / coords.length, latSum / coords.length];
+    };
+    
+    const zoneIncidentsAsReports = zoneIncidents.map(({ zone, incident, distance }) => {
+      const zoneCenter = calculateZoneCenter(zone.coordinates);
+      return {
+        id: incident.id,
+        type: incident.type,
+        description: incident.description || `${incident.type} incident`,
+        location: {
+          lat: zoneCenter[1], // Use zone center as incident location
+          lng: zoneCenter[0]
+        },
+        timestamp: incident.timestamp,
+        level: this.mapSeverityToLevel(incident.severity),
+        riskLevel: this.mapSeverityToLevel(incident.severity),
+        status: 'verified',
+        zoneName: zone.name,
+        zoneLevel: zone.level,
+        distanceFromUser: distance * 1000 // Convert to meters (already calculated from zone center)
+      };
+    });
     
     console.log('🔍 DEBUG: zoneIncidentsAsReports count:', zoneIncidentsAsReports.length);
     
-    // Combine all incidents and sort by distance
-    const allIncidentsWithDistance = [...allIncidents, ...zoneIncidentsAsReports].map(incident => {
+    // Combine all incidents and deduplicate by ID to avoid double counting
+    const allIncidentsMap = new Map<string, any>();
+    
+    // Add validated reports first
+    allIncidents.forEach(incident => {
+      if (incident.id) {
+        allIncidentsMap.set(incident.id, incident);
+      }
+    });
+    
+    // Add zone incidents, overwriting duplicates to use the version with distanceFromUser
+    zoneIncidentsAsReports.forEach(incident => {
+      if (incident.id) {
+        allIncidentsMap.set(incident.id, incident);
+      }
+    });
+    
+    // Convert to array with distance calculation
+    const allIncidentsWithDistance = Array.from(allIncidentsMap.values()).map(incident => {
       const distance = incident.distanceFromUser || this.calculateDistance(
         location.lat,
         location.lng,
@@ -2990,7 +3017,7 @@ export class HomePage implements OnInit, OnDestroy {
     this.nearbyReportsCount = allNearbyIncidents.length; // Count ALL incidents within 500m
     this.hasNearbyReports = allNearbyIncidents.length > 0; // Show "incidents nearby" if any incidents within 500m
     
-    console.log('🔍 DEBUG: Final counts - nearbyReports (30m):', nearbyReports.length, 'allNearbyIncidents (1km):', allNearbyIncidents.length);
+    console.log('🔍 DEBUG: Final counts - nearbyReports (30m):', nearbyReports.length, 'allNearbyIncidents (500m):', allNearbyIncidents.length);
     console.log('🔍 DEBUG: Final status - hasNearbyReports:', this.hasNearbyReports, 'nearestZoneDistance:', this.nearestZoneDistance);
     console.log('🔍 DEBUG: Setting nearbyReportsCount to:', this.nearbyReportsCount);
 
