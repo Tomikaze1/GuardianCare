@@ -656,11 +656,16 @@ ion-content {
 }
 
 .modern-legend {
-  position: absolute;
-  bottom: 150px;
+  position: fixed;
+  bottom: calc(60px + 20px + env(safe-area-inset-bottom));
   left: 16px;
   z-index: 900;
   animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  
+  .legend-card {
+    pointer-events: auto;
+  }
 }
 
 .legend-card {
@@ -731,8 +736,8 @@ ion-content {
 }
 
 .fab-container {
-  position: absolute;
-  bottom: 150px;
+  position: fixed;
+  bottom: calc(60px + 20px + env(safe-area-inset-bottom));
   right: 24px;
   z-index: 1000;
   display: flex;
@@ -1181,7 +1186,7 @@ button:active .fab-ripple {
   }
   
   .modern-legend {
-    bottom: 145px;
+    bottom: calc(60px + 15px + env(safe-area-inset-bottom));
     left: 12px;
   }
   
@@ -1192,7 +1197,7 @@ button:active .fab-ripple {
   }
   
   .fab-container {
-    bottom: 140px;
+    bottom: calc(60px + 10px + env(safe-area-inset-bottom));
     right: 16px;
     gap: 10px;
   }
@@ -1949,6 +1954,77 @@ ion-alert.zone-alert-warning.card-style-alert {
   }
   100% {
     box-shadow: 0 20px 40px rgba(220, 38, 38, 0.4);
+  }
+}
+
+// Emergency Contacts Action Sheet Styling
+.emergency-contacts-action-sheet {
+  --backdrop-opacity: 0.4;
+  
+  .action-sheet-container {
+    border-radius: 20px 20px 0 0;
+  }
+  
+  .action-sheet-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1f2937;
+    text-align: center;
+    padding: 16px 0 8px;
+  }
+  
+  .action-sheet-sub-title {
+    font-size: 14px;
+    color: #6b7280;
+    text-align: center;
+    padding-bottom: 16px;
+  }
+  
+  .action-sheet-button {
+    font-size: 16px;
+    font-weight: 500;
+    color: #059669;
+    text-align: left;
+    padding: 16px;
+    
+    ion-icon {
+      margin-right: 12px;
+      font-size: 22px;
+    }
+    
+    &:hover {
+      background: rgba(5, 150, 105, 0.1);
+    }
+  }
+  
+  .action-sheet-cancel {
+    font-weight: 600;
+    color: #ef4444;
+  }
+}
+
+// Improved button styling
+::ng-deep .emergency-contacts-action-sheet {
+  .action-sheet-wrapper {
+    border-radius: 20px 20px 0 0;
+    overflow: hidden;
+  }
+  
+  .action-sheet-button-inner {
+    justify-content: flex-start;
+    padding-left: 16px;
+    text-align: left;
+    
+    .action-sheet-icon {
+      margin-right: 12px;
+      color: #059669;
+    }
+  }
+  
+  .action-sheet-button-inner.sc-ion-action-sheet-md {
+    font-size: 15px;
+    line-height: 1.4;
+    color: #1f2937;
   }
 }
 

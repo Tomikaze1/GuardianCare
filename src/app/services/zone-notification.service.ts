@@ -1116,10 +1116,17 @@ export class ZoneNotificationService {
     }
   }
 
-  private showImmediateAlertDialog(alert: ZoneAlert): void {
+  private async showImmediateAlertDialog(alert: ZoneAlert): Promise<void> {
     // Remove any existing alert dialogs first
     const existingDialogs = document.querySelectorAll('.zone-alert-dialog');
     existingDialogs.forEach(dialog => dialog.remove());
+    
+    // Get risk level info
+    const riskLevel = alert.riskLevel || 1;
+    const heatmapEmoji = this.getHeatmapEmojiForRiskLevel(riskLevel);
+    const heatmapColor = this.getHeatmapColorForRiskLevel(riskLevel);
+    const backgroundColor = this.getBackgroundColorForRiskLevel(riskLevel);
+    const borderColor = this.getBorderColorForRiskLevel(riskLevel);
     
     // Create the alert dialog element
     const dialog = document.createElement('div');
@@ -1130,69 +1137,71 @@ export class ZoneNotificationService {
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.8);
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 10000;
+      z-index: 999999;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 20px;
+      box-sizing: border-box;
     `;
     
     // Create the alert content
     const alertContent = document.createElement('div');
     alertContent.style.cssText = `
       background: white;
-      border-radius: 12px;
+      border-radius: 16px;
       padding: 32px 28px 28px 28px;
-      margin: 20px;
+      margin: 0 auto;
       max-width: 420px;
-      width: 90%;
-      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.25);
+      width: 100%;
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.3);
       animation: slideIn 0.3s ease-out;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-sizing: border-box;
     `;
     
     // Add CSS animation
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes slideIn {
-        from {
-          opacity: 0;
-          transform: translateY(-50px) scale(0.9);
+    let style = document.getElementById('zone-alert-animation-style');
+    if (!style) {
+      style = document.createElement('style');
+      style.id = 'zone-alert-animation-style';
+      style.textContent = `
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateY(-50px) scale(0.9);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
         }
-        to {
-          opacity: 1;
-          transform: translateY(0) scale(1);
-        }
-      }
-    `;
-    document.head.appendChild(style);
+      `;
+      document.head.appendChild(style);
+    }
     
-    // Get risk level info
-    const riskLevel = alert.riskLevel || 1;
-    const heatmapEmoji = this.getHeatmapEmojiForRiskLevel(riskLevel);
-    const heatmapColor = this.getHeatmapColorForRiskLevel(riskLevel);
-    const backgroundColor = this.getBackgroundColorForRiskLevel(riskLevel);
-    const borderColor = this.getBorderColorForRiskLevel(riskLevel);
-    
-    // Create alert content HTML with professional formal styling
+    // Create alert content HTML
     alertContent.innerHTML = `
       <div style="border-bottom: 2px solid #e5e7eb; padding-bottom: 20px; margin-bottom: 24px;">
         <div style="text-align: center; margin-bottom: 16px;">
           <div style="font-size: 56px; margin-bottom: 12px; line-height: 1;">${heatmapEmoji}</div>
         </div>
         <div style="text-align: center;">
-          <h1 style="margin: 0; color: #111827; font-size: 16px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; line-height: 1.4;">
+          <h1 style="margin: 0; color: #111827; font-size: 18px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; line-height: 1.4;">
             DANGER ZONE ALERT
           </h1>
-          <p style="margin: 10px 0 0 0; color: #6b7280; font-size: 13px; font-weight: 500; letter-spacing: 0.3px;">
+          <p style="margin: 10px 0 0 0; color: #6b7280; font-size: 14px; font-weight: 500; letter-spacing: 0.3px;">
             Risk Level ${riskLevel} / 5 • ${heatmapColor}
           </p>
         </div>
       </div>
       
       <div style="margin-bottom: 28px;">
-        <div style="display: flex; align-items: start; gap: 12px; margin-bottom: 16px; padding: 12px; background: ${backgroundColor}; border-left: 4px solid ${borderColor}; border-radius: 4px;">
+        <div style="display: flex; align-items: start; gap: 12px; padding: 12px; background: ${backgroundColor}; border-left: 4px solid ${borderColor}; border-radius: 4px;">
           <div style="min-width: 20px; color: ${borderColor}; font-size: 18px;">⚠️</div>
           <div style="flex: 1;">
             <h3 style="margin: 0 0 6px 0; color: #1a1a1a; font-size: 14px; font-weight: 700; letter-spacing: 0.5px;">
@@ -1265,6 +1274,14 @@ export class ZoneNotificationService {
         dialog.remove();
       }
     }, 30000);
+    
+    // Click backdrop to dismiss
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) {
+        console.log(`❌ User dismissed alert by clicking backdrop: ${alert.zoneName}`);
+        dialog.remove();
+      }
+    });
     
     console.log(`🚨 Immediate alert dialog shown for zone: ${alert.zoneName}`);
   }

@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
-import { AlertController, LoadingController, ToastController, IonContent, ModalController } from '@ionic/angular';
+import { AlertController, LoadingController, ToastController, IonContent, ModalController, ActionSheetController } from '@ionic/angular';
 import { TranslateService } from '@ngx-translate/core';
 import { LocationService } from '../services/location.service';
 import { ZoneDangerEngineService, DangerZone } from '../services/zone-danger-engine.service';
@@ -9,6 +9,7 @@ import { FirebaseService } from '../services/firebase.service';
 import { ReportService } from '../services/report.service';
 import { NotificationService } from '../shared/services/notification.service';
 import { NotificationManagerService } from '../services/notification-manager.service';
+import { UserService } from '../services/user.service';
 
 import * as mapboxgl from 'mapbox-gl';
 
@@ -78,6 +79,8 @@ export class HomePage implements OnInit, OnDestroy {
     private translate: TranslateService,
     private notificationService: NotificationService,
     private notificationManager: NotificationManagerService,
+    private userService: UserService,
+    private actionSheetController: ActionSheetController,
   ) {}
 
   ngOnInit() {
@@ -2365,45 +2368,121 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   async callEmergency() {
+    // Show loading while fetching emergency contacts
+    const loading = await this.loadingController.create({
+      message: 'Loading emergency contacts...',
+      spinner: 'crescent',
+      duration: 5000
+    });
+    await loading.present();
+
+    try {
+      // Get current user
+      const user = await this.authService.getCurrentUser();
+      if (!user) {
+        await loading.dismiss();
+        this.notificationService.error('Error', 'Please login to access emergency contacts', 'OK', 3000);
+        return;
+      }
+
+      // Fetch user data including emergency contacts
+      const userData = await this.userService.getUserDataOnce(user.uid);
+      
+      await loading.dismiss();
+
+      // Extract emergency contacts
+      let emergencyContacts: any[] = [];
+      
+      if (userData?.emergencyContacts && Array.isArray(userData.emergencyContacts)) {
+        emergencyContacts = userData.emergencyContacts;
+      } else if (userData?.emergencyContact && userData?.emergencyContactName) {
+        // Handle single emergency contact (legacy format)
+        emergencyContacts = [{
+          id: '1',
+          name: userData.emergencyContactName,
+          phone: userData.emergencyContact,
+          relationship: 'Emergency Contact'
+        }];
+      }
+
+      // Show alert with emergency contacts
+      if (emergencyContacts.length === 0) {
+        await this.showNoEmergencyContactsAlert();
+        return;
+      }
+
+      await this.showEmergencyContactsAlert(emergencyContacts);
+
+    } catch (error) {
+      console.error('Error loading emergency contacts:', error);
+      await loading.dismiss();
+      this.notificationService.error('Error', 'Failed to load emergency contacts', 'OK', 3000);
+    }
+  }
+
+  private async showNoEmergencyContactsAlert() {
     const alert = await this.alertController.create({
-      header: 'Emergency Call (911)',
-      message: 'Are you sure you want to call emergency services? This will initiate a call to 911.',
+      header: 'No Emergency Contacts',
+      message: 'You don\'t have any emergency contacts set up. Please add emergency contacts in your profile settings.',
       buttons: [
         {
           text: 'Cancel',
-          role: 'cancel',
-          cssClass: 'secondary'
-        },
-        {
-          text: 'Call 911',
-          handler: () => {
-            this.initiateEmergencyCall();
-          }
+          role: 'cancel'
         }
       ]
     });
     await alert.present();
   }
 
-  private initiateEmergencyCall() {
+  private async showEmergencyContactsAlert(contacts: any[]) {
+    // Create action sheet buttons for each emergency contact
+    const buttons: any[] = contacts.map((contact, index) => {
+      return {
+        text: contact.name,
+        icon: 'call-outline',
+        handler: () => {
+          this.callContact(contact.phone, contact.name);
+        }
+      };
+    });
+
+    // Add cancel button at the end
+    buttons.push({
+      text: 'Cancel',
+      icon: 'close-outline',
+      role: 'cancel'
+    });
+
+    const actionSheet = await this.actionSheetController.create({
+      header: 'Select Emergency Contact',
+      subHeader: 'Choose a contact to call',
+      buttons: buttons,
+      cssClass: 'emergency-contacts-action-sheet'
+    });
+    
+    await actionSheet.present();
+  }
+
+  private async callContact(phoneNumber: string, contactName: string) {
     try {
-      if (this.currentLocation) {
-        const coordinates = `${this.currentLocation.lat}, ${this.currentLocation.lng}`;
-        const message = `Emergency at coordinates: ${coordinates}`;
-        
-        this.notificationService.warning('Emergency Call', 'Initiating call to 911...', 'OK', 5000);
-        
-        setTimeout(() => {
-          this.notificationService.success('Emergency Call', '911 call initiated successfully!', 'OK', 3000);
-          console.log('Emergency call to 911 initiated with location:', coordinates);
-        }, 2000);
-        
-      } else {
-        this.notificationService.error('Error', 'No location available for emergency call', 'OK', 3000);
-      }
+      // Clean phone number (remove spaces, dashes, parentheses)
+      const cleanNumber = phoneNumber.replace(/[\s\-\(\)]/g, '');
+      
+      console.log(`Calling ${contactName} at ${cleanNumber}`);
+      
+      // Open phone dialer with the contact's number
+      window.location.href = `tel:${cleanNumber}`;
+      
+      // Show success message
+      this.notificationService.success(
+        'Calling...',
+        `Opening dialer for ${contactName}`,
+        'OK',
+        2000
+      );
     } catch (error) {
-      console.error('Error initiating emergency call:', error);
-      this.notificationService.error('Error', 'Failed to initiate emergency call', 'OK', 3000);
+      console.error('Error calling contact:', error);
+      this.notificationService.error('Error', 'Failed to initiate call', 'OK', 3000);
     }
   }
 

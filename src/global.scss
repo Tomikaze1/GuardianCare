@@ -488,4 +488,64 @@ ion-icon {
   line-height: 1;
 }
 
+/* Emergency Contacts Action Sheet */
+::ng-deep .emergency-contacts-action-sheet {
+  .action-sheet-wrapper {
+    border-radius: 24px 24px 0 0 !important;
+    overflow: hidden;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.15) !important;
+  }
+  
+  .action-sheet-container {
+    padding-bottom: 0 !important;
+  }
+  
+  .action-sheet-title {
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    color: #1f2937 !important;
+    text-align: center !important;
+    padding: 20px 16px 8px !important;
+  }
+  
+  .action-sheet-sub-title {
+    font-size: 14px !important;
+    color: #6b7280 !important;
+    text-align: center !important;
+    padding: 0 16px 20px !important;
+    margin-bottom: 8px !important;
+  }
+  
+  .action-sheet-button {
+    min-height: 56px !important;
+    padding: 16px 20px !important;
+    text-align: left !important;
+    font-size: 16px !important;
+    color: #059669 !important;
+    
+    .action-sheet-icon {
+      font-size: 22px !important;
+      margin-right: 12px !important;
+      color: #059669 !important;
+    }
+    
+    &:first-child {
+      border-top: 1px solid #f3f4f6 !important;
+    }
+  }
+  
+  .action-sheet-cancel {
+    min-height: 56px !important;
+    padding: 16px 20px !important;
+    font-weight: 600 !important;
+    color: #ef4444 !important;
+    background: #fef2f2 !important;
+    border-top: 1px solid #fee2e2 !important;
+    
+    &:active {
+      background: #fee2e2 !important;
+    }
+  }
+}
+
 
