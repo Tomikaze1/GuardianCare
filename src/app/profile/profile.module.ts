@@ -13,7 +13,7 @@ import { ProfilePage } from './profile.page';
     FormsModule,
     ReactiveFormsModule,
     IonicModule,
-    TranslateModule,
+    TranslateModule.forChild(),
     ProfilePageRoutingModule
   ],
   declarations: [ProfilePage]

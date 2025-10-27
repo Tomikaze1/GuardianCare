@@ -13,7 +13,7 @@ import { SettingsPage } from './settings.page';
     FormsModule,
     IonicModule,
     SettingsPageRoutingModule,
-    TranslateModule 
+    TranslateModule.forChild()
   ],
   declarations: [SettingsPage]
 })

@@ -12,7 +12,7 @@ import { RegisterPage } from './register.page';
     FormsModule,
     ReactiveFormsModule,
     IonicModule,
-    TranslateModule,
+    TranslateModule.forChild(),
     RegisterPageRoutingModule
   ],
   declarations: [RegisterPage]

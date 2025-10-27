@@ -13,7 +13,7 @@ import { ReportsPage } from './reports.page';
     ReactiveFormsModule,
     IonicModule,
     ReportsPageRoutingModule,
-    TranslateModule
+    TranslateModule.forChild()
   ],
   declarations: [ReportsPage]
 })
