@@ -47,7 +47,10 @@ export class ZoneNotificationService {
   private currentAlertAudio: HTMLAudioElement | null = null;
   private acknowledgedZones: Set<string> = new Set(); // Legacy - kept for compatibility
   private lastZoneCheckTime: number = 0; // Debounce rapid zone checks
-  private currentEntryAcknowledged: boolean = false; // No longer needed - heatmap alerts removed
+  private currentEntryAcknowledged: boolean = false; // Track if current zone entry alert was acknowledged
+  private acknowledgedZoneEntryId: string | null = null; // Track which zone entry was acknowledged
+  private activeDialogForZoneId: string | null = null; // Track which zone currently has an alert dialog showing
+  private lastZoneEntryTime: number = 0; // Track when we last entered a zone to prevent rapid duplicate alerts
   
   private defaultSettings: ZoneNotificationSettings = {
     enableZoneEntryAlerts: true,
@@ -75,18 +78,13 @@ export class ZoneNotificationService {
 
 
   checkZoneEntry(location: { lat: number; lng: number }): void {
-    // Debounce rapid zone checks (minimum 1 second between checks)
+    // NO DELAY - Check immediately for instant response
     const now = Date.now();
-    if (now - this.lastZoneCheckTime < 1000) {
-      console.log(`⏸️ Zone check debounced - too frequent (${now - this.lastZoneCheckTime}ms ago)`);
-      return;
-    }
     this.lastZoneCheckTime = now;
     
-    // Detection radius constants
-    const heatmapRadius = 0.15; // 15 centimeters radius
-    const blueDotRadius = 0.08; // 8 centimeters radius
-    const detectionRadius = heatmapRadius + blueDotRadius; // 23cm total
+    // Detection radius constants - increased for practical detection
+    const heatmapRadius = 50; // 50 meters radius (reasonable detection distance)
+    const detectionRadius = heatmapRadius; // Keep in meters since calculateDistance returns meters
     
     // Get validated reports directly from report service (same data used for heatmap)
     this.reportService.getValidatedReports().pipe(take(1)).subscribe(validatedReports => {
@@ -100,64 +98,73 @@ export class ZoneNotificationService {
         userLocation: location,
         validatedReportsCount: validatedReports.length,
         currentZone: currentZone,
-        detectionRadius: (detectionRadius * 1000).toFixed(1) + 'cm',
+        detectionRadius: detectionRadius + 'm',
         enableSound: this.settings.enableSound,
         minimumRiskLevel: this.settings.minimumRiskLevel
       });
     
-      // User entered a new zone
-      if (currentZone && currentZone !== this.currentZone) {
+      // SCENARIO 1: User entered a NEW zone (check by zone ID, not object reference)
+      const isNewZone = currentZone && (!this.currentZone || this.currentZone.id !== currentZone.id);
+      
+      if (isNewZone) {
         console.log(`📍 Heatmap zone entry detected! User moved into:`, currentZone.name, `(Risk Level: ${currentZone.riskLevel})`);
+        console.log(`📍 Zone ID: ${currentZone.id}, Previous zone: ${this.previousZone?.name || 'none'}`);
+        
+        // No debounce - allow immediate alert on zone entry
+        const now = Date.now();
+        this.lastZoneEntryTime = now;
+        
+        // Clear previous zone
         this.previousZone = this.currentZone;
         this.currentZone = currentZone;
         
         // Reset acknowledgment state for new zone entry
         this.currentEntryAcknowledged = false;
+        this.acknowledgedZoneEntryId = null;
+        console.log(`🔄 State reset - entryAcknowledged: ${this.currentEntryAcknowledged}, zoneId: ${this.acknowledgedZoneEntryId}`);
         
-        // Always trigger alert for new zone entry (once per entry)
-        if (this.shouldTriggerAlert('zone_entry', currentZone)) {
-          console.log(`🚨 Triggering heatmap zone entry alert for: ${currentZone.name} (new entry)`);
-          this.triggerZoneEntryAlert(currentZone, location);
-        } else {
-          console.log(`⏸️ Heatmap zone entry alert skipped due to cooldown or settings`);
-        }
-      }
-      
-      // User is still in the same zone - ensure ringtone continues if it should be playing
-      else if (this.currentZone && currentZone && this.currentZone.id === currentZone.id) {
-        // User is still in the same zone, ensure ringtone continues if it should be playing
-        if (!this.isRingtonePlaying() && this.shouldPlayRingtoneForZone(currentZone)) {
-          console.log(`🔊 Restarting ringtone for continued heatmap zone presence: ${currentZone.name}`);
+        // Start ringing the Guardian Care ringtone (will loop continuously)
+        if (this.settings.enableSound && this.shouldPlayRingtoneForZone(currentZone)) {
+          console.log(`🔊 Starting Guardian Care ringtone loop for zone: ${currentZone.name} (Risk Level: ${currentZone.riskLevel})`);
           this.playRingtoneAlertInternal(currentZone.level);
         }
-        // Don't trigger any new alerts or notifications - user is still in the same zone
+        
+        // ALWAYS show alert dialog for new zone entry
+        console.log(`🚨 Showing alert dialog for NEW zone entry: ${currentZone.name}`);
+        this.triggerZoneEntryAlert(currentZone, location);
+      }
+      
+      // SCENARIO 2: User is STILL in the SAME zone
+      else if (this.currentZone && currentZone && this.currentZone.id === currentZone.id) {
+        // User is still in the same zone - ensure ringtone continues looping
+        if (!this.isRingtonePlaying() && this.shouldPlayRingtoneForZone(currentZone)) {
+          console.log(`🔊 Restarting ringtone loop for continued presence in: ${currentZone.name}`);
+          this.playRingtoneAlertInternal(currentZone.level);
+        }
+        // Ringtone should already be looping, so just return
         return;
       }
       
-      // User exited the current zone
-      if (this.currentZone && !currentZone) {
-        console.log(`📍 Heatmap zone exit detected! User left:`, this.currentZone.name);
+      // SCENARIO 3: User EXITED the current zone
+      else if (this.currentZone && !currentZone) {
+        console.log(`📍 Heatmap zone exit detected! User left: ${this.currentZone.name}`);
         
-        // Stop the ringtone when exiting zone
+        // STOP ringtone IMMEDIATELY when user exits zone
         this.stopRingtone();
-        console.log(`🔕 Ringtone stopped - user exited ${this.currentZone.name}`);
+        console.log(`🔕 Ringtone stopped IMMEDIATELY - user exited ${this.currentZone.name}`);
         
-        // Ringtone stopped - ready for next entry
+        // Reset acknowledgment state for next zone entry
+        this.currentEntryAcknowledged = false;
+        this.acknowledgedZoneEntryId = null;
+        this.activeDialogForZoneId = null; // Clear active dialog marker
+        console.log(`🔄 Reset acknowledgment state - ready for next zone entry`);
         
+        // Ready for next zone entry
         if (this.shouldTriggerAlert('zone_exit', this.currentZone)) {
           this.triggerZoneExitAlert(this.currentZone, location);
         }
         this.previousZone = this.currentZone;
         this.currentZone = null;
-      }
-      
-      // User is still in the same zone - ensure ringtone continues if it should be playing
-      if (this.currentZone && currentZone && this.currentZone.id === currentZone.id) {
-        // User is still in the same zone, ensure ringtone continues if it should be playing
-        if (!this.isRingtonePlaying() && this.shouldPlayRingtoneForZone(currentZone)) {
-          console.log(`🔊 Restarting ringtone for continued heatmap zone presence: ${currentZone.name}`);
-          this.playRingtoneAlertInternal(currentZone.level);
-        }
       }
     });
   }
@@ -225,7 +232,10 @@ export class ZoneNotificationService {
     
     // Mark the current entry as acknowledged
     this.currentEntryAcknowledged = true;
-    console.log(`✅ Current zone entry acknowledged - alert won't show again until next entry`);
+    this.acknowledgedZoneEntryId = this.currentZone?.id || null;
+    this.activeDialogForZoneId = null; // Clear the active dialog marker
+    console.log(`✅ Zone entry acknowledged for: ${this.currentZone?.name || 'current zone'}`);
+    console.log(`✅ Alert dismissed - ringtone continues playing until zone exit`);
     
     // Clean up any existing dialogs and notification banners
     const existingDialogs = document.querySelectorAll('.zone-alert-dialog');
@@ -241,7 +251,7 @@ export class ZoneNotificationService {
     // Show a brief confirmation that the alert was acknowledged
     this.showAcknowledgmentConfirmation();
     
-    console.log(`✅ Alert ${alertId} acknowledged, but ringtone continues until zone exit`);
+    console.log(`✅ Alert ${alertId} acknowledged, ringtone continues until zone exit`);
   }
 
   private showAcknowledgmentConfirmation(): void {
@@ -373,14 +383,17 @@ export class ZoneNotificationService {
         }
       }
       // If we entered a new zone, handle zone entry
+      // NOTE: Don't trigger alerts here - let checkZoneEntry() handle it to prevent duplicates
       else if (!this.currentZone && currentZone) {
         console.log(`🔄 Force re-evaluation: Entered new zone:`, currentZone.name);
         this.previousZone = this.currentZone;
         this.currentZone = currentZone;
         
-        if (this.shouldTriggerAlert('zone_entry', currentZone)) {
-          console.log(`🚨 Triggering zone entry alert for: ${currentZone.name}`);
-          this.triggerZoneEntryAlert(currentZone, location);
+        // Just ensure ringtone plays - don't show alert here to prevent duplicates
+        // Alert will be shown by checkZoneEntry() which is called from home.page.ts
+        if (this.settings.enableSound && this.shouldPlayRingtoneForZone(currentZone)) {
+          console.log(`🔊 Force re-evaluation: Starting ringtone for: ${currentZone.name}`);
+          this.playRingtoneAlertInternal(currentZone.level);
         }
       }
     });
@@ -388,11 +401,9 @@ export class ZoneNotificationService {
 
   private findHeatmapZoneAtLocation(location: { lat: number; lng: number }, validatedReports: any[]): DangerZone | null {
     // Find the closest validated report where the blue dot intersects with the heatmap zone
-    // Blue dot is 16px diameter, heatmap is 15cm radius
-    // We need to account for the blue dot's radius when checking intersection
-    const heatmapRadius = 0.15; // 15 centimeters radius - matches visual heatmap zones on map
-    const blueDotRadius = 0.08; // 8 centimeters radius (16px diameter at typical zoom levels)
-    const detectionRadius = heatmapRadius + blueDotRadius; // Combined radius for intersection detection
+    // Using 50 meter radius for practical detection - this matches typical heatmap visualization
+    const heatmapRadius = 50; // 50 meters radius (increased for practical detection)
+    const detectionRadius = heatmapRadius / 1000; // Convert to km since we'll compare with distance in meters
     
     for (const report of validatedReports) {
       if (!report.location || !report.location.lat || !report.location.lng) continue;
@@ -402,7 +413,8 @@ export class ZoneNotificationService {
         report.location.lat, report.location.lng
       );
       
-      if (distance <= detectionRadius) {
+      // Compare distance (meters) with detectionRadius (meters)
+      if (distance <= heatmapRadius) {
         // Convert report to DangerZone format
         const riskLevel = Number(report.riskLevel || report.level || report.validationLevel || 1);
         
@@ -433,18 +445,18 @@ export class ZoneNotificationService {
           alertSettings: { enablePushNotifications: true, enableVibration: true, enableSound: true, vibrationPattern: [], alertThreshold: 0 }
         };
         
-        console.log(`📍 Found heatmap zone: ${zone.name} at distance ${(distance * 1000).toFixed(1)}cm (Risk Level: ${riskLevel})`);
-        console.log(`📍 Blue dot intersects with heatmap zone (detection radius: ${(detectionRadius * 1000).toFixed(1)}cm)`);
+        console.log(`📍 Found heatmap zone: ${zone.name} at distance ${(distance * 1000).toFixed(1)}m (Risk Level: ${riskLevel})`);
+        console.log(`📍 Blue dot intersects with heatmap zone (detection radius: ${heatmapRadius}m)`);
         return zone;
       }
     }
     
-    console.log(`📍 No heatmap zone found within ${(detectionRadius * 1000)}cm detection radius of location:`, location);
+    console.log(`📍 No heatmap zone found within ${heatmapRadius}m detection radius of location:`, location);
     console.log(`📍 Available reports:`, validatedReports.map(r => ({
       id: r.id,
       location: r.location,
       riskLevel: r.riskLevel || r.level || 1,
-      distance: validatedReports.length > 0 ? (this.calculateDistance(location.lat, location.lng, r.location.lat, r.location.lng) * 1000).toFixed(1) + 'cm' : 'N/A'
+      distance: validatedReports.length > 0 ? (this.calculateDistance(location.lat, location.lng, r.location.lat, r.location.lng) * 1000).toFixed(1) + 'm' : 'N/A'
     })));
     return null;
   }
@@ -523,22 +535,26 @@ export class ZoneNotificationService {
     }
 
     // For zone entry alerts, check if current entry is already acknowledged
-    if (type === 'zone_entry' && this.currentEntryAcknowledged && this.currentZone && this.currentZone.id === zone.id) {
-      console.log(`⏸️ Zone entry alert skipped - current entry already acknowledged for zone: ${zone.name}`);
+    if (type === 'zone_entry' && this.currentEntryAcknowledged && this.acknowledgedZoneEntryId === zone.id) {
+      console.log(`⏸️ Zone entry alert skipped - already acknowledged for entry into: ${zone.name}`);
+      console.log(`   Ringtone continues - user must leave zone to trigger new alert`);
       return false;
     }
 
     const now = Date.now();
-    // Use shorter cooldown for zone entry alerts to ensure immediate response
-    const cooldownMs = type === 'zone_entry' ? 30 * 1000 : this.settings.cooldownPeriod * 60 * 1000; // 30 seconds for entry, 5 minutes for others
+    // NO DELAY for zone_entry alerts - immediate response!
+    const cooldownMs = type === 'zone_entry' ? 0 : this.settings.cooldownPeriod * 60 * 1000; // No cooldown for entry, 5 minutes for others
     
     if (type !== 'zone_entry' && now - this.lastNotificationTime < cooldownMs) {
       return false;
     }
 
-    const alertKey = `${type}-${zone.id}-${Math.floor(now / (cooldownMs))}`;
-    if (this.alertHistory.has(alertKey)) {
-      return false;
+    // Skip duplicate alert history check for zone_entry to allow immediate alerts
+    if (type !== 'zone_entry') {
+      const alertKey = `${type}-${zone.id}-${Math.floor(now / (cooldownMs))}`;
+      if (this.alertHistory.has(alertKey)) {
+        return false;
+      }
     }
 
     switch (type) {
@@ -558,6 +574,13 @@ export class ZoneNotificationService {
   private triggerZoneEntryAlert(zone: DangerZone, location: { lat: number; lng: number }): void {
     console.log(`🚨 ZONE ENTRY DETECTED: User entered ${zone.name} (${zone.level} zone) at location:`, location);
     console.log(`📍 Zone coordinates:`, zone.coordinates);
+    console.log(`🔍 Settings:`, {
+      enableZoneEntryAlerts: this.settings.enableZoneEntryAlerts,
+      enableSound: this.settings.enableSound,
+      minimumRiskLevel: this.settings.minimumRiskLevel,
+      currentEntryAcknowledged: this.currentEntryAcknowledged,
+      acknowledgedZoneEntryId: this.acknowledgedZoneEntryId
+    });
     
     // Check if there's already an active alert for this zone to prevent duplicates
     const existingAlert = this.activeAlerts.value.find(alert => 
@@ -566,13 +589,12 @@ export class ZoneNotificationService {
     
     if (existingAlert) {
       console.log(`⏸️ Alert already exists for zone ${zone.name}, skipping duplicate alert creation`);
-      // Still ensure ringtone is playing
-      if (this.shouldPlayRingtoneForZone(zone)) {
-        console.log(`🔊 Ensuring ringtone continues for existing alert: ${zone.name}`);
-        this.playRingtoneAlertInternal(zone.level);
-      }
       return;
     }
+    
+    // Mark dialog as showing to prevent duplicates from rapid successive calls
+    this.activeDialogForZoneId = zone.id;
+    console.log(`📌 Marking dialog as active for zone: ${zone.name}`);
     
     const alert: ZoneAlert = {
       id: `entry-${zone.id}-${Date.now()}`,
@@ -589,17 +611,16 @@ export class ZoneNotificationService {
     };
 
     this.addAlert(alert);
-    this.recordAlertHistory(alert);
     
-    // Start continuous ringtone for zone entry (will continue until zone exit)
-    if (this.shouldPlayRingtoneForZone(zone)) {
-      console.log(`🔊 Starting continuous ringtone for zone entry: ${zone.name}`);
-      this.playRingtoneAlertInternal(zone.level);
-    }
+    // Note: Ringtone is already started in checkZoneEntry() to ensure it plays
+    // even if alert is skipped. Only show the alert dialog here.
     
-    // Show immediate alert dialog for zone entry
+    // Show the white card alert dialog with Acknowledge button IMMEDIATELY
+    console.log(`🎯 Calling showImmediateAlertDialog for alert: ${alert.id}`);
     this.showImmediateAlertDialog(alert);
+    console.log(`✅ Alert dialog created for zone: ${zone.name}`);
     
+    // Update last notification time for other alert types (not for zone_entry)
     this.lastNotificationTime = Date.now();
     
     if (this.settings.enableVibration) {
@@ -845,9 +866,7 @@ export class ZoneNotificationService {
       this.triggerVibration(alert.zoneLevel);
     }
     
-    if (this.settings.enableSound) {
-      this.triggerSound(alert.zoneLevel);
-    }
+    // Sound is already handled in checkZoneEntry() - don't play duplicate sounds
     
     this.showNotificationBanner(alert);
     
@@ -889,27 +908,31 @@ export class ZoneNotificationService {
       // Stop any existing ringtone first
       this.stopRingtone();
       
+      // Get volume and playback rate based on zone level (higher risk = louder AND faster)
+      const volume = this.getVolumeForZoneLevel(level);
+      const playbackRate = this.getPlaybackRateForZoneLevel(level);
+      
       // Create audio element for the ringtone
       const audio = new Audio('/assets/sounds/GuardianCare - Ringtone.mp3');
       audio.loop = true; // Loop the ringtone until user exits zone
-      audio.volume = 0.8; // Set appropriate volume
+      audio.volume = volume; // Dynamic volume based on risk level
+      audio.playbackRate = playbackRate; // Faster playback for higher urgency
       
       // Store reference to stop it later
       this.currentAlertAudio = audio;
       
       // Add event listeners for better control
       audio.addEventListener('loadstart', () => {
-        console.log('🔊 Ringtone loading started');
+        console.log(`🔊 Ringtone loading started for ${level} zone (volume: ${volume}, speed: ${playbackRate}x)`);
       });
       
       audio.addEventListener('canplaythrough', () => {
-        console.log('🔊 Ringtone ready to play');
+        console.log(`🔊 Ringtone ready to play at volume ${volume} and speed ${playbackRate}x`);
       });
       
       audio.addEventListener('error', (e) => {
         console.warn('🔊 Ringtone error:', e);
-        // Fallback to oscillator sound
-        this.playFallbackSound(level);
+        console.warn('⚠️ Guardian Care ringtone failed to load - no sound will play');
       });
       
       // Add event listener for when audio ends (shouldn't happen with loop=true, but safety)
@@ -923,70 +946,53 @@ export class ZoneNotificationService {
       
       // Play the ringtone
       audio.play().then(() => {
-        console.log(`🔊 Zone ${level} ringtone alert started - will loop until zone exit`);
+        console.log(`🔊 Zone ${level} Guardian Care ringtone started at volume ${volume} and speed ${playbackRate}x - will loop until zone exit`);
       }).catch(error => {
         console.warn('Could not play ringtone:', error);
-        // Fallback to oscillator sound
-        this.playFallbackSound(level);
+        console.warn('⚠️ No fallback sound - ringtone file must be available');
       });
       
     } catch (error) {
       console.warn('Could not create audio element:', error);
-      // Fallback to oscillator sound
-      this.playFallbackSound(level);
     }
   }
 
-  private playFallbackSound(level: string): void {
-    try {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      let frequency: number;
-      let duration: number;
-      
-      switch (level) {
-        case 'Safe':
-          frequency = 400;
-          duration = 0.2;
-          break;
-        case 'Neutral':
-          frequency = 500;
-          duration = 0.3;
-          break;
-        case 'Caution':
-          frequency = 600;
-          duration = 0.4;
-          break;
-        case 'Danger':
-          frequency = 800;
-          duration = 0.5;
-          break;
-        case 'Critical':
-          frequency = 1000;
-          duration = 0.6;
-          break;
-        default:
-          frequency = 400;
-          duration = 0.2;
-      }
-      
-      oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-      
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + duration);
-      
-      console.log(`🔊 Zone ${level} fallback sound alert triggered`);
-    } catch (error) {
-      console.warn('Could not play fallback sound:', error);
+  private getVolumeForZoneLevel(level: string): number {
+    // EXPONENTIAL volume scaling - dramatic difference between low and high risk
+    // This creates a much more urgent feeling for extreme risk zones
+    switch (level) {
+      case 'Safe':
+        return 0.2; // Level 1 - Low risk: very quiet (just a gentle alert)
+      case 'Neutral':
+        return 0.4; // Level 2 - Moderate risk: soft alert
+      case 'Caution':
+        return 0.65; // Level 3 - High risk: noticeable but not alarming
+      case 'Danger':
+        return 1.0; // Level 4-5 - Critical/Extreme risk: MAX VOLUME (immediate attention)
+      default:
+        return 0.5; // Default medium volume
     }
   }
+
+  private getPlaybackRateForZoneLevel(level: string): number {
+    // Adjust playback speed for urgency (faster = more urgent)
+    // This makes extreme risk zones feel more alarming and immediate
+    switch (level) {
+      case 'Safe':
+        return 0.9; // Level 1 - Low risk: slightly slower (gentle, non-alarming)
+      case 'Neutral':
+        return 1.0; // Level 2 - Moderate risk: normal speed
+      case 'Caution':
+        return 1.1; // Level 3 - High risk: slightly faster (building urgency)
+      case 'Danger':
+        return 1.3; // Level 4-5 - Critical/Extreme risk: 30% faster (max urgency)
+      default:
+        return 1.0; // Default normal speed
+    }
+  }
+
+  // REMOVED: playFallbackSound() method
+  // Only Guardian Care ringtone is used - no oscillator fallback sounds
 
   private showNotificationBanner(alert: ZoneAlert): void {
     const riskLevel = alert.riskLevel || 1;

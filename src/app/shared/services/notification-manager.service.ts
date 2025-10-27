@@ -113,10 +113,11 @@ export class NotificationManagerService {
       this.showPushNotification(newNotification);
     }
 
-    // Play sound only for zone context
-    if ((window as any).__guardianCareZoneSound === true && this.settingsSubject.value.soundEnabled && newNotification.sound !== false) {
-      this.playNotificationSound(newNotification.priority);
-    }
+    // DISABLED: playNotificationSound for zone context
+    // Only Guardian Care ringtone plays, not this oscillator sound
+    // if ((window as any).__guardianCareZoneSound === true && this.settingsSubject.value.soundEnabled && newNotification.sound !== false) {
+    //   this.playNotificationSound(newNotification.priority);
+    // }
 
     // Vibrate if enabled
     if (this.settingsSubject.value.vibrationEnabled && newNotification.vibration !== false) {

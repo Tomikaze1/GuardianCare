@@ -153,6 +153,7 @@ ion-content {
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
+  line-clamp: 2;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
@@ -1662,43 +1663,52 @@ ion-alert.zone-alert-warning.card-style-alert {
 
 // Enhanced heatmap zone alert styles using heatmap colors
 .zone-alert-info.full-screen-alert {
-  --backdrop-opacity: 0.7;
+  --backdrop-opacity: 0.6;
   
   .alert-wrapper {
-    background: linear-gradient(135deg, #10b981, #34d399); // Level 1 colors
-    border-radius: 20px;
-    box-shadow: 0 20px 40px rgba(16, 185, 129, 0.3);
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: #ffffff !important; // White background for readability
+    border-radius: 16px !important;
+    box-shadow: 0 8px 32px rgba(16, 185, 129, 0.2) !important;
+    border: 3px solid #10b981 !important; // Green border for info
     
     .alert-head {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 18px 18px 0 0;
-      padding: 20px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      background: #10b981 !important; // Green header
+      border-radius: 13px 13px 0 0 !important;
+      padding: 20px !important;
+      border-bottom: none !important;
       
-      .alert-title {
-        color: #ffffff;
-        font-size: 1.4rem;
-        font-weight: 700;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      h2 {
+        color: #ffffff !important;
+        font-size: 1.2rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.5px !important;
+        text-transform: uppercase !important;
+        margin: 0 !important;
+        text-shadow: none !important;
       }
     }
     
     .alert-message {
-      color: rgba(255, 255, 255, 0.95);
-      font-size: 1rem;
-      line-height: 1.6;
-      padding: 20px;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+      color: #1f2937 !important; // Dark gray for readability
+      font-size: 0.95rem !important;
+      line-height: 1.6 !important;
+      padding: 24px 20px !important;
+      background: #ffffff !important;
+      font-weight: 400 !important;
     }
     
     .alert-button-group {
-      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      background: #f9fafb !important;
+      border-top: 1px solid #e5e7eb !important;
       
       button {
-        color: #ffffff;
-        font-weight: 600;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        color: #10b981 !important;
+        font-weight: 600 !important;
+        background: transparent !important;
+        
+        &:hover {
+          background: #d1fae5 !important;
+        }
       }
     }
   }
@@ -1706,44 +1716,52 @@ ion-alert.zone-alert-warning.card-style-alert {
 
 // Enhanced danger zone alert with pulsing effect using heatmap colors
 .zone-alert-danger.full-screen-alert {
-  --backdrop-opacity: 0.9;
+  --backdrop-opacity: 0.8;
   
   .alert-wrapper {
-    background: linear-gradient(135deg, #dc2626, #ef4444); // Level 5 colors
-    border-radius: 20px;
-    box-shadow: 0 20px 40px rgba(220, 38, 38, 0.4);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    animation: dangerPulse 2s infinite;
+    background: #ffffff !important; // White background for readability
+    border-radius: 16px !important;
+    box-shadow: 0 8px 32px rgba(220, 38, 38, 0.3) !important;
+    border: 3px solid #dc2626 !important; // Red border for danger
     
     .alert-head {
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 18px 18px 0 0;
-      padding: 20px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+      background: #dc2626 !important; // Red header
+      border-radius: 13px 13px 0 0 !important;
+      padding: 20px !important;
+      border-bottom: none !important;
       
-      .alert-title {
-        color: #ffffff;
-        font-size: 1.5rem;
-        font-weight: 800;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+      h2 {
+        color: #ffffff !important;
+        font-size: 1.2rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.5px !important;
+        text-transform: uppercase !important;
+        margin: 0 !important;
+        text-shadow: none !important;
       }
     }
     
     .alert-message {
-      color: rgba(255, 255, 255, 0.95);
-      font-size: 1rem;
-      line-height: 1.6;
-      padding: 20px;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      color: #1f2937 !important; // Dark gray for readability
+      font-size: 0.95rem !important;
+      line-height: 1.6 !important;
+      padding: 24px 20px !important;
+      background: #ffffff !important;
+      font-weight: 400 !important;
     }
     
     .alert-button-group {
-      border-top: 1px solid rgba(255, 255, 255, 0.3);
+      background: #f9fafb !important;
+      border-top: 1px solid #e5e7eb !important;
       
       button {
-        color: #ffffff;
-        font-weight: 700;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+        color: #dc2626 !important;
+        font-weight: 600 !important;
+        background: transparent !important;
+        
+        &:hover {
+          background: #fee2e2 !important;
+        }
       }
     }
   }
@@ -1751,43 +1769,52 @@ ion-alert.zone-alert-warning.card-style-alert {
 
 // Enhanced warning zone alert using heatmap colors
 .zone-alert-warning.full-screen-alert {
-  --backdrop-opacity: 0.8;
+  --backdrop-opacity: 0.7;
   
   .alert-wrapper {
-    background: linear-gradient(135deg, #f97316, #fb923c); // Level 3 colors
-    border-radius: 20px;
-    box-shadow: 0 20px 40px rgba(249, 115, 22, 0.3);
-    border: 2px solid rgba(255, 255, 255, 0.25);
+    background: #ffffff !important; // White background for readability
+    border-radius: 16px !important;
+    box-shadow: 0 8px 32px rgba(249, 115, 22, 0.2) !important;
+    border: 3px solid #f97316 !important; // Orange border for warning
     
     .alert-head {
-      background: rgba(255, 255, 255, 0.12);
-      border-radius: 18px 18px 0 0;
-      padding: 20px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+      background: #f97316 !important; // Orange header
+      border-radius: 13px 13px 0 0 !important;
+      padding: 20px !important;
+      border-bottom: none !important;
       
-      .alert-title {
-        color: #ffffff;
-        font-size: 1.4rem;
-        font-weight: 700;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      h2 {
+        color: #ffffff !important;
+        font-size: 1.2rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.5px !important;
+        text-transform: uppercase !important;
+        margin: 0 !important;
+        text-shadow: none !important;
       }
     }
     
     .alert-message {
-      color: rgba(255, 255, 255, 0.95);
-      font-size: 1rem;
-      line-height: 1.6;
-      padding: 20px;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+      color: #1f2937 !important; // Dark gray for readability
+      font-size: 0.95rem !important;
+      line-height: 1.6 !important;
+      padding: 24px 20px !important;
+      background: #ffffff !important;
+      font-weight: 400 !important;
     }
     
     .alert-button-group {
-      border-top: 1px solid rgba(255, 255, 255, 0.25);
+      background: #f9fafb !important;
+      border-top: 1px solid #e5e7eb !important;
       
       button {
-        color: #ffffff;
-        font-weight: 600;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        color: #f97316 !important;
+        font-weight: 600 !important;
+        background: transparent !important;
+        
+        &:hover {
+          background: #fff7ed !important;
+        }
       }
     }
   }
@@ -1795,87 +1822,104 @@ ion-alert.zone-alert-warning.card-style-alert {
 
 // Additional alert styles for Level 2 and Level 4
 .zone-alert-moderate.full-screen-alert {
-  --backdrop-opacity: 0.75;
+  --backdrop-opacity: 0.7;
   
   .alert-wrapper {
-    background: linear-gradient(135deg, #fbbf24, #fcd34d); // Level 2 colors
-    border-radius: 20px;
-    box-shadow: 0 20px 40px rgba(251, 191, 36, 0.3);
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: #ffffff !important; // White background for readability
+    border-radius: 16px !important;
+    box-shadow: 0 8px 32px rgba(251, 191, 36, 0.2) !important;
+    border: 3px solid #fbbf24 !important; // Yellow border for moderate
     
     .alert-head {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 18px 18px 0 0;
-      padding: 20px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      background: #fbbf24 !important; // Yellow header
+      border-radius: 13px 13px 0 0 !important;
+      padding: 20px !important;
+      border-bottom: none !important;
       
-      .alert-title {
-        color: #ffffff;
-        font-size: 1.4rem;
-        font-weight: 700;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      h2 {
+        color: #ffffff !important;
+        font-size: 1.2rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.5px !important;
+        text-transform: uppercase !important;
+        margin: 0 !important;
+        text-shadow: none !important;
       }
     }
     
     .alert-message {
-      color: rgba(255, 255, 255, 0.95);
-      font-size: 1rem;
-      line-height: 1.6;
-      padding: 20px;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+      color: #1f2937 !important; // Dark gray for readability
+      font-size: 0.95rem !important;
+      line-height: 1.6 !important;
+      padding: 24px 20px !important;
+      background: #ffffff !important;
+      font-weight: 400 !important;
     }
     
     .alert-button-group {
-      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      background: #f9fafb !important;
+      border-top: 1px solid #e5e7eb !important;
       
       button {
-        color: #ffffff;
-        font-weight: 600;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        color: #f59e0b !important;
+        font-weight: 600 !important;
+        background: transparent !important;
+        
+        &:hover {
+          background: #fef3c7 !important;
+        }
       }
     }
   }
 }
 
 .zone-alert-critical.full-screen-alert {
-  --backdrop-opacity: 0.85;
+  --backdrop-opacity: 0.8;
   
   .alert-wrapper {
-    background: linear-gradient(135deg, #ef4444, #f87171); // Level 4 colors
-    border-radius: 20px;
-    box-shadow: 0 20px 40px rgba(239, 68, 68, 0.4);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    animation: dangerPulse 1.8s infinite;
+    background: #ffffff !important; // White background for readability
+    border-radius: 16px !important;
+    box-shadow: 0 8px 32px rgba(239, 68, 68, 0.3) !important;
+    border: 3px solid #ef4444 !important; // Red border for critical
     
     .alert-head {
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 18px 18px 0 0;
-      padding: 20px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+      background: #ef4444 !important; // Red header
+      border-radius: 13px 13px 0 0 !important;
+      padding: 20px !important;
+      border-bottom: none !important;
       
-      .alert-title {
-        color: #ffffff;
-        font-size: 1.5rem;
-        font-weight: 800;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+      h2 {
+        color: #ffffff !important;
+        font-size: 1.2rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.5px !important;
+        text-transform: uppercase !important;
+        margin: 0 !important;
+        text-shadow: none !important;
       }
     }
     
     .alert-message {
-      color: rgba(255, 255, 255, 0.95);
-      font-size: 1rem;
-      line-height: 1.6;
-      padding: 20px;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      color: #1f2937 !important; // Dark gray for readability
+      font-size: 0.95rem !important;
+      line-height: 1.6 !important;
+      padding: 24px 20px !important;
+      background: #ffffff !important;
+      font-weight: 400 !important;
     }
     
     .alert-button-group {
-      border-top: 1px solid rgba(255, 255, 255, 0.3);
+      background: #f9fafb !important;
+      border-top: 1px solid #e5e7eb !important;
       
       button {
-        color: #ffffff;
-        font-weight: 700;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+        color: #ef4444 !important;
+        font-weight: 600 !important;
+        background: transparent !important;
+        
+        &:hover {
+          background: #fee2e2 !important;
+        }
       }
     }
   }

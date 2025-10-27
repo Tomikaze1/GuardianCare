@@ -331,7 +331,8 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   private checkZoneNotifications(location: { lat: number; lng: number }) {
-    // Check for zone entry/exit and trigger appropriate alerts
+    // Check for zone entry/exit and trigger appropriate alerts IMMEDIATELY
+    // No delays - instant response when entering/exiting heatmap zones
     this.zoneNotificationService.checkZoneEntry(location);
     
     // Also update zone engine for internal tracking
@@ -340,11 +341,7 @@ export class HomePage implements OnInit, OnDestroy {
     // Trigger UI update to reflect current zone status
     this.updateZoneStatusUI();
     
-    // Force zone re-evaluation with current validated reports to ensure synchronization
-    if (this.validatedReports && this.validatedReports.length > 0) {
-      console.log('🔄 Forcing zone re-evaluation with current validated reports');
-      this.zoneNotificationService.forceZoneReevaluation(location);
-    }
+    // Note: No force re-evaluation needed - checkZoneEntry handles everything
   }
   
   private updateZoneStatusUI() {
@@ -3078,23 +3075,23 @@ export class HomePage implements OnInit, OnDestroy {
 
   private getIncidentTypeDisplay(incidentType: string): string {
     const typeMap: { [key: string]: string } = {
-      'crime-theft': '💰 Theft/Crime',
-      'crime-assault': '👊 Assault',
-      'crime-robbery': '🔫 Robbery',
-      'crime-murder': '💀 Murder',
-      'crime-drug': '💊 Drug Activity',
-      'crime-vandalism': '🎨 Vandalism',
-      'accident-traffic': '🚗 Traffic Accident',
-      'accident-pedestrian': '🚶 Pedestrian Accident',
-      'accident-fire': '🔥 Fire',
-      'accident-medical': '🏥 Medical Emergency',
-      'safety-hazard': '⚠️ Safety Hazard',
-      'safety-infrastructure': '🏗️ Infrastructure Issue',
-      'safety-environmental': '🌍 Environmental Hazard',
-      'other': '❓ Other Incident'
+      'crime-theft': 'Theft/Crime',
+      'crime-assault': 'Assault',
+      'crime-robbery': 'Robbery',
+      'crime-murder': 'Murder',
+      'crime-drug': 'Drug Activity',
+      'crime-vandalism': 'Vandalism',
+      'accident-traffic': 'Traffic Accident',
+      'accident-pedestrian': 'Pedestrian Accident',
+      'accident-fire': 'Fire',
+      'accident-medical': 'Medical Emergency',
+      'safety-hazard': 'Safety Hazard',
+      'safety-infrastructure': 'Infrastructure Issue',
+      'safety-environmental': 'Environmental Hazard',
+      'other': 'Other Incident'
     };
     
-    return typeMap[incidentType] || `❓ ${incidentType}`;
+    return typeMap[incidentType] || incidentType;
   }
 
   private getRiskLevelEmoji(riskLevel: number): string {
@@ -3122,17 +3119,17 @@ export class HomePage implements OnInit, OnDestroy {
   private getRiskWarningMessage(riskLevel: number): string {
     switch (riskLevel) {
       case 5:
-        return 'Leave this area immediately and stay alert!';
+        return 'Please exercise extreme caution and consider leaving this area.';
       case 4:
-        return 'Consider leaving this area immediately!';
+        return 'Please exercise caution and consider leaving this area.';
       case 3:
-        return 'Stay alert and exercise caution!';
+        return 'Please exercise caution and remain alert.';
       case 2:
-        return 'Stay aware of your surroundings!';
+        return 'Please remain aware of your surroundings.';
       case 1:
-        return 'Stay aware of your surroundings.';
+        return 'Please remain aware of your surroundings.';
       default:
-        return 'Stay aware of your surroundings.';
+        return 'Please remain aware of your surroundings.';
     }
   }
 
@@ -3193,66 +3190,10 @@ export class HomePage implements OnInit, OnDestroy {
     }
   }
 
-  private async showHeatmapZoneAlert(incident: any, riskLevel: number, zoneId: string) {
-    // Professional alert titles
-    const alertTitle = riskLevel >= 5 ? `EXTREME RISK ZONE ENTERED` : 
-                      riskLevel >= 4 ? `CRITICAL RISK ZONE ENTERED` : 
-                      riskLevel >= 3 ? `HIGH RISK ZONE ENTERED` : 
-                      riskLevel >= 2 ? `MODERATE RISK ZONE ENTERED` : 
-                      `LOW RISK ZONE ENTERED`;
-    
-    // Get clean data
-    const location = incident.locationAddress || 
-                    incident.location?.fullAddress || 
-                    incident.location?.simplifiedAddress || 
-                    'Location Not Available';
-    
-    const incidentType = incident.type || 'Unknown Incident';
-    
-    const reportedDate = incident.createdAt ? 
-                        new Date(incident.createdAt).toLocaleDateString() : 
-                        'Date Not Available';
-    
-    // Create enhanced message with icons and better formatting
-    const alertMessage = `🚨 You have entered a ${this.getRiskLevelText(riskLevel).toUpperCase()} RISK zone!
-
-📍 Location:
-${location}
-
-⚠️ Risk Level:
-${riskLevel}/5 (${this.getRiskLevelText(riskLevel)})
-
-🔍 Incident Type:
-${this.getIncidentTypeDisplay(incidentType)}
-
-📅 Reported:
-${reportedDate}
-
-${this.getRiskLevelEmoji(riskLevel)} ${this.getRiskLevelText(riskLevel).toUpperCase()} RISK:
-${this.getRiskWarningMessage(riskLevel)}`;
-
-    const alert = await this.alertController.create({
-      header: alertTitle,
-      message: alertMessage,
-      buttons: [
-        {
-          text: 'OK',
-          handler: () => {
-            this.alertAcknowledged = true;
-            this.lastAlertedZoneId = zoneId;
-            console.log('✅ User acknowledged heatmap zone alert - ringtone continues');
-          }
-        }
-      ],
-      cssClass: `zone-alert-${this.getAlertClassForRiskLevel(riskLevel)} full-screen-alert card-style-alert`,
-      backdropDismiss: false,
-      translucent: false
-    });
-    
-    await alert.present();
-    
-    console.log('🚨 Heatmap zone alert shown:', alertTitle);
-  }
+  // REMOVED: showHeatmapZoneAlert() method
+  // This Ionic AlertController alert (red header style) has been replaced with
+  // the white card alert style in zone-notification.service.ts showImmediateAlertDialog()
+  // for consistent UX with Acknowledge and View Details buttons
 
   private checkAndNotifyZoneChanges(previousStatus: 'safe' | 'warning' | 'danger', wasInZone: boolean, location?: { lat: number; lng: number }) {
     const now = Date.now();
@@ -3269,13 +3210,13 @@ ${this.getRiskWarningMessage(riskLevel)}`;
     const currentZoneId = this.generateZoneId();
 
     // Check if user entered a heatmap zone - now includes ALL risk levels
+    // NOTE: Zone entry alerts and ringtone are now handled by zone-notification.service.ts
+    // This allows for IMMEDIATE response without any delay
     if (!wasInZone && this.inDangerZone) {
-      // Only apply cooldown for UI alerts, not for ringtone
-      const shouldShowAlert = now - this.lastNotificationTime >= 10000;
-      
-      if (shouldShowAlert) {
+      // No cooldown - zone notification service handles everything instantly
         this.lastNotificationTime = now;
         
+      // Find nearest incident for reference (zone service handles detection now)
         const nearestIncident = this.validatedReports
         .filter(report => {
           const distance = this.calculateDistance(
@@ -3293,21 +3234,9 @@ ${this.getRiskWarningMessage(riskLevel)}`;
 
       if (nearestIncident) {
         const riskLevel = nearestIncident.level || nearestIncident.riskLevel || 1;
-        
-        // Only show alert if this is a new zone or user hasn't acknowledged yet
-        if (this.lastAlertedZoneId !== currentZoneId || !this.alertAcknowledged) {
-          this.showHeatmapZoneAlert(nearestIncident, riskLevel, currentZoneId);
-        }
-        
-        // Always trigger ringtone immediately when entering zone (no cooldown)
-        if (riskLevel >= 1) { // Play ringtone for ALL risk levels
-          console.log(`🔊 Triggering ringtone immediately for zone entry (Risk Level ${riskLevel})`);
-          this.zoneNotificationService.playRingtoneAlert(this.getLevelFromRiskLevel(riskLevel));
-        }
-        
-        console.log(`🔊 HEATMAP ZONE ALERT (Risk Level ${riskLevel}):`, nearestIncident.type);
+        console.log(`📍 Entered heatmap zone (Risk Level ${riskLevel}) - Alert and ringtone triggered IMMEDIATELY`);
       }
-      }
+      
       return;
     }
 
