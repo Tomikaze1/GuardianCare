@@ -734,30 +734,30 @@ export class ZoneNotificationService {
     
     switch (zone.level) {
       case 'Danger':
-        recommendations.push('🚨 HIGH RISK: Consider leaving immediately');
-        recommendations.push('📱 Keep emergency contacts accessible');
-        recommendations.push('👥 Stay in well-lit, populated areas');
-        recommendations.push('🚶‍♀️ Avoid isolated areas');
+        recommendations.push('HIGH RISK: Consider leaving immediately');
+        recommendations.push('Keep emergency contacts accessible');
+        recommendations.push('Stay in well-lit, populated areas');
+        recommendations.push('Avoid isolated areas');
         break;
       case 'Caution':
-        recommendations.push('⚠️ MODERATE RISK: Stay alert and cautious');
-        recommendations.push('📱 Keep your phone accessible');
-        recommendations.push('🔍 Be aware of your surroundings');
-        recommendations.push('👥 Stay near other people when possible');
+        recommendations.push('MODERATE RISK: Stay alert and cautious');
+        recommendations.push('Keep your phone accessible');
+        recommendations.push('Be aware of your surroundings');
+        recommendations.push('Stay near other people when possible');
         break;
       case 'Neutral':
-        recommendations.push('🟡 NEUTRAL: Normal vigilance recommended');
-        recommendations.push('📱 Stay aware of your surroundings');
-        recommendations.push('🔍 Be observant of unusual activity');
+        recommendations.push('NEUTRAL: Normal vigilance recommended');
+        recommendations.push('Stay aware of your surroundings');
+        recommendations.push('Be observant of unusual activity');
         break;
       case 'Safe':
-        recommendations.push('🟢 SAFE: Normal activities can resume');
-        recommendations.push('📱 Continue to stay aware');
+        recommendations.push('SAFE: Normal activities can resume');
+        recommendations.push('Continue to stay aware');
         break;
     }
     
     if (zone.riskLevel && zone.riskLevel >= 4) {
-      recommendations.push('🚨 Multiple incidents reported in this area');
+      recommendations.push('Multiple incidents reported in this area');
     }
     
     return recommendations;
@@ -839,6 +839,28 @@ export class ZoneNotificationService {
       case 4: return 'Red (Critical)';
       case 5: return 'Dark Red (Extreme)';
       default: return 'Unknown';
+    }
+  }
+
+  private getBackgroundColorForRiskLevel(riskLevel: number): string {
+    switch (riskLevel) {
+      case 1: return '#f0fdf4'; // Very light green
+      case 2: return '#fefce8'; // Very light yellow
+      case 3: return '#fff7ed'; // Very light orange
+      case 4: return '#fef2f2'; // Light red
+      case 5: return '#fef2f2'; // Light red (same as level 4 for extreme)
+      default: return '#f9fafb'; // Default light gray
+    }
+  }
+
+  private getBorderColorForRiskLevel(riskLevel: number): string {
+    switch (riskLevel) {
+      case 1: return '#10b981'; // Green
+      case 2: return '#fbbf24'; // Yellow
+      case 3: return '#f97316'; // Orange
+      case 4: return '#ef4444'; // Red
+      case 5: return '#dc2626'; // Dark red
+      default: return '#d1d5db'; // Default gray
     }
   }
 
@@ -1120,13 +1142,14 @@ export class ZoneNotificationService {
     const alertContent = document.createElement('div');
     alertContent.style.cssText = `
       background: white;
-      border-radius: 16px;
-      padding: 24px;
+      border-radius: 12px;
+      padding: 32px 28px 28px 28px;
       margin: 20px;
-      max-width: 400px;
+      max-width: 420px;
       width: 90%;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.25);
       animation: slideIn 0.3s ease-out;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
     `;
     
     // Add CSS animation
@@ -1149,66 +1172,66 @@ export class ZoneNotificationService {
     const riskLevel = alert.riskLevel || 1;
     const heatmapEmoji = this.getHeatmapEmojiForRiskLevel(riskLevel);
     const heatmapColor = this.getHeatmapColorForRiskLevel(riskLevel);
-    const riskText = this.getRiskText(riskLevel);
+    const backgroundColor = this.getBackgroundColorForRiskLevel(riskLevel);
+    const borderColor = this.getBorderColorForRiskLevel(riskLevel);
     
-    // Create alert content HTML
+    // Create alert content HTML with professional formal styling
     alertContent.innerHTML = `
-      <div style="text-align: center; margin-bottom: 20px;">
-        <div style="font-size: 48px; margin-bottom: 12px;">${heatmapEmoji}</div>
-        <h2 style="margin: 0; color: #1f2937; font-size: 20px; font-weight: 600;">
-          DANGER ZONE ENTERED
-        </h2>
-        <p style="margin: 8px 0 0 0; color: #6b7280; font-size: 14px;">
-          Level ${riskLevel} • ${heatmapColor}
-        </p>
+      <div style="border-bottom: 2px solid #e5e7eb; padding-bottom: 20px; margin-bottom: 24px;">
+        <div style="text-align: center; margin-bottom: 16px;">
+          <div style="font-size: 56px; margin-bottom: 12px; line-height: 1;">${heatmapEmoji}</div>
+        </div>
+        <div style="text-align: center;">
+          <h1 style="margin: 0; color: #111827; font-size: 16px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; line-height: 1.4;">
+            DANGER ZONE ALERT
+          </h1>
+          <p style="margin: 10px 0 0 0; color: #6b7280; font-size: 13px; font-weight: 500; letter-spacing: 0.3px;">
+            Risk Level ${riskLevel} / 5 • ${heatmapColor}
+          </p>
+        </div>
       </div>
       
-      <div style="margin-bottom: 20px;">
-        <p style="margin: 0 0 8px 0; color: #374151; font-size: 16px; font-weight: 500;">
-          📍 ${alert.zoneName}
-        </p>
-        <p style="margin: 0; color: #6b7280; font-size: 14px; line-height: 1.4;">
-          ${alert.message.split('\n').slice(1).join('\n')}
-        </p>
+      <div style="margin-bottom: 28px;">
+        <div style="display: flex; align-items: start; gap: 12px; margin-bottom: 16px; padding: 12px; background: ${backgroundColor}; border-left: 4px solid ${borderColor}; border-radius: 4px;">
+          <div style="min-width: 20px; color: ${borderColor}; font-size: 18px;">⚠️</div>
+          <div style="flex: 1;">
+            <h3 style="margin: 0 0 6px 0; color: #1a1a1a; font-size: 14px; font-weight: 700; letter-spacing: 0.5px;">
+              LOCATION
+            </h3>
+            <p style="margin: 0; color: #374151; font-size: 14px; line-height: 1.6; font-weight: 500;">
+              ${alert.zoneName}
+            </p>
+          </div>
+        </div>
       </div>
       
-      <div style="margin-bottom: 24px;">
-        <h4 style="margin: 0 0 8px 0; color: #374151; font-size: 14px; font-weight: 600;">
-          Safety Recommendations:
-        </h4>
-        <ul style="margin: 0; padding-left: 16px; color: #6b7280; font-size: 13px; line-height: 1.4;">
-          ${alert.recommendations.map(rec => `<li>${rec}</li>`).join('')}
-        </ul>
+      <div style="margin-bottom: 28px;">
+        <h3 style="margin: 0 0 14px 0; color: #111827; font-size: 14px; font-weight: 700; letter-spacing: 0.5px;">
+          SAFETY RECOMMENDATIONS
+        </h3>
+        <div style="background: #f9fafb; padding: 16px; border-radius: 6px;">
+          <ul style="margin: 0; padding-left: 20px; color: #374151; font-size: 13px; line-height: 2;">
+            ${alert.recommendations.map(rec => `<li style="margin-bottom: 8px;">${rec}</li>`).join('')}
+          </ul>
+        </div>
       </div>
       
-      <div style="display: flex; gap: 12px;">
+      <div style="display: flex; justify-content: center;">
         <button id="acknowledge-btn" style="
-          flex: 1;
-          background: #3b82f6;
+          width: 100%;
+          background: #2563eb;
           color: white;
           border: none;
           border-radius: 8px;
-          padding: 12px 16px;
-          font-size: 16px;
+          padding: 14px 32px;
+          font-size: 15px;
           font-weight: 600;
           cursor: pointer;
-          transition: background-color 0.2s;
+          transition: all 0.2s ease;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
         ">
-          ✓ Acknowledge
-        </button>
-        <button id="view-details-btn" style="
-          flex: 1;
-          background: #f3f4f6;
-          color: #374151;
-          border: 1px solid #d1d5db;
-          border-radius: 8px;
-          padding: 12px 16px;
-          font-size: 16px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: background-color 0.2s;
-        ">
-          View Details
+          OK
         </button>
       </div>
     `;
@@ -1218,7 +1241,6 @@ export class ZoneNotificationService {
     
     // Add button event listeners
     const acknowledgeBtn = dialog.querySelector('#acknowledge-btn') as HTMLButtonElement;
-    const viewDetailsBtn = dialog.querySelector('#view-details-btn') as HTMLButtonElement;
     
     acknowledgeBtn.addEventListener('click', () => {
       console.log(`✅ User acknowledged zone entry alert: ${alert.zoneName}`);
@@ -1227,25 +1249,13 @@ export class ZoneNotificationService {
     });
     
     acknowledgeBtn.addEventListener('mouseenter', () => {
-      acknowledgeBtn.style.backgroundColor = '#2563eb';
+      acknowledgeBtn.style.backgroundColor = '#1d4ed8';
+      acknowledgeBtn.style.boxShadow = '0 4px 12px rgba(37, 99, 235, 0.4)';
     });
     
     acknowledgeBtn.addEventListener('mouseleave', () => {
-      acknowledgeBtn.style.backgroundColor = '#3b82f6';
-    });
-    
-    viewDetailsBtn.addEventListener('click', () => {
-      console.log(`📋 User requested details for zone: ${alert.zoneName}`);
-      // You can implement additional details view here
-      dialog.remove();
-    });
-    
-    viewDetailsBtn.addEventListener('mouseenter', () => {
-      viewDetailsBtn.style.backgroundColor = '#e5e7eb';
-    });
-    
-    viewDetailsBtn.addEventListener('mouseleave', () => {
-      viewDetailsBtn.style.backgroundColor = '#f3f4f6';
+      acknowledgeBtn.style.backgroundColor = '#2563eb';
+      acknowledgeBtn.style.boxShadow = 'none';
     });
     
     // Auto-close after 30 seconds if not acknowledged
