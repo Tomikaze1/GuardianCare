@@ -376,6 +376,16 @@
 
 
 :root {
+  /* Field Tokens */
+  --field-height: 54px;            /* Unified control height */
+  --field-radius: 14px;            /* Unified radius for inputs/buttons */
+  --field-border-width: 1.5px;     /* Standard border thickness */
+  --rhythm-xxs: 6px;               /* Spacing scale */
+  --rhythm-xs: 8px;
+  --rhythm-sm: 12px;
+  --rhythm-md: 16px;
+  --rhythm-lg: 24px;
+  --rhythm-xl: 32px;
   /* Primary Colors */
   --primary-purple: #7C3AED;        /* Purple-600 - Main brand color */
   --primary-blue: #4C1D95;          /* Purple-800 - Dark Purple (was blue) */
