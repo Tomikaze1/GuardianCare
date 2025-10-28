@@ -2,8 +2,12 @@
   --background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);
   min-height: 100vh;
   font-family: 'DM Sans', 'Plus Jakarta Sans', Arial, sans-serif;
-  padding: 0;
-  padding-bottom: 120px;
+  /* Safe, consistent insets from phone edges */
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --padding-top: 8px;
+  --padding-bottom: 120px;
+  padding: 0; /* keep Ionic padding vars authoritative */
 }
 
 
@@ -100,8 +104,8 @@
   font-size: 1.07rem;
   font-weight: 700;
   color: #1a202c;
-  margin-top: 20px;
-  margin-bottom: 4px;
+  margin-top: 16px;
+  margin-bottom: 8px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -127,24 +131,25 @@
   display: flex;
   flex-direction: column;
   background: none;
-  padding: 0 8px 28px 8px;
+  /* rely on ion-content padding for consistent edge spacing */
+  padding: 0 0 28px 0;
   gap: 0;
 }
 
 .form-row {
   width: 100%;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .input-box {
   background: #fff;
-  border-radius: 14px;
+  border-radius: 12px;
   box-shadow: 0 4px 18px rgba(124, 58, 237, 0.08);
   border: 1.5px solid #e7eef7;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0.85rem 1rem;
+  padding: 14px 16px;
   transition: box-shadow 0.16s, border-color 0.15s;
   font-size: 1rem;
   position: relative;
@@ -181,6 +186,10 @@
     color: #0f172a;
     width: 100%;
     resize: none;
+    /* keep description input in a single line height with proper alignment */
+    height: 24px;
+    line-height: 24px;
+    padding: 0;
     &::placeholder {
       color: #64748b;
       opacity: 1;
@@ -263,10 +272,11 @@
   padding: 16px;
   
   .media-buttons {
-    display: flex;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
     width: 100%;
-    flex-wrap: wrap;
+    justify-items: center;
     
     .media-btn {
       display: flex;
@@ -282,7 +292,8 @@
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s ease;
-      min-width: 80px;
+      min-width: 0;
+      width: 100%;
       
       ion-icon {
         font-size: 1.4rem;
@@ -480,9 +491,9 @@
   
   .map-card {
     background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 12px;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     border: 1px solid #e2e8f0;
     width: 100%;
@@ -540,8 +551,8 @@
     display: flex;
     align-items: flex-start;
     gap: 12px;
-    margin-top: 16px;
-    padding: 16px;
+    margin-top: 12px;
+    padding: 12px 14px;
     background: linear-gradient(135deg, var(--primary-indigo) 0%, var(--primary-purple) 100%);
     border-radius: 12px;
     border: 1px solid #d1d5db;
@@ -587,24 +598,25 @@
   }
   
   .location-actions {
-    display: flex;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
     margin-top: 16px;
     padding-top: 16px;
     border-top: 2px solid #f1f5f9;
     
     .action-btn {
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 600;
-      --padding-start: 24px;
-      --padding-end: 24px;
-      --padding-top: 12px;
-      --padding-bottom: 12px;
+      --padding-start: 16px;
+      --padding-end: 16px;
+      --padding-top: 10px;
+      --padding-bottom: 10px;
       --border-radius: 12px;
       border: 1px solid #e2e8f0;
       transition: all 0.3s ease;
-      min-width: 180px;
+      min-width: 0;
+      width: 100%;
       
       ion-icon {
         margin-right: 6px;
@@ -655,6 +667,27 @@
           transform: translateY(-2px);
         }
       }
+
+      &.gps-btn {
+        --color: var(--primary-indigo);
+        --background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+        border-color: #e0e7ff;
+        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
+
+        ion-icon { color: var(--primary-indigo); }
+
+        &:hover {
+          --background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+          transform: translateY(-2px);
+        }
+      }
+    }
+  }
+
+  /* Stack buttons on very narrow screens to avoid crowding */
+  @media (max-width: 360px) {
+    .location-actions {
+      grid-template-columns: 1fr;
     }
   }
   
@@ -713,7 +746,7 @@
   align-items: flex-start;
   gap: 16px;
   background: #fff;
-  padding: 20px;
+  padding: 16px;
   
   .time-date-header {
     display: flex;
@@ -795,8 +828,8 @@
     
     .current-time-display {
       background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-      border-radius: 16px;
-      padding: 20px;
+      border-radius: 12px;
+      padding: 16px;
       border: 1px solid #e2e8f0;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
       transition: all 0.3s ease;
@@ -868,7 +901,7 @@
     .time-actions {
       display: flex;
       gap: 8px;
-      margin-top: 16px;
+      margin-top: 12px;
       justify-content: center;
       
       .action-btn {
@@ -963,9 +996,9 @@
 .button-row {
   display: flex;
   flex-direction: column;
-  gap: 13px;
-  margin-top: 12px;
-  margin-bottom: 20px;
+  gap: 16px;
+  margin-top: 16px;
+  margin-bottom: 24px;
 }
 
 .call-btn {

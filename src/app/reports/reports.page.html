@@ -189,7 +189,7 @@
         <ion-icon name="document-text-outline"></ion-icon>
         <textarea
           formControlName="description"
-          rows="2"
+          rows="1"
           maxlength="1000"
           placeholder="{{ 'REPORTS.DESCRIPTION_PH' | translate }}"></textarea>
       </div>
@@ -324,6 +324,15 @@
           </div>
           
           <div class="location-actions">
+            <ion-button
+              fill="clear"
+              size="small"
+              (click)="useCurrentLocation()"
+              class="action-btn gps-btn">
+              <ion-icon name="navigate-outline" slot="start"></ion-icon>
+              Use Current Location
+            </ion-button>
+
             <ion-button
               fill="clear"
               size="small"

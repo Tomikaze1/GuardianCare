@@ -75,6 +75,26 @@ export class ReportsPage implements OnInit, OnDestroy {
     });
   }
 
+  async useCurrentLocation() {
+    try {
+      const latest = await this.locationService.getDeviceExactLocation();
+      this.currentLocation = latest;
+      this.selectedLocation = latest;
+      this.isLocationManuallyEdited = false;
+      await this.updateLocationAddress();
+
+      if (this.map && latest) {
+        this.map.flyTo({ center: [latest.lng, latest.lat], zoom: Math.max(this.map.getZoom(), 15) });
+        if (this.editableMarker) {
+          this.editableMarker.setLngLat([latest.lng, latest.lat]);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to use current location', e);
+      this.notificationService.error?.('Location Error', 'Unable to fetch current location');
+    }
+  }
+
   ngOnInit() {
     this.initializeLocation();
     this.checkCameraPermissions();
