@@ -399,6 +399,10 @@
   transition: all 0.3s ease;
   animation: fadeInUp 0.4s ease-out;
   cursor: pointer;
+  --inner-padding-start: 0;
+  --inner-padding-end: 0;
+  --padding-start: 0;
+  --padding-end: 0;
   
   &:hover {
     box-shadow: 0 4px 20px rgba(124, 58, 237, 0.15);
@@ -439,6 +443,10 @@ ion-item-sliding {
   }
 }
 
+.notification-card-content {
+  display: block;
+}
+
 .notification-header {
   display: flex;
   justify-content: space-between;
@@ -465,9 +473,20 @@ ion-item-sliding {
       margin-left: 4px;
     }
   }
+
+  .notification-timestamp {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #64748b;
+    font-size: 0.82rem;
+    ion-icon {
+      font-size: 1rem;
+      color: var(--primary-purple);
+    }
+  }
 }
 
-.notification-date,
 .notification-location {
   display: flex;
   align-items: center;
@@ -475,11 +494,24 @@ ion-item-sliding {
   margin-bottom: 8px;
   color: #64748b;
   font-size: 0.85rem;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   
   ion-icon {
     font-size: 1rem;
     color: var(--primary-purple);
   }
+}
+
+.notification-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .notification-incident {

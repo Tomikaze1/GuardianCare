@@ -100,38 +100,41 @@
               </ion-item-option>
             </ion-item-options>
             
-            <ion-item 
-              class="notification-card" 
-              [class.unread]="!notification.read"
-              (click)="handleNotificationClick(notification)">
-              
-              <div class="notification-header">
-                <div class="notification-type">
-                  <ion-icon [name]="getNotificationIcon(notification.type)"></ion-icon>
-                  <span>{{ getNotificationTypeLabel(notification.type) }}</span>
-                  <ion-badge *ngIf="shouldShowNewBadge(notification)" color="success" class="new-badge">NEW</ion-badge>
+          <ion-item 
+            lines="none"
+            class="notification-card" 
+            [class.unread]="!notification.read"
+            (click)="handleNotificationClick(notification)">
+
+              <ion-label class="notification-card-content">
+                <div class="notification-header">
+                  <div class="notification-type">
+                    <ion-icon [name]="getNotificationIcon(notification.type)"></ion-icon>
+                    <span>{{ getNotificationTypeLabel(notification.type) }}</span>
+                    <ion-badge *ngIf="shouldShowNewBadge(notification)" color="success" class="new-badge">NEW</ion-badge>
+                  </div>
+                  <div class="notification-timestamp">
+                    <ion-icon name="calendar-outline"></ion-icon>
+                    <span>{{ formatTimestamp(notification.timestamp) }}</span>
+                  </div>
                 </div>
-              </div>
 
-              <div class="notification-date">
-                <ion-icon name="calendar-outline"></ion-icon>
-                <span>{{ formatTimestamp(notification.timestamp) }}</span>
-              </div>
+                <div class="notification-location" *ngIf="notification.data?.locationAddress">
+                  <ion-icon name="location-outline"></ion-icon>
+                  <span>{{ notification.data?.locationAddress }}</span>
+                </div>
 
-              <div class="notification-location" *ngIf="notification.data?.locationAddress">
-                <ion-icon name="location-outline"></ion-icon>
-                <span>{{ notification.data?.locationAddress }}</span>
-              </div>
-
-              <div class="notification-incident" *ngIf="notification.data?.reportType">
-                <ion-icon [name]="getIncidentTypeIcon(notification.data.reportType)" class="incident-icon"></ion-icon>
-                <span class="incident-label">{{ getIncidentTypeLabel(notification.data.reportType) }}</span>
-              </div>
-
-              <div class="notification-risk" *ngIf="notification.data?.adminLevel">
-                <div class="level-color-bar" [style.background]="getRiskLevelColor(notification.data.adminLevel)"></div>
-                <span class="risk-text">Level {{ notification.data.adminLevel }} - {{ getRiskLevelText(notification.data.adminLevel) }} Risk</span>
-              </div>
+                <div class="notification-meta-row">
+                  <div class="notification-incident" *ngIf="notification.data?.reportType">
+                    <ion-icon [name]="getIncidentTypeIcon(notification.data.reportType)" class="incident-icon"></ion-icon>
+                    <span class="incident-label">{{ getIncidentTypeLabel(notification.data.reportType) }}</span>
+                  </div>
+                  <div class="notification-risk" *ngIf="notification.data?.adminLevel">
+                    <div class="level-color-bar" [style.background]="getRiskLevelColor(notification.data.adminLevel)"></div>
+                    <span class="risk-text">Lvl {{ notification.data.adminLevel }} · {{ getRiskLevelText(notification.data.adminLevel) }} Risk</span>
+                  </div>
+                </div>
+              </ion-label>
             </ion-item>
             
             <ion-item-options side="end">
