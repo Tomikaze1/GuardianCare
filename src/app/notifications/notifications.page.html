@@ -13,55 +13,130 @@
   </div>
 
     <div class="notification-history-section">
-      <div class="section-header">
+      <!-- Notification Summary Badge -->
+      <div class="notification-summary">
+        <span class="summary-text">
+          {{ getUnreadCount() }} unread • {{ getTotalNotificationCount() }} total
+        </span>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="search-container" *ngIf="notifications.length > 0">
+        <ion-searchbar 
+          [(ngModel)]="searchQuery" 
+          (ionInput)="onSearchQueryChange()"
+          placeholder="Search notifications..."
+          show-clear-button="always">
+        </ion-searchbar>
+      </div>
+
+      <!-- Filter Chips -->
+      <div class="filters-row" *ngIf="notifications.length > 0">
+        <ion-chip 
+          [class.active-filter]="filterType === 'all'" 
+          [class.inactive-filter]="filterType !== 'all'"
+          [outline]="filterType !== 'all'"
+          (click)="onFilterChange('all')">
+          <ion-label>All</ion-label>
+        </ion-chip>
+        <ion-chip 
+          [class.active-filter]="filterType === 'unread'" 
+          [class.inactive-filter]="filterType !== 'unread'"
+          [outline]="filterType !== 'unread'"
+          (click)="onFilterChange('unread')">
+          <ion-label>Unread</ion-label>
+        </ion-chip>
+        <ion-chip 
+          [class.active-filter]="filterType === 'report'" 
+          [class.inactive-filter]="filterType !== 'report'"
+          [outline]="filterType !== 'report'"
+          (click)="onFilterChange('report')">
+          <ion-label>My Reports</ion-label>
+        </ion-chip>
+        <ion-chip 
+          [class.active-filter]="filterType === 'zone'" 
+          [class.inactive-filter]="filterType !== 'zone'"
+          [outline]="filterType !== 'zone'"
+          (click)="onFilterChange('zone')">
+          <ion-label>Zone Alerts</ion-label>
+        </ion-chip>
+      </div>
+
+      <div class="section-header" *ngIf="displayedNotifications.length > 0">
         <span>My Notifications</span>
         <div class="section-underline"></div>
       </div>
 
-      <div class="notifications-list" *ngIf="notifications.length > 0">
-      <div class="notification-card" 
-           *ngFor="let notification of notifications; trackBy: trackByNotificationId"
-           [class.unread]="!notification.read"
-           (click)="handleNotificationClick(notification)">
-        
-        <div class="notification-header">
-          <div class="notification-type">
-            <ion-icon [name]="getNotificationIcon(notification.type)"></ion-icon>
-            <span>{{ getNotificationTypeLabel(notification.type) }}</span>
-            <ion-badge *ngIf="shouldShowNewBadge(notification)" color="success" class="new-badge">NEW</ion-badge>
-          </div>
+      <div class="notifications-list" *ngIf="displayedNotifications.length > 0">
+        <div class="notification-group" *ngFor="let group of getGroupedNotifications()">
+          <div class="group-header">{{ group.label }}</div>
+          
+          <ion-item-sliding *ngFor="let notification of group.notifications; trackBy: trackByNotificationId">
+            <ion-item-options side="start">
+              <ion-item-option color="success" (click)="markAsRead(notification)">
+                <ion-icon name="checkmark-outline"></ion-icon>
+                <span>Mark Read</span>
+              </ion-item-option>
+            </ion-item-options>
+            
+            <ion-item 
+              class="notification-card" 
+              [class.unread]="!notification.read"
+              (click)="handleNotificationClick(notification)">
+              
+              <div class="notification-header">
+                <div class="notification-type">
+                  <ion-icon [name]="getNotificationIcon(notification.type)"></ion-icon>
+                  <span>{{ getNotificationTypeLabel(notification.type) }}</span>
+                  <ion-badge *ngIf="shouldShowNewBadge(notification)" color="success" class="new-badge">NEW</ion-badge>
+                </div>
+              </div>
+
+              <div class="notification-date">
+                <ion-icon name="calendar-outline"></ion-icon>
+                <span>{{ formatTimestamp(notification.timestamp) }}</span>
+              </div>
+
+              <div class="notification-location" *ngIf="notification.data?.locationAddress">
+                <ion-icon name="location-outline"></ion-icon>
+                <span>{{ notification.data?.locationAddress }}</span>
+              </div>
+
+              <div class="notification-incident" *ngIf="notification.data?.reportType">
+                <ion-icon [name]="getIncidentTypeIcon(notification.data.reportType)" class="incident-icon"></ion-icon>
+                <span class="incident-label">{{ getIncidentTypeLabel(notification.data.reportType) }}</span>
+              </div>
+
+              <div class="notification-risk" *ngIf="notification.data?.adminLevel">
+                <div class="level-color-bar" [style.background]="getRiskLevelColor(notification.data.adminLevel)"></div>
+                <span class="risk-text">Level {{ notification.data.adminLevel }} - {{ getRiskLevelText(notification.data.adminLevel) }} Risk</span>
+              </div>
+            </ion-item>
+            
+            <ion-item-options side="end">
+              <ion-item-option color="danger" (click)="deleteNotification(notification)">
+                <ion-icon name="trash-outline"></ion-icon>
+                <span>Delete</span>
+              </ion-item-option>
+            </ion-item-options>
+          </ion-item-sliding>
         </div>
 
-        <div class="notification-date">
-          <ion-icon name="calendar-outline"></ion-icon>
-          <span>{{ formatTimestamp(notification.timestamp) }}</span>
+        <!-- Load More Button -->
+        <div class="load-more-container" *ngIf="hasMore">
+          <ion-button expand="block" fill="outline" (click)="loadMore()">
+            Load More
+          </ion-button>
         </div>
-
-        <div class="notification-location" *ngIf="notification.data?.locationAddress">
-          <ion-icon name="location-outline"></ion-icon>
-          <span>{{ notification.data?.locationAddress }}</span>
-        </div>
-
-        <div class="notification-incident" *ngIf="notification.data?.reportType">
-          <ion-icon [name]="getIncidentTypeIcon(notification.data.reportType)" class="incident-icon"></ion-icon>
-          <span class="incident-label">{{ getIncidentTypeLabel(notification.data.reportType) }}</span>
-        </div>
-
-        <div class="notification-risk" *ngIf="notification.data?.adminLevel">
-          <div class="level-color-bar" [style.background]="getRiskLevelColor(notification.data.adminLevel)"></div>
-          <span class="risk-text">Level {{ notification.data.adminLevel }} - {{ getRiskLevelText(notification.data.adminLevel) }} Risk</span>
-        </div>
-
       </div>
-    </div>
 
-    <div class="no-notifications" *ngIf="notifications.length === 0">
+    <div class="no-notifications" *ngIf="displayedNotifications.length === 0 && !isLoading">
       <ion-icon name="notifications-off-outline"></ion-icon>
       <h3>No Notifications Yet</h3>
       <p>You don't have any notifications yet. New incident reports and validations will appear here.</p>
     </div>
 
-    <div class="action-buttons" *ngIf="notifications.length > 0">
+    <div class="action-buttons" *ngIf="displayedNotifications.length > 0">
       <ion-button 
         expand="block" 
         fill="outline"

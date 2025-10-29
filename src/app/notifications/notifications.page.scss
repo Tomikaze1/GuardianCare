@@ -93,6 +93,34 @@
   }
 }
 
+.notification-summary {
+  margin: 16px 0;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+  border-radius: 12px;
+  border-left: 4px solid var(--primary-purple);
+  
+  .summary-text {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--primary-purple);
+    letter-spacing: 0.5px;
+  }
+}
+
+.search-container {
+  margin: 16px 0;
+  
+  ion-searchbar {
+    --border-radius: 12px;
+    --box-shadow: 0 2px 8px rgba(124, 58, 237, 0.1);
+    --placeholder-color: #94a3b8;
+    --color: #1a202c;
+    --icon-color: var(--primary-purple);
+  }
+}
+
 .section-header {
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 1.07rem;
@@ -235,12 +263,46 @@
   padding-bottom: 20px;
 }
 
+.notification-group {
+  margin-bottom: 24px;
+  
+  .group-header {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #64748b;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 2px solid rgba(124, 58, 237, 0.1);
+    padding-bottom: 8px;
+  }
+}
+
+.load-more-container {
+  margin: 24px 0 16px 0;
+  
+  ion-button {
+    --border-radius: 12px;
+    --border-color: var(--primary-purple);
+    --color: var(--primary-purple);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      --background: rgba(124, 58, 237, 0.05);
+    }
+  }
+}
+
 .notification-card {
   background: white;
   border-radius: 16px;
   padding: 16px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(124, 58, 237, 0.1);
+  border-left: 4px solid transparent;
   transition: all 0.3s ease;
   animation: fadeInUp 0.4s ease-out;
   cursor: pointer;
@@ -252,6 +314,35 @@
   
   &.unread {
     background: rgba(124, 58, 237, 0.02);
+    border-left-color: var(--primary-purple);
+    font-weight: 600;
+  }
+  
+  &.read {
+    opacity: 0.8;
+    background: #f9fafb;
+  }
+}
+
+ion-item-sliding {
+  .notification-card {
+    margin: 0 0 12px 0;
+  }
+  
+  ion-item-options {
+    ion-item-option {
+      min-width: 80px;
+      
+      ion-icon {
+        font-size: 1.5rem;
+        margin-bottom: 4px;
+      }
+      
+      span {
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+    }
   }
 }
 
