@@ -13,64 +13,85 @@
   </div>
 
     <div class="notification-history-section">
-      <!-- Notification Summary Badge -->
-      <div class="notification-summary">
-        <span class="summary-text">
-          {{ getUnreadCount() }} unread • {{ getTotalNotificationCount() }} total
-        </span>
+
+      <!-- Search + Actions -->
+      <div class="search-container">
+        <div class="search-filter-row">
+          <ion-searchbar 
+            [(ngModel)]="searchQuery" 
+            (ionInput)="onSearchQueryChange()"
+            placeholder="Search notifications..."
+            show-clear-button="always">
+          </ion-searchbar>
+          <ion-button fill="clear" class="filter-btn" aria-label="Mark all read" (click)="markAllAsRead()" [disabled]="!notifications.length">
+            <ion-icon name="checkmark-done-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+          <ion-button fill="clear" class="filter-btn" aria-label="Clear all notifications" (click)="clearAllNotifications()" [disabled]="!notifications.length">
+            <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+          <ion-button id="filtersToggle" fill="clear" class="filter-btn" aria-label="Filters">
+            <ion-icon name="options-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </div>
+
+        <!-- Filters Popover -->
+        <ion-popover trigger="filtersToggle" triggerAction="click" side="bottom" alignment="end">
+          <ng-template>
+            <ion-content class="ion-padding">
+              <div class="filter-panel">
+                <div class="filter-section">
+                  <div class="filter-title">STATUS</div>
+                  <div class="chip-row">
+                    <ion-chip [outline]="statusFilter!=='all'" (click)="onStatusFilterChange('all')"><ion-label>All</ion-label></ion-chip>
+                    <ion-chip [outline]="statusFilter!=='unread'" (click)="onStatusFilterChange('unread')"><ion-label>Unread</ion-label></ion-chip>
+                    <ion-chip [outline]="statusFilter!=='read'" (click)="onStatusFilterChange('read')"><ion-label>Read</ion-label></ion-chip>
+                    <ion-chip [outline]="statusFilter!=='validated'" (click)="onStatusFilterChange('validated')"><ion-label>Validated</ion-label></ion-chip>
+                    <ion-chip [outline]="statusFilter!=='zone'" (click)="onStatusFilterChange('zone')"><ion-label>Zone Alerts</ion-label></ion-chip>
+                  </div>
+                </div>
+                <div class="filter-section">
+                  <div class="filter-title">RISK LEVEL</div>
+                  <div class="chip-row">
+                    <ion-chip [outline]="riskFilter!=='all'" (click)="onRiskFilterChange('all')"><ion-label>All</ion-label></ion-chip>
+                    <ion-chip [outline]="riskFilter!=='low'" (click)="onRiskFilterChange('low')"><ion-label>Low</ion-label></ion-chip>
+                    <ion-chip [outline]="riskFilter!=='moderate'" (click)="onRiskFilterChange('moderate')"><ion-label>Moderate</ion-label></ion-chip>
+                    <ion-chip [outline]="riskFilter!=='high'" (click)="onRiskFilterChange('high')"><ion-label>High</ion-label></ion-chip>
+                    <ion-chip [outline]="riskFilter!=='critical'" (click)="onRiskFilterChange('critical')"><ion-label>Critical</ion-label></ion-chip>
+                  </div>
+                </div>
+                <div class="filter-section">
+                  <div class="filter-title">SORT BY</div>
+                  <div class="chip-row">
+                    <ion-chip [outline]="sortBy!=='recent'" (click)="onSortByChange('recent')"><ion-label>Recent</ion-label></ion-chip>
+                    <ion-chip [outline]="sortBy!=='priority'" (click)="onSortByChange('priority')"><ion-label>Priority</ion-label></ion-chip>
+                    <ion-chip [outline]="sortBy!=='type'" (click)="onSortByChange('type')"><ion-label>Type</ion-label></ion-chip>
+                  </div>
+                </div>
+              </div>
+            </ion-content>
+          </ng-template>
+        </ion-popover>
       </div>
 
-      <!-- Search Bar -->
-      <div class="search-container" *ngIf="notifications.length > 0">
-        <ion-searchbar 
-          [(ngModel)]="searchQuery" 
-          (ionInput)="onSearchQueryChange()"
-          placeholder="Search notifications..."
-          show-clear-button="always">
-        </ion-searchbar>
-      </div>
-
-      <!-- Filter Chips -->
-      <div class="filters-row" *ngIf="notifications.length > 0">
-        <ion-chip 
-          [class.active-filter]="filterType === 'all'" 
-          [class.inactive-filter]="filterType !== 'all'"
-          [outline]="filterType !== 'all'"
-          (click)="onFilterChange('all')">
-          <ion-label>All</ion-label>
-        </ion-chip>
-        <ion-chip 
-          [class.active-filter]="filterType === 'unread'" 
-          [class.inactive-filter]="filterType !== 'unread'"
-          [outline]="filterType !== 'unread'"
-          (click)="onFilterChange('unread')">
-          <ion-label>Unread</ion-label>
-        </ion-chip>
-        <ion-chip 
-          [class.active-filter]="filterType === 'report'" 
-          [class.inactive-filter]="filterType !== 'report'"
-          [outline]="filterType !== 'report'"
-          (click)="onFilterChange('report')">
-          <ion-label>My Reports</ion-label>
-        </ion-chip>
-        <ion-chip 
-          [class.active-filter]="filterType === 'zone'" 
-          [class.inactive-filter]="filterType !== 'zone'"
-          [outline]="filterType !== 'zone'"
-          (click)="onFilterChange('zone')">
-          <ion-label>Zone Alerts</ion-label>
-        </ion-chip>
-      </div>
-
-      <div class="section-header" *ngIf="displayedNotifications.length > 0">
-        <span>My Notifications</span>
+      <div class="section-header">
+        <div class="section-title-row">
+          <span>My Notifications</span>
+          <span class="section-count">{{ getUnreadCount() }}/{{ getTotalNotificationCount() }}</span>
+        </div>
         <div class="section-underline"></div>
       </div>
 
       <div class="notifications-list" *ngIf="displayedNotifications.length > 0">
         <div class="notification-group" *ngFor="let group of getGroupedNotifications()">
-          <div class="group-header">{{ group.label }}</div>
-          
+          <button type="button" class="group-header" (click)="toggleGroup(group.label)">
+            <div class="group-left">
+              <ion-icon [class.expanded]="isGroupExpanded(group.label)" name="chevron-forward"></ion-icon>
+              <span>{{ group.label }}</span>
+            </div>
+            <span class="group-count">({{ group.notifications.length }})</span>
+          </button>
+
+          <ng-container *ngIf="isGroupExpanded(group.label)">
           <ion-item-sliding *ngFor="let notification of group.notifications; trackBy: trackByNotificationId">
             <ion-item-options side="start">
               <ion-item-option color="success" (click)="markAsRead(notification)">
@@ -120,14 +141,10 @@
               </ion-item-option>
             </ion-item-options>
           </ion-item-sliding>
+          </ng-container>
         </div>
 
-        <!-- Load More Button -->
-        <div class="load-more-container" *ngIf="hasMore">
-          <ion-button expand="block" fill="outline" (click)="loadMore()">
-            Load More
-          </ion-button>
-        </div>
+        
       </div>
 
     <div class="no-notifications" *ngIf="displayedNotifications.length === 0 && !isLoading">
@@ -136,26 +153,7 @@
       <p>You don't have any notifications yet. New incident reports and validations will appear here.</p>
     </div>
 
-    <div class="action-buttons" *ngIf="displayedNotifications.length > 0">
-      <ion-button 
-        expand="block" 
-        fill="outline"
-        color="success"
-        (click)="markAllAsRead()"
-        class="action-btn">
-        <ion-icon name="checkmark-outline" slot="start"></ion-icon>
-        Mark All Read
-      </ion-button>
-      <ion-button 
-        expand="block" 
-        fill="solid" 
-        color="danger"
-        (click)="clearAllNotifications()"
-        class="action-btn">
-        <ion-icon name="trash-outline" slot="start"></ion-icon>
-        Clear All
-      </ion-button>
-    </div>
+    
   </div>
 
   <div class="loading-state" *ngIf="isLoading">

@@ -181,36 +181,35 @@ export class NotificationHelpers {
   }
 
   static getGroupedNotifications(notifications: NotificationItem[]): { label: string, notifications: NotificationItem[] }[] {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const weekAgo = new Date(today);
-    weekAgo.setDate(weekAgo.getDate() - 7);
-    
-    const groups = {
-      'Today': [] as NotificationItem[],
-      'Yesterday': [] as NotificationItem[],
-      'This Week': [] as NotificationItem[],
-      'Earlier': [] as NotificationItem[]
+    const now = new Date().getTime();
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    const sevenDaysMs = 7 * oneDayMs;
+    const thirtyDaysMs = 30 * oneDayMs;
+
+    const groups: Record<string, NotificationItem[]> = {
+      'Recent': [],
+      'This Week': [],
+      'This Month': [],
+      'Old': []
     };
-    
+
     notifications.forEach(notification => {
-      const timestamp = notification.timestamp.getTime();
-      
-      if (timestamp >= today.getTime()) {
-        groups['Today'].push(notification);
-      } else if (timestamp >= yesterday.getTime()) {
-        groups['Yesterday'].push(notification);
-      } else if (timestamp >= weekAgo.getTime()) {
+      const diff = now - notification.timestamp.getTime();
+
+      if (diff < oneDayMs * 2) {
+        // within last 48 hours
+        groups['Recent'].push(notification);
+      } else if (diff < sevenDaysMs) {
         groups['This Week'].push(notification);
+      } else if (diff < thirtyDaysMs) {
+        groups['This Month'].push(notification);
       } else {
-        groups['Earlier'].push(notification);
+        groups['Old'].push(notification);
       }
     });
-    
+
     return Object.entries(groups)
-      .filter(([_, notifications]) => notifications.length > 0)
-      .map(([label, notifications]) => ({ label, notifications }));
+      .filter(([, groupItems]) => groupItems.length > 0)
+      .map(([label, groupItems]) => ({ label, notifications: groupItems }));
   }
 }

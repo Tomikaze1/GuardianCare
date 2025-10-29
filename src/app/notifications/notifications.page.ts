@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
-import { AlertController, NavController } from '@ionic/angular';
+import { AlertController, NavController, ToastController } from '@ionic/angular';
 import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../services/auth.service';
 import { ReportService } from '../services/report.service';
@@ -22,14 +22,18 @@ export class NotificationsPage implements OnInit, OnDestroy {
   displayedNotifications: NotificationItem[] = [];
   isLoading = false;
   currentUser: any = null;
+  expandedGroups: { [label: string]: boolean } = {};
   
   // Filter and search
   filterType: 'all' | 'unread' | 'report' | 'zone' = 'all';
   searchQuery: string = '';
+  statusFilter: 'all' | 'unread' | 'read' | 'validated' | 'zone' = 'all';
+  riskFilter: 'all' | 'low' | 'moderate' | 'high' | 'critical' = 'all';
+  sortBy: 'recent' | 'priority' | 'type' = 'recent';
   
-  // Pagination
+  // Pagination removed (show all)
   currentPage = 0;
-  itemsPerPage = 20;
+  itemsPerPage = 0;
   hasMore = false;
   
   private subscriptions: Subscription[] = [];
@@ -50,6 +54,7 @@ export class NotificationsPage implements OnInit, OnDestroy {
 
   constructor(
     private alertController: AlertController,
+    private toastController: ToastController,
     private translateService: TranslateService,
     private authService: AuthService,
     private reportService: ReportService,
@@ -92,11 +97,24 @@ export class NotificationsPage implements OnInit, OnDestroy {
     this.isLoading = false;
   }
 
-  clearAllNotifications() {
-    this.notifications = [];
-    this.notificationsPageService.clearAllNotifications();
-    this.adminNotificationService.clearProcessedReports();
-    this.updateDisplayedNotifications();
+  async clearAllNotifications() {
+    const alert = await this.alertController.create({
+      header: 'Clear All Notifications',
+      message: 'This will permanently remove all notifications. Continue?',
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Clear', role: 'destructive', handler: () => {
+            this.notifications = [];
+            this.notificationsPageService.clearAllNotifications();
+            this.adminNotificationService.clearProcessedReports();
+            this.updateDisplayedNotifications();
+            this.presentToast('All notifications cleared');
+          }
+        }
+      ]
+    });
+    await alert.present();
   }
 
   private loadReportValidationNotifications() {
@@ -207,50 +225,66 @@ export class NotificationsPage implements OnInit, OnDestroy {
     this.filteredNotifications = this.notificationsPageService.getFilteredNotifications(
       this.notifications, 
       this.filterType,
-      this.searchQuery
+      this.searchQuery,
+      this.statusFilter,
+      this.riskFilter,
+      this.sortBy
     );
     
+    // Show all without pagination
     const grouped = NotificationHelpers.getGroupedNotifications(this.filteredNotifications);
     this.displayedNotifications = [];
     grouped.forEach((group: { label: string; notifications: NotificationItem[] }) => {
       this.displayedNotifications = this.displayedNotifications.concat(group.notifications);
     });
-    
-    this.displayedNotifications = this.notificationsPageService.getPaginatedNotifications(
-      this.displayedNotifications,
-      this.currentPage,
-      this.itemsPerPage
-    );
-    
-    this.hasMore = this.notificationsPageService.hasMoreNotifications(
-      this.filteredNotifications,
-      this.currentPage,
-      this.itemsPerPage
-    );
+    this.hasMore = false;
+    // Auto-expand Recent by default if not set
+    grouped.forEach((g: { label: string; notifications: NotificationItem[] }) => {
+      if (this.expandedGroups[g.label] === undefined) {
+        this.expandedGroups[g.label] = g.label === 'Recent';
+      }
+    });
     
     this.cdr.markForCheck();
   }
   
   onFilterChange(filterType: 'all' | 'unread' | 'report' | 'zone') {
     this.filterType = filterType;
-    this.currentPage = 0;
     this.updateDisplayedNotifications();
   }
   
   onSearchQueryChange() {
-    this.currentPage = 0;
+    this.updateDisplayedNotifications();
+  }
+
+  onStatusFilterChange(value: 'all' | 'unread' | 'read' | 'validated' | 'zone') {
+    this.statusFilter = value;
+    this.updateDisplayedNotifications();
+  }
+
+  onRiskFilterChange(value: 'all' | 'low' | 'moderate' | 'high' | 'critical') {
+    this.riskFilter = value;
+    this.updateDisplayedNotifications();
+  }
+
+  onSortByChange(value: 'recent' | 'priority' | 'type') {
+    this.sortBy = value;
     this.updateDisplayedNotifications();
   }
   
-  loadMore() {
-    if (this.hasMore) {
-      this.currentPage++;
-      this.updateDisplayedNotifications();
-    }
-  }
+  // loadMore removed
   
   getGroupedNotifications(): { label: string, notifications: NotificationItem[] }[] {
     return NotificationHelpers.getGroupedNotifications(this.displayedNotifications);
+  }
+
+  toggleGroup(label: string) {
+    this.expandedGroups[label] = !this.expandedGroups[label];
+    this.cdr.markForCheck();
+  }
+
+  isGroupExpanded(label: string): boolean {
+    return !!this.expandedGroups[label];
   }
 
   private saveNotifications() {
@@ -320,6 +354,7 @@ export class NotificationsPage implements OnInit, OnDestroy {
     this.notificationsPageService.saveNotifications(this.notifications);
     this.notificationsPageService.updateLastNotificationCheckTime();
     this.updateDisplayedNotifications();
+    this.presentToast('All notifications marked as read');
   }
 
   async deleteNotification(notification: NotificationItem) {
@@ -344,6 +379,17 @@ export class NotificationsPage implements OnInit, OnDestroy {
     });
     
     await alert.present();
+  }
+
+  private async presentToast(message: string) {
+    const toast = await this.toastController.create({
+      message,
+      duration: 1600,
+      position: 'top',
+      color: 'dark',
+      buttons: [{ text: 'OK', role: 'cancel' }]
+    });
+    await toast.present();
   }
 
 

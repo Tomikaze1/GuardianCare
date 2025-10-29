@@ -54,17 +54,56 @@ export class NotificationsPageService {
   getFilteredNotifications(
     notifications: NotificationItem[], 
     filterType: 'all' | 'unread' | 'report' | 'zone',
-    searchQuery: string = ''
+    searchQuery: string = '',
+    statusFilter: 'all' | 'unread' | 'read' | 'validated' | 'zone' = 'all',
+    riskFilter: 'all' | 'low' | 'moderate' | 'high' | 'critical' = 'all',
+    sortBy: 'recent' | 'priority' | 'type' = 'recent'
   ): NotificationItem[] {
     let filtered = notifications;
     
-    // Apply filter
+    // Backward-compatible main filter (from old UI)
     if (filterType === 'unread') {
       filtered = filtered.filter(n => !n.read);
     } else if (filterType === 'report') {
       filtered = filtered.filter(n => n.type === 'report_validated');
     } else if (filterType === 'zone') {
       filtered = filtered.filter(n => n.type === 'new_zone');
+    }
+
+    // STATUS filter from new panel
+    switch (statusFilter) {
+      case 'unread':
+        filtered = filtered.filter(n => !n.read);
+        break;
+      case 'read':
+        filtered = filtered.filter(n => n.read);
+        break;
+      case 'validated':
+        filtered = filtered.filter(n => n.type === 'report_validated');
+        break;
+      case 'zone':
+        filtered = filtered.filter(n => n.type === 'new_zone');
+        break;
+      default:
+        break;
+    }
+    
+    // RISK LEVEL filter
+    if (riskFilter !== 'all') {
+      const levelFor = (n: NotificationItem): number => {
+        const level = Number(n.data?.adminLevel ?? n.data?.riskLevel ?? 0);
+        return isNaN(level) ? 0 : level;
+      };
+      const inBucket = (lvl: number) => {
+        switch (riskFilter) {
+          case 'low': return lvl === 1;
+          case 'moderate': return lvl === 2;
+          case 'high': return lvl === 3;
+          case 'critical': return lvl >= 4; // 4-5
+          default: return true;
+        }
+      };
+      filtered = filtered.filter(n => inBucket(levelFor(n)));
     }
     
     // Apply search
@@ -78,6 +117,16 @@ export class NotificationsPageService {
       );
     }
     
+    // Sort
+    if (sortBy === 'priority') {
+      const rank: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
+      filtered = [...filtered].sort((a, b) => (rank[b.priority] || 0) - (rank[a.priority] || 0));
+    } else if (sortBy === 'type') {
+      filtered = [...filtered].sort((a, b) => (a.type || '').localeCompare(b.type || ''));
+    } else {
+      filtered = this.sortNotifications(filtered);
+    }
+
     return filtered;
   }
 
