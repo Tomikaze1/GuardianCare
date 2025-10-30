@@ -20,6 +20,7 @@
           <ion-searchbar 
             [(ngModel)]="searchQuery" 
             (ionInput)="onSearchQueryChange()"
+            (ionClear)="onSearchQueryChange()"
             placeholder="Search notifications..."
             show-clear-button="always">
           </ion-searchbar>
@@ -37,7 +38,7 @@
         <!-- Filters Popover -->
         <ion-popover trigger="filtersToggle" triggerAction="click" side="bottom" alignment="end" cssClass="filters-popover">
           <ng-template>
-            <ion-content class="ion-padding">
+            <ion-content class="ion-padding" [scrollY]="false">
               <div class="filter-panel">
                 <div class="filter-section">
                   <div class="filter-title"><ion-icon name="list-circle-outline"></ion-icon><span>STATUS</span></div>
@@ -87,9 +88,9 @@
       </div>
 
       <!-- Time range popover -->
-      <ion-popover trigger="timeRangeMenu" triggerAction="click" side="bottom" alignment="end" dismissOnSelect="true">
+      <ion-popover trigger="timeRangeMenu" triggerAction="click" side="bottom" alignment="end" dismissOnSelect="true" cssClass="time-range-popover">
         <ng-template>
-          <ion-content class="ion-padding">
+          <ion-content class="ion-padding" [scrollY]="false">
             <ion-list lines="none">
               <ion-item button detail="false" (click)="onTimeRangeChange('recent')">
                 <ion-icon name="flash-outline" slot="start"></ion-icon>

@@ -189,6 +189,11 @@
   --border-radius: 16px;
   border: 1px solid #cbd5e1; /* crisper edge, less blur */
 
+  ion-content {
+    /* Prevent scrolling inside the filter popover */
+    --overflow: hidden;
+  }
+
   .filter-panel {
     padding: 14px;
   }
@@ -277,6 +282,13 @@
   ion-chip.sort-type:not([outline]) {
     --background: #a78bfa; /* violet-400 */
     --color: #111827;
+  }
+}
+
+/* Prevent scrolling in time range popover as well */
+:host ::ng-deep .time-range-popover {
+  ion-content {
+    --overflow: hidden;
   }
 }
 

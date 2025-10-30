@@ -107,37 +107,54 @@ export class NotificationsPageService {
       filtered = filtered.filter(n => inBucket(levelFor(n)));
     }
     
-    // Apply search
+    // Apply search (expanded fields)
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(n => 
-        n.title.toLowerCase().includes(query) ||
-        n.message.toLowerCase().includes(query) ||
-        n.data?.locationAddress?.toLowerCase().includes(query) ||
-        n.data?.reportType?.toLowerCase().includes(query)
-      );
+      filtered = filtered.filter(n => {
+        const title = (n.title || '').toLowerCase();
+        const message = (n.message || '').toLowerCase();
+        const locationAddress = (n.data?.locationAddress || '').toLowerCase();
+        const reportType = (n.data?.reportType || '').toLowerCase();
+        const type = (n.type || '').toLowerCase();
+        const priority = (n.priority || '').toLowerCase();
+        const level = Number(n.data?.adminLevel ?? n.data?.riskLevel ?? 0);
+        const riskText = NotificationHelpers.getRiskLevelText(level).toLowerCase();
+        const timeText = NotificationHelpers.formatTimestamp(n.timestamp).toLowerCase();
+        return (
+          title.includes(query) ||
+          message.includes(query) ||
+          locationAddress.includes(query) ||
+          reportType.includes(query) ||
+          type.includes(query) ||
+          priority.includes(query) ||
+          riskText.includes(query) ||
+          timeText.includes(query)
+        );
+      });
     }
 
-    // Time range filter
-    const now = Date.now();
-    const days = (d: number) => d * 24 * 60 * 60 * 1000;
-    const hours = (h: number) => h * 60 * 60 * 1000;
-    filtered = filtered.filter(n => {
-      const ts = n.timestamp?.getTime?.() ?? new Date(n.timestamp as any).getTime();
-      const age = now - ts;
-      switch (timeRange) {
-        case 'recent':
-          return age <= hours(24); // last 24 hours
-        case 'week':
-          return age <= days(7);
-        case 'month':
-          return age <= days(30);
-        case 'old':
-          return age > days(30);
-        default:
-          return true;
-      }
-    });
+    // Time range filter (apply only when not searching)
+    if (!searchQuery.trim()) {
+      const now = Date.now();
+      const days = (d: number) => d * 24 * 60 * 60 * 1000;
+      const hours = (h: number) => h * 60 * 60 * 1000;
+      filtered = filtered.filter(n => {
+        const ts = n.timestamp?.getTime?.() ?? new Date(n.timestamp as any).getTime();
+        const age = now - ts;
+        switch (timeRange) {
+          case 'recent':
+            return age <= hours(24); // last 24 hours
+          case 'week':
+            return age <= days(7);
+          case 'month':
+            return age <= days(30);
+          case 'old':
+            return age > days(30);
+          default:
+            return true;
+        }
+      });
+    }
     
     // Sort
     if (sortBy === 'priority') {
