@@ -30,6 +30,7 @@ export class NotificationsPage implements OnInit, OnDestroy {
   statusFilter: 'all' | 'unread' | 'read' | 'validated' | 'zone' = 'all';
   riskFilter: 'all' | 'low' | 'moderate' | 'high' | 'critical' = 'all';
   sortBy: 'recent' | 'priority' | 'type' = 'recent';
+  timeRange: 'recent' | 'week' | 'month' | 'old' = 'recent';
   
   // Pagination removed (show all)
   currentPage = 0;
@@ -228,22 +229,12 @@ export class NotificationsPage implements OnInit, OnDestroy {
       this.searchQuery,
       this.statusFilter,
       this.riskFilter,
-      this.sortBy
+      this.sortBy,
+      this.timeRange
     );
-    
-    // Show all without pagination
-    const grouped = NotificationHelpers.getGroupedNotifications(this.filteredNotifications);
-    this.displayedNotifications = [];
-    grouped.forEach((group: { label: string; notifications: NotificationItem[] }) => {
-      this.displayedNotifications = this.displayedNotifications.concat(group.notifications);
-    });
+    // Flat list directly based on current filters
+    this.displayedNotifications = [...this.filteredNotifications];
     this.hasMore = false;
-    // Auto-expand Recent by default if not set
-    grouped.forEach((g: { label: string; notifications: NotificationItem[] }) => {
-      if (this.expandedGroups[g.label] === undefined) {
-        this.expandedGroups[g.label] = g.label === 'Recent';
-      }
-    });
     
     this.cdr.markForCheck();
   }
@@ -271,21 +262,15 @@ export class NotificationsPage implements OnInit, OnDestroy {
     this.sortBy = value;
     this.updateDisplayedNotifications();
   }
+
+  onTimeRangeChange(value: 'recent' | 'week' | 'month' | 'old') {
+    this.timeRange = value;
+    this.updateDisplayedNotifications();
+  }
   
   // loadMore removed
   
-  getGroupedNotifications(): { label: string, notifications: NotificationItem[] }[] {
-    return NotificationHelpers.getGroupedNotifications(this.displayedNotifications);
-  }
-
-  toggleGroup(label: string) {
-    this.expandedGroups[label] = !this.expandedGroups[label];
-    this.cdr.markForCheck();
-  }
-
-  isGroupExpanded(label: string): boolean {
-    return !!this.expandedGroups[label];
-  }
+  // Grouping removed for flat filtered list
 
   private saveNotifications() {
     this.notificationsPageService.saveNotifications(this.notifications);
@@ -502,6 +487,36 @@ export class NotificationsPage implements OnInit, OnDestroy {
       .replace(/\b(Crime-Theft|Vandalism|Assault|Theft|Verbal Threats|Lost Item|Suspicious-Activity)\b/g, '<strong>$1</strong>');
     
     return formattedMessage;
+  }
+
+  getEmptyTitle(): string {
+    switch (this.timeRange) {
+      case 'recent':
+        return 'No Recent Notifications';
+      case 'week':
+        return 'No Notifications This Week';
+      case 'month':
+        return 'No Notifications This Month';
+      case 'old':
+        return 'No Older Notifications';
+      default:
+        return 'No Notifications Yet';
+    }
+  }
+
+  getEmptySubtitle(): string {
+    switch (this.timeRange) {
+      case 'recent':
+        return "You're all caught up in the last 24 hours.";
+      case 'week':
+        return "You're all caught up for the past 7 days.";
+      case 'month':
+        return "You're all caught up for the past 30 days.";
+      case 'old':
+        return 'There are no notifications older than 30 days.';
+      default:
+        return "You don't have any notifications yet. New incident reports and validations will appear here.";
+    }
   }
 
   private subscribeToAdminValidations() {

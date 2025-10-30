@@ -4,7 +4,8 @@
   min-height: 100vh;
   font-family: 'DM Sans', 'Plus Jakarta Sans', Arial, sans-serif;
   padding: 0;
-  padding-bottom: calc(200px + env(safe-area-inset-bottom));
+  padding-bottom: calc(220px + env(safe-area-inset-bottom));
+  --padding-bottom: 120px; /* ensure extra space above tab bar */
 }
 
 .logo-container {
@@ -179,6 +180,106 @@
   }
 }
 
+/* Enhanced styling for the popover filters */
+:host ::ng-deep .filters-popover {
+  --width: 340px;
+  --background: #ffffff;
+  --backdrop-opacity: 0.28;
+  --box-shadow: 0 14px 34px rgba(2, 6, 23, 0.18);
+  --border-radius: 16px;
+  border: 1px solid #cbd5e1; /* crisper edge, less blur */
+
+  .filter-panel {
+    padding: 14px;
+  }
+
+  .filter-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: #0f172a; /* very dark slate for high contrast */
+    text-transform: uppercase;
+    margin-bottom: 8px;
+
+    ion-icon {
+      color: var(--primary-purple);
+      font-size: 18px;
+    }
+  }
+
+  .chip-row {
+    margin-bottom: 6px;
+  }
+
+  ion-chip {
+    --border-radius: 14px;
+    --background: #eef2f7; /* slight fill even when not selected */
+    --color: #0f172a;
+    height: 32px;
+    font-weight: 800;
+    font-size: 0.92rem; /* sharper text */
+    letter-spacing: 0.15px;
+  }
+
+  ion-chip[outline] {
+    --background: #f8fafc; /* light fill for visibility */
+    --border-color: #cbd5e1; /* stronger border for clarity */
+    --color: #0f172a;
+  }
+
+  /* Status color accents when selected */
+  ion-chip.status-unread:not([outline]) {
+    --background: #60a5fa; /* blue-400 */
+    --color: #ffffff;
+  }
+  ion-chip.status-read:not([outline]) {
+    --background: #94a3b8; /* slate-400 */
+    --color: #ffffff;
+  }
+  ion-chip.status-validated:not([outline]) {
+    --background: var(--primary-purple);
+    --color: #ffffff;
+  }
+  ion-chip.status-zone:not([outline]) {
+    --background: #14b8a6; /* teal-500 */
+    --color: #ffffff;
+  }
+
+  /* Risk level semantic colors when selected */
+  ion-chip.risk-low:not([outline]) {
+    --background: #10b981; /* emerald-500 */
+    --color: #ffffff;
+  }
+  ion-chip.risk-moderate:not([outline]) {
+    --background: #f59e0b; /* amber-500 */
+    --color: #111827;
+  }
+  ion-chip.risk-high:not([outline]) {
+    --background: #f97316; /* orange-500 */
+    --color: #111827;
+  }
+  ion-chip.risk-critical:not([outline]) {
+    --background: #ef4444; /* red-500 */
+    --color: #ffffff;
+  }
+
+  /* Sort chips */
+  ion-chip.sort-recent:not([outline]) {
+    --background: #6366f1; /* indigo-500 */
+    --color: #ffffff;
+  }
+  ion-chip.sort-priority:not([outline]) {
+    --background: #22c55e; /* green-500 */
+    --color: #ffffff;
+  }
+  ion-chip.sort-type:not([outline]) {
+    --background: #a78bfa; /* violet-400 */
+    --color: #111827;
+  }
+}
+
 .section-header {
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 1.07rem;
@@ -328,7 +429,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding-bottom: 90px; /* prevent overlap with tab bar */
+  padding-bottom: 140px; /* prevent overlap with tab bar */
 }
 
 .notification-group {
@@ -764,7 +865,7 @@ ion-item-sliding {
   }
   
   .notifications-list {
-    padding-bottom: 20px;
+    padding-bottom: 120px;
   }
 }
 

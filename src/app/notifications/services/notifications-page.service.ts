@@ -57,7 +57,8 @@ export class NotificationsPageService {
     searchQuery: string = '',
     statusFilter: 'all' | 'unread' | 'read' | 'validated' | 'zone' = 'all',
     riskFilter: 'all' | 'low' | 'moderate' | 'high' | 'critical' = 'all',
-    sortBy: 'recent' | 'priority' | 'type' = 'recent'
+    sortBy: 'recent' | 'priority' | 'type' = 'recent',
+    timeRange: 'recent' | 'week' | 'month' | 'old' = 'recent'
   ): NotificationItem[] {
     let filtered = notifications;
     
@@ -116,6 +117,27 @@ export class NotificationsPageService {
         n.data?.reportType?.toLowerCase().includes(query)
       );
     }
+
+    // Time range filter
+    const now = Date.now();
+    const days = (d: number) => d * 24 * 60 * 60 * 1000;
+    const hours = (h: number) => h * 60 * 60 * 1000;
+    filtered = filtered.filter(n => {
+      const ts = n.timestamp?.getTime?.() ?? new Date(n.timestamp as any).getTime();
+      const age = now - ts;
+      switch (timeRange) {
+        case 'recent':
+          return age <= hours(24); // last 24 hours
+        case 'week':
+          return age <= days(7);
+        case 'month':
+          return age <= days(30);
+        case 'old':
+          return age > days(30);
+        default:
+          return true;
+      }
+    });
     
     // Sort
     if (sortBy === 'priority') {

@@ -35,36 +35,36 @@
         </div>
 
         <!-- Filters Popover -->
-        <ion-popover trigger="filtersToggle" triggerAction="click" side="bottom" alignment="end">
+        <ion-popover trigger="filtersToggle" triggerAction="click" side="bottom" alignment="end" cssClass="filters-popover">
           <ng-template>
             <ion-content class="ion-padding">
               <div class="filter-panel">
                 <div class="filter-section">
-                  <div class="filter-title">STATUS</div>
+                  <div class="filter-title"><ion-icon name="list-circle-outline"></ion-icon><span>STATUS</span></div>
                   <div class="chip-row">
-                    <ion-chip [outline]="statusFilter!=='all'" (click)="onStatusFilterChange('all')"><ion-label>All</ion-label></ion-chip>
-                    <ion-chip [outline]="statusFilter!=='unread'" (click)="onStatusFilterChange('unread')"><ion-label>Unread</ion-label></ion-chip>
-                    <ion-chip [outline]="statusFilter!=='read'" (click)="onStatusFilterChange('read')"><ion-label>Read</ion-label></ion-chip>
-                    <ion-chip [outline]="statusFilter!=='validated'" (click)="onStatusFilterChange('validated')"><ion-label>Validated</ion-label></ion-chip>
-                    <ion-chip [outline]="statusFilter!=='zone'" (click)="onStatusFilterChange('zone')"><ion-label>Zone Alerts</ion-label></ion-chip>
+                    <ion-chip size="small" class="status-all" [outline]="statusFilter!=='all'" (click)="onStatusFilterChange('all')"><ion-label>All</ion-label></ion-chip>
+                    <ion-chip size="small" class="status-unread" [outline]="statusFilter!=='unread'" (click)="onStatusFilterChange('unread')"><ion-label>Unread</ion-label></ion-chip>
+                    <ion-chip size="small" class="status-read" [outline]="statusFilter!=='read'" (click)="onStatusFilterChange('read')"><ion-label>Read</ion-label></ion-chip>
+                    <ion-chip size="small" class="status-validated" [outline]="statusFilter!=='validated'" (click)="onStatusFilterChange('validated')"><ion-label>Validated</ion-label></ion-chip>
+                    <ion-chip size="small" class="status-zone" [outline]="statusFilter!=='zone'" (click)="onStatusFilterChange('zone')"><ion-label>Zone Alerts</ion-label></ion-chip>
                   </div>
                 </div>
                 <div class="filter-section">
-                  <div class="filter-title">RISK LEVEL</div>
+                  <div class="filter-title"><ion-icon name="pulse-outline"></ion-icon><span>RISK LEVEL</span></div>
                   <div class="chip-row">
-                    <ion-chip [outline]="riskFilter!=='all'" (click)="onRiskFilterChange('all')"><ion-label>All</ion-label></ion-chip>
-                    <ion-chip [outline]="riskFilter!=='low'" (click)="onRiskFilterChange('low')"><ion-label>Low</ion-label></ion-chip>
-                    <ion-chip [outline]="riskFilter!=='moderate'" (click)="onRiskFilterChange('moderate')"><ion-label>Moderate</ion-label></ion-chip>
-                    <ion-chip [outline]="riskFilter!=='high'" (click)="onRiskFilterChange('high')"><ion-label>High</ion-label></ion-chip>
-                    <ion-chip [outline]="riskFilter!=='critical'" (click)="onRiskFilterChange('critical')"><ion-label>Critical</ion-label></ion-chip>
+                    <ion-chip size="small" class="risk-all" [outline]="riskFilter!=='all'" (click)="onRiskFilterChange('all')"><ion-label>All</ion-label></ion-chip>
+                    <ion-chip size="small" class="risk-low" [outline]="riskFilter!=='low'" (click)="onRiskFilterChange('low')"><ion-label>Low</ion-label></ion-chip>
+                    <ion-chip size="small" class="risk-moderate" [outline]="riskFilter!=='moderate'" (click)="onRiskFilterChange('moderate')"><ion-label>Moderate</ion-label></ion-chip>
+                    <ion-chip size="small" class="risk-high" [outline]="riskFilter!=='high'" (click)="onRiskFilterChange('high')"><ion-label>High</ion-label></ion-chip>
+                    <ion-chip size="small" class="risk-critical" [outline]="riskFilter!=='critical'" (click)="onRiskFilterChange('critical')"><ion-label>Critical</ion-label></ion-chip>
                   </div>
                 </div>
                 <div class="filter-section">
-                  <div class="filter-title">SORT BY</div>
+                  <div class="filter-title"><ion-icon name="funnel-outline"></ion-icon><span>SORT BY</span></div>
                   <div class="chip-row">
-                    <ion-chip [outline]="sortBy!=='recent'" (click)="onSortByChange('recent')"><ion-label>Recent</ion-label></ion-chip>
-                    <ion-chip [outline]="sortBy!=='priority'" (click)="onSortByChange('priority')"><ion-label>Priority</ion-label></ion-chip>
-                    <ion-chip [outline]="sortBy!=='type'" (click)="onSortByChange('type')"><ion-label>Type</ion-label></ion-chip>
+                    <ion-chip size="small" class="sort-recent" [outline]="sortBy!=='recent'" (click)="onSortByChange('recent')"><ion-label>Recent</ion-label></ion-chip>
+                    <ion-chip size="small" class="sort-priority" [outline]="sortBy!=='priority'" (click)="onSortByChange('priority')"><ion-label>Priority</ion-label></ion-chip>
+                    <ion-chip size="small" class="sort-type" [outline]="sortBy!=='type'" (click)="onSortByChange('type')"><ion-label>Type</ion-label></ion-chip>
                   </div>
                 </div>
               </div>
@@ -76,23 +76,48 @@
       <div class="section-header">
         <div class="section-title-row">
           <span>My Notifications</span>
-          <span class="section-count">{{ getUnreadCount() }}/{{ getTotalNotificationCount() }}</span>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="section-count">{{ getUnreadCount() }}/{{ getTotalNotificationCount() }}</span>
+            <ion-button id="timeRangeMenu" fill="clear" size="small" aria-label="Time range menu">
+              <ion-icon name="ellipsis-horizontal"></ion-icon>
+            </ion-button>
+          </div>
         </div>
         <div class="section-underline"></div>
       </div>
 
-      <div class="notifications-list" *ngIf="displayedNotifications.length > 0">
-        <div class="notification-group" *ngFor="let group of getGroupedNotifications()">
-          <button type="button" class="group-header" (click)="toggleGroup(group.label)">
-            <div class="group-left">
-              <ion-icon [class.expanded]="isGroupExpanded(group.label)" name="chevron-forward"></ion-icon>
-              <span>{{ group.label }}</span>
-            </div>
-            <span class="group-count">({{ group.notifications.length }})</span>
-          </button>
+      <!-- Time range popover -->
+      <ion-popover trigger="timeRangeMenu" triggerAction="click" side="bottom" alignment="end" dismissOnSelect="true">
+        <ng-template>
+          <ion-content class="ion-padding">
+            <ion-list lines="none">
+              <ion-item button detail="false" (click)="onTimeRangeChange('recent')">
+                <ion-icon name="flash-outline" slot="start"></ion-icon>
+                <ion-label>Recent</ion-label>
+                <ion-icon *ngIf="timeRange==='recent'" name="checkmark-outline" slot="end"></ion-icon>
+              </ion-item>
+              <ion-item button detail="false" (click)="onTimeRangeChange('week')">
+                <ion-icon name="calendar-outline" slot="start"></ion-icon>
+                <ion-label>Week</ion-label>
+                <ion-icon *ngIf="timeRange==='week'" name="checkmark-outline" slot="end"></ion-icon>
+              </ion-item>
+              <ion-item button detail="false" (click)="onTimeRangeChange('month')">
+                <ion-icon name="calendar-number-outline" slot="start"></ion-icon>
+                <ion-label>Month</ion-label>
+                <ion-icon *ngIf="timeRange==='month'" name="checkmark-outline" slot="end"></ion-icon>
+              </ion-item>
+              <ion-item button detail="false" (click)="onTimeRangeChange('old')">
+                <ion-icon name="time-outline" slot="start"></ion-icon>
+                <ion-label>Old</ion-label>
+                <ion-icon *ngIf="timeRange==='old'" name="checkmark-outline" slot="end"></ion-icon>
+              </ion-item>
+            </ion-list>
+          </ion-content>
+        </ng-template>
+      </ion-popover>
 
-          <ng-container *ngIf="isGroupExpanded(group.label)">
-          <ion-item-sliding *ngFor="let notification of group.notifications; trackBy: trackByNotificationId">
+      <div class="notifications-list" *ngIf="displayedNotifications.length > 0">
+          <ion-item-sliding *ngFor="let notification of displayedNotifications; trackBy: trackByNotificationId">
             <ion-item-options side="start">
               <ion-item-option color="success" (click)="markAsRead(notification)">
                 <ion-icon name="checkmark-outline"></ion-icon>
@@ -144,16 +169,13 @@
               </ion-item-option>
             </ion-item-options>
           </ion-item-sliding>
-          </ng-container>
-        </div>
-
         
       </div>
 
     <div class="no-notifications" *ngIf="displayedNotifications.length === 0 && !isLoading">
       <ion-icon name="notifications-off-outline"></ion-icon>
-      <h3>No Notifications Yet</h3>
-      <p>You don't have any notifications yet. New incident reports and validations will appear here.</p>
+      <h3>{{ getEmptyTitle() }}</h3>
+      <p>{{ getEmptySubtitle() }}</p>
     </div>
 
     
